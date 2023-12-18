@@ -1,2 +1,51 @@
-{'id': '29', 'time': '2023-12-18T13:41:56.333978561Z', 'userID': 26259809, 'accountID': '101-001-26259809-001', 'batchID': '28', 'requestID': '61185704820251909', 'type': 'ORDER_FILL', 'orderID': '28', 'instrument': 'EUR_USD', 'units': '10000.0', 
-'gainQuoteHomeConversionFactor': '1.0', 'lossQuoteHomeConversionFactor': '1.0', 'price': 1.09221, 'fullVWAP': 1.09221, 'fullPrice': {'type': 'PRICE', 'bids': [{'price': 1.09206, 'liquidity': '10000000'}], 'asks': [{'price': 1.09221, 'liquidity': '10000000'}], 'closeoutBid': 1.09206, 'closeoutAsk': 1.09221}, 'reason': 'MARKET_ORDER', 'pl': '-0.1', 'financing': '0.0', 'commission': '0.0', 'guaranteedExecutionFee': '0.0', 'accountBalance': '99909.872', 'tradesClosed': [{'tradeID': '25', 'units': '10000.0', 'price': 1.09221, 'realizedPL': '-0.1', 'financing': '0.0', 'guaranteedExecutionFee': '0.0', 'halfSpreadCost': '0.75'}], 'halfSpreadCost': '0.75'}
+{
+    "id": "29",
+    "time": "2023-12-18T13: 41: 56.333978561Z",
+    "userID": 26259809,
+    "accountID": "101-001-26259809-001",
+    "batchID": "28",
+    "requestID": "61185704820251909",
+    "type": "ORDER_FILL",
+    "orderID": "28",
+    "instrument": "EUR_USD",
+    "units": "10000.0",
+    "gainQuoteHomeConversionFactor": "1.0",
+    "lossQuoteHomeConversionFactor": "1.0",
+    "price": 1.09221,
+    "fullVWAP": 1.09221,
+    "fullPrice": {
+        "type": "PRICE",
+        "bids": [
+            {
+                "price": 1.09206,
+                "liquidity": "10000000"
+            }
+        ],
+        "asks": [
+            {
+                "price": 1.09221,
+                "liquidity": "10000000"
+            }
+        ],
+        "closeoutBid": 1.09206,
+        "closeoutAsk": 1.09221
+    },
+    "reason": "MARKET_ORDER",
+    "pl": "-0.1",
+    "financing": "0.0",
+    "commission": "0.0",
+    "guaranteedExecutionFee": "0.0",
+    "accountBalance": "99909.872",
+    "tradesClosed": [
+        {
+            "tradeID": "25",
+            "units": "10000.0",
+            "price": 1.09221,
+            "realizedPL": "-0.1",
+            "financing": "0.0",
+            "guaranteedExecutionFee": "0.0",
+            "halfSpreadCost": "0.75"
+        }
+    ],
+    "halfSpreadCost": "0.75"
+}

@@ -1,13 +1,13 @@
-
+import json
 import time
+import traceback
 from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
 import pytz
 import tpqoa
-import traceback
-import json
+
 
 class ConTrader(tpqoa.tpqoa):
     def __init__(self, conf_file, instrument, bar_length, units, SMA, dev, sl_perc = None, tsl_perc = None, tp_perc = None):
@@ -67,16 +67,16 @@ class ConTrader(tpqoa.tpqoa):
             print (f"bar_length: {self.bar_length}")
             print (f"now - last_bar: {now - self.last_bar}")
 
-            if now - self.last_bar < self.bar_length:
+            if now - self.last_bar <= self.bar_length:
                 print ("break")
                 break
                 
-        df = df.resample(self.bar_length, label = "right").last().dropna().iloc[:-1]
+        df = self.raw_data.resample(self.bar_length, label = "right").last().dropna().iloc[:-1]
         df.rename(columns = {"c":self.instrument}, inplace = True)
 
         print (f"resampled df {df}")
 
-        self.data = self.raw_data
+        self.data = df
             
     def start_trading(self, days, max_attempts = 5, wait = 20, wait_increase = 0): # Error Handling
         
@@ -122,39 +122,48 @@ class ConTrader(tpqoa.tpqoa):
     def on_success(self, time, bid, ask):
         print(f"{self.ticks}, time: {time}, ask: {ask}, bid: {bid}", flush = True)
         
-        recent_tick = pd.to_datetime(time)
         
         # define stop
         if self.ticks >= 200:
             self.terminate_session(cause = "Scheduled Session End.")
             return
+
         
-        # collect and store tick data
-        df = pd.DataFrame({self.instrument:(ask + bid)/2}, 
-                          index = [recent_tick])
+        recent_tick = pd.to_datetime(time)
+        df = pd.DataFrame({self.instrument: (ask + bid)/2}, index=[recent_tick])
         self.tick_data = pd.concat([self.tick_data, df])
  
         # if a time longer than the bar_lenght has elapsed between last full bar and the most recent tick
-        if recent_tick.to_pydatetime(warn=False).replace(tzinfo=None) - self.last_bar >= self.bar_length:
+        # if recent_tick.to_pydatetime(warn=False).replace(tzinfo=None) - self.last_bar >= self.bar_length:
+        if recent_tick.replace(tzinfo=None) - self.last_bar >= self.bar_length:
             self.resample_and_join()
             self.define_strategy()
             #self.execute_trades() now called inside self.check_positions()
 
-        self.determine_action()
-        self.check_positions()
-        # self.execute_trades() 
+        pos, price = self.determine_action(bid, ask)
+        if pos != 0:
+            self.check_positions()
+            self.execute_trades(pos, price) 
 
             
     def resample_and_join(self):
 
-        print (f"resampling: {datetime.now()}")
-        self.raw_data = pd.concat([self.raw_data, self.tick_data.resample(self.bar_length, label="right").last().ffill().iloc[:-1]])
+        print ("resampling...")
+
+        self.tick_data.reset_index(inplace=True)
+        self.tick_data.rename(columns = {"index":'time'}, inplace = True)
+        self.tick_data.set_index('time', inplace=True)
+
+        self.raw_data = pd.concat([self.raw_data, self.tick_data.resample(self.bar_length, label="right").last().ffill()])
         
         if self.raw_data.size > self.SMA:
             self.raw_data = self.raw_data.iloc[-1 * self.SMA]
 
-        self.tick_data = self.tick_data.iloc[-1:]
-        self.last_bar = self.raw_data.index[-1].to_pydatetime().replace(tzinfo=None)
+        self.tick_data = pd.DataFrame()
+        print(f"self.raw_data.index[-1]: {self.raw_data.index[-1]}")
+        self.last_bar = datetime.strftime(self.raw_data.index[-1], "%Y-%m-%d %H:%M:%S%z").replace(tzinfo=None)
+
+        # self.last_bar = self.raw_data.index[-1].replace(tzinfo=None)
         
     def define_strategy(self): # "strategy-specific"
 
@@ -171,7 +180,7 @@ class ConTrader(tpqoa.tpqoa):
 
         df["position"] = np.where(df[self.instrument] > df.Upper, -1, np.nan)
         
-        # df["position"] = np.where(df.distance * df.distance.shift(1) < 0, 0, df["position"])
+        df["position"] = np.where(df.distance * df.distance.shift(1) < 0, 0, df["position"])
 
         df["position"] = df.position.ffill().fillna(0)
         # ***********************************************************************
@@ -181,34 +190,40 @@ class ConTrader(tpqoa.tpqoa):
 
         self.data = df.copy()
         
-    def determine_action(self):
+    def determine_action(self, bid, ask):
 
         print ("Inside determine_action")
         df = self.data.copy()
-        a_price = df[self.instrument].iloc[-1]
         pos = 0
+        price = None
 
         # update the latest position
 
-        if a_price < self.bb_lower:
-            pos = 1
-        elif a_price > self.bb_upper:
-            pos = -1
+        if ask < self.bb_lower:
+           pos = 1
+           price = ask
+        elif bid > self.bb_upper:
+           pos = -1
+           price = bid
+        else:
+           pos = 0
+           price = ask + (bid - ask)/2
         
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
         #     pos = 0
 
-        print (f"Exiting determine_action: price: {a_price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}, action: {pos}")
+        print (f"Exiting determine_action: price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}, action: {pos}")
         df["position"].iloc[-1] = pos
         self.data = df.copy()
 
+        return pos, price
 
-    def execute_trades(self):
+
+    def execute_trades(self, pos, price):
 
         print ("Inside execute_trades")
         # NEW - determne SL distance and TP Price
-        current_price = self.data[self.instrument].iloc[-1]
-
+        current_price = price
         
         if self.sl_perc:
             sl_dist = round(current_price * self.sl_perc, 4) 
@@ -230,7 +245,7 @@ class ConTrader(tpqoa.tpqoa):
         else: 
             tp_price = None
         
-        if self.data["position"].iloc[-1] == 1:
+        if pos == 1:
             print ("Signal = BUY")
             if self.position == 0:
                 print ("No current possitions")
@@ -241,9 +256,11 @@ class ConTrader(tpqoa.tpqoa):
                 print ("Have short positions")
                 order = self.create_order(self.instrument, self.units * 2, suppress = True, ret = True,
                                           sl_distance = sl_dist, tsl_distance = tsl_dist, tp_price = tp_price) 
-                self.report_trade(order, "GOING LONG")  
+                self.report_trade(order, "GOING LONG")
+            elif self.position == 1:
+                print ("Already have long positions...skipping trade")
             self.position = 1
-        elif self.data["position"].iloc[-1] == -1: 
+        elif pos == -1: 
             print ("Signal = SELL")
             if self.position == 0:
                 print ("No current possitions")
@@ -254,9 +271,12 @@ class ConTrader(tpqoa.tpqoa):
                 print ("Have longs positions")
                 order = self.create_order(self.instrument, -self.units * 2, suppress = True, ret = True,
                                           sl_distance = sl_dist, tsl_distance = tsl_dist, tp_price = tp_price)
-                self.report_trade(order, "GOING SHORT")  
+                self.report_trade(order, "GOING SHORT")
+            elif self.position == -1:
+                print ("Already have short positions...skipping trade")
+            
             self.position = -1
-        elif self.data["position"].iloc[-1] == 0: 
+        elif pos == 0: 
             print ("Signal = Neutral - Do nothing")
             
             # if self.position == -1:
@@ -271,11 +291,11 @@ class ConTrader(tpqoa.tpqoa):
     
     def report_trade(self, order, going):  
         print(f"Inside report_trade: {json.dumps(order, indent = 2)}")
-        self.order_id = order["id"] 
-        time = order["time"]
-        units = order["units"]
-        price = order["price"]
-        pl = float(order["pl"])
+        self.order_id = order.get("id") 
+        time = order.get("time")
+        units = order.get("units")
+        price = order.get("price")
+        pl = float(order.get("pl"))
         self.profits.append(pl)
         cumpl = sum(self.profits)
         print("\n" + 100* "-")
@@ -285,49 +305,38 @@ class ConTrader(tpqoa.tpqoa):
         
     def terminate_session(self, cause):
         self.stop_stream = True
-        if self.position != 0:
-            close_order = self.create_order(self.instrument, units = -self.position * self.units,
-                                            suppress = True, ret = True) 
-            self.report_trade(close_order, "GOING NEUTRAL")
-            self.position = 0
-        print(cause, end = " | ")
+        # if self.position != 0:
+        #     close_order = self.create_order(self.instrument, units = -self.position * self.units,
+        #                                     suppress = True, ret = True) 
+        #     self.report_trade(close_order, "GOING NEUTRAL")
+        #     self.position = 0
+        # print(cause, end = " | ")
     
     def check_positions(self): 
-        exp_position = self.position*self.units # get current (exp.) position
+        print ("inside check_positions")
         
-        # get current actual position
-        try:
-            positions = self.get_positions()
-            actual_position = 0
-            for pos in positions:
-                if pos["instrument"] == self.instrument:
-                    actual_position = round(float(pos["long"]["units"]) + float(pos["short"]["units"]), 0)
-        except:
-            actual_position = exp_position 
+        positions = self.get_positions()
+        for position in positions:
+            if position["instrument"] == self.instrument:
+                self.units = round(float(position["long"]["units"]) + float(position["short"]["units"]), 0)
+                print (f"currently have: {self.units}")
         
-        if actual_position != exp_position: # if mismatch (sl/tp triggered)
-            self.position = actual_position / self.units # update self.position
-            try:
-                latest_actions = self.get_transactions(self.order_id) # get all actions since last recorded trade (excl.)
-                for action in latest_actions:
-                    if action["type"] == "ORDER_FILL": # last filled order/trade (sl/tp trade!) 
-                        self.report_trade(action, "GOING NEUTRAL") # report sl/tp trade
-            except:
-                pass
-            finally:
-                self.terminate_session("SL/TP Event!") # stop session
-        elif self.position != self.data["position"].iloc[-1]: # if no mismatch and trade required
-            self.execute_trades()
-        else: # if no mismatch and no trade required
-            pass
+
+        if self.units == 0:
+            self.position = 0
+        elif self.units > 0:
+            self.position = 1
+        elif self.units < 0:
+            self.position = -1
         
+
 if __name__ == "__main__":
         
     #insert the file path of your config file below!
    
     trader = ConTrader(conf_file = "oanda.cfg",
-                       instrument = "EUR_USD", bar_length = 5, units = 10000, SMA=125, dev=2, sl_perc = 0.01, tp_perc = 0.015)
-    trader.start_trading(days = 5, max_attempts =  3, wait = 20, wait_increase = 0)
+                       instrument = "EUR_USD", bar_length = 1, units = 10000, SMA=125, dev=2, sl_perc = 0.05, tp_perc = 0.01)
+    trader.start_trading(days = 5, max_attempts =  1, wait = 20, wait_increase = 0)
     
     
     
