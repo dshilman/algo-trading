@@ -1,7 +1,7 @@
 import json
 import time
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
@@ -33,9 +33,8 @@ class ConTrader(tpqoa.tpqoa):
         self.bb_lower = None
         self.bb_upper =  None
 
-        print ("Initialized")
     
-    def get_most_recent(self, days = 5):
+    def get_most_recent(self, days = 1):
         
         self.raw_data = None
         self.last_bar = None
@@ -52,7 +51,7 @@ class ConTrader(tpqoa.tpqoa):
             print (f"Getting candles for {self.instrument}, from {past} to {now}")
             
             df = self.get_history(instrument = self.instrument, start = past, end = now,
-                                   granularity = "S5", price = "M", localize = True).c.dropna().to_frame()
+                                   granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
             df.rename(columns = {"c":self.instrument}, inplace = True)
             df = df.resample(self.bar_length, label = "right").last().dropna().iloc[:-1]
             
@@ -61,26 +60,25 @@ class ConTrader(tpqoa.tpqoa):
             else:
                 self.raw_data = pd.concat([self.raw_data, df])
 
-            self.last_bar = self.raw_data.index[-1].to_pydatetime().replace(tzinfo=None)
+            self.last_bar = self.raw_data.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
 
-            print (f"Raw data size: {self.raw_data.size} - Last candle date {self.last_bar}")
-            print (f"bar_length: {self.bar_length}")
-            print (f"now - last_bar: {now - self.last_bar}")
+            # print (f"Raw data size: {self.raw_data.size} - Last candle date {self.last_bar}")
+            # print (f"bar_length: {self.bar_length}")
+            # print (f"now - last_bar: {now - self.last_bar}")
 
             if now - self.last_bar <= self.bar_length:
                 print ("break")
                 break
                 
-        df = self.raw_data.resample(self.bar_length, label = "right").last().dropna().iloc[:-1]
         df.rename(columns = {"c":self.instrument}, inplace = True)
 
-        print (f"resampled df {df}")
+        print ("resampled", df)
 
         self.data = df
             
-    def start_trading(self, days, max_attempts = 5, wait = 20, wait_increase = 0): # Error Handling
+    def start_trading(self, days, max_attempts = 5, wait = 20, wait_increase = 0):
         
-        print ("Start")
+        print (f"Started: {datetime.now()}")
 
         attempt = 0
         success = False
@@ -119,28 +117,33 @@ class ConTrader(tpqoa.tpqoa):
                         wait += wait_increase
                         self.tick_data = pd.DataFrame()
         
+        print (f"Ended: {datetime.now()}")
+
+
     def on_success(self, time, bid, ask):
-        print(f"{self.ticks}, time: {time}, ask: {ask}, bid: {bid}", flush = True)
+
+        print(f"# {self.ticks} ---- time: {time} ---- ask: {ask} ----- bid: {bid}")
+
+         # print(f"{self.ticks}, time: {time}, ask: {ask}, bid: {bid}", flush = True)
         
         
-        # define stop
-        if self.ticks >= 200:
+        # used for testing only
+        if self.ticks >= 100:
             self.terminate_session(cause = "Scheduled Session End.")
             return
 
         
         recent_tick = pd.to_datetime(time)
+
         df = pd.DataFrame({self.instrument: (ask + bid)/2}, index=[recent_tick])
         self.tick_data = pd.concat([self.tick_data, df])
  
-        # if a time longer than the bar_lenght has elapsed between last full bar and the most recent tick
-        # if recent_tick.to_pydatetime(warn=False).replace(tzinfo=None) - self.last_bar >= self.bar_length:
         if recent_tick.replace(tzinfo=None) - self.last_bar >= self.bar_length:
             self.resample_and_join()
             self.define_strategy()
-            #self.execute_trades() now called inside self.check_positions()
 
         pos, price = self.determine_action(bid, ask)
+
         if pos != 0:
             self.check_positions()
             self.execute_trades(pos, price) 
@@ -148,30 +151,26 @@ class ConTrader(tpqoa.tpqoa):
             
     def resample_and_join(self):
 
-        print ("resampling...")
-
-        self.tick_data.reset_index(inplace=True)
-        self.tick_data.rename(columns = {"index":'time'}, inplace = True)
-        self.tick_data.set_index('time', inplace=True)
-
-        self.raw_data = pd.concat([self.raw_data, self.tick_data.resample(self.bar_length, label="right").last().ffill()])
+        # self.tick_data.resample(self.bar_length, label="right").last().ffill().iloc[:-1]
+        self.tick_data.resample(self.bar_length, label="right").last().ffill()
+        self.raw_data = pd.concat([self.raw_data, self.tick_data])
         
         if self.raw_data.size > self.SMA:
-            self.raw_data = self.raw_data.iloc[-1 * self.SMA]
+            self.raw_data = self.raw_data.tail(self.SMA)
+
+        print ("After resampling", self.raw_data)
 
         self.tick_data = pd.DataFrame()
-        print(f"self.raw_data.index[-1]: {self.raw_data.index[-1]}")
-        self.last_bar = datetime.strftime(self.raw_data.index[-1], "%Y-%m-%d %H:%M:%S%z").replace(tzinfo=None)
-
-        # self.last_bar = self.raw_data.index[-1].replace(tzinfo=None)
+        self.last_bar = self.raw_data.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
         
     def define_strategy(self): # "strategy-specific"
-
-        print ("Inside define_strategy")
+        
         df = self.data.copy()
       
         # ******************** define your strategy here ************************
         df["SMA"] = df[self.instrument].rolling(self.SMA).mean()
+        df.dropna(subset=['SMA'], inplace=True)
+
         df["Lower"] = df["SMA"] - df[self.instrument].rolling(self.SMA).std() * self.dev
         df["Upper"] = df["SMA"] + df[self.instrument].rolling(self.SMA).std() * self.dev
         df["distance"] = df[self.instrument] - df.SMA
@@ -190,9 +189,11 @@ class ConTrader(tpqoa.tpqoa):
 
         self.data = df.copy()
         
+        print ("After defining strategy:", self.data)
+
     def determine_action(self, bid, ask):
 
-        print ("Inside determine_action")
+        # print ("Inside determine_action")
         df = self.data.copy()
         pos = 0
         price = None
@@ -202,9 +203,13 @@ class ConTrader(tpqoa.tpqoa):
         if ask < self.bb_lower:
            pos = 1
            price = ask
+           print (f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
+    
         elif bid > self.bb_upper:
            pos = -1
            price = bid
+           print (f"Signal SELL at price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
+
         else:
            pos = 0
            price = ask + (bid - ask)/2
@@ -212,8 +217,7 @@ class ConTrader(tpqoa.tpqoa):
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
         #     pos = 0
 
-        print (f"Exiting determine_action: price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}, action: {pos}")
-        df["position"].iloc[-1] = pos
+        # df["position"].iloc[-1] = pos
         self.data = df.copy()
 
         return pos, price
@@ -221,8 +225,7 @@ class ConTrader(tpqoa.tpqoa):
 
     def execute_trades(self, pos, price):
 
-        print ("Inside execute_trades")
-        # NEW - determne SL distance and TP Price
+        # print ("Inside execute_trades")
         current_price = price
         
         if self.sl_perc:
@@ -238,9 +241,9 @@ class ConTrader(tpqoa.tpqoa):
             
         
         if self.tp_perc:
-            if self.data["position"].iloc[-1] == 1:
+            if pos == 1:
                 tp_price = round(current_price * (1 + self.tp_perc), 2) 
-            elif self.data["position"].iloc[-1] == -1:
+            elif pos == -1:
                 tp_price = round(current_price * (1 - self.tp_perc), 2)      
         else: 
             tp_price = None
@@ -336,7 +339,7 @@ if __name__ == "__main__":
    
     trader = ConTrader(conf_file = "oanda.cfg",
                        instrument = "EUR_USD", bar_length = 1, units = 10000, SMA=125, dev=2, sl_perc = 0.05, tp_perc = 0.01)
-    trader.start_trading(days = 5, max_attempts =  1, wait = 20, wait_increase = 0)
+    trader.start_trading(days = 1, max_attempts =  1, wait = 20, wait_increase = 0)
     
     
     
