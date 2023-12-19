@@ -1,0 +1,6 @@
+2023-12-19 14:20:22,463 - trader_oanda - INFO - Started Trading Session
+2023-12-19 14:20:22,463 - trader_oanda - INFO - Getting  candles for: EUR_USD
+2023-12-19 14:20:22,825 - trader_oanda - INFO - Define strategy for the first time
+2023-12-19 14:20:22,830 - trader_oanda - INFO - Starting to stream for: EUR_USD
+2023-12-19 14:21:01,109 - trader_oanda - ERROR - Attempt: 1
+2023-12-19 14:21:01,109 - trader_oanda - INFO - Ended Trading Session

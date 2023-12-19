@@ -1,3 +1,4 @@
 pandas
 numpy
 git+https://github.com/yhilpisch/tpqoa
+.log

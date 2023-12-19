@@ -9,15 +9,34 @@ import pytz
 import tpqoa
 
 
+import logging
+import logging.handlers as handlers
+import time
+
+logger = logging.getLogger('trader_oanda')
+logger.setLevel(logging.DEBUG)
+
+## Here we define our formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+
+logHandler = handlers.RotatingFileHandler('trader_oanda.log', maxBytes=5*1024*1024, backupCount=10)
+logHandler.setLevel(logging.INFO)
+logger.addHandler(logHandler)
+logHandler.setFormatter(formatter)
+
+
 class ConTrader(tpqoa.tpqoa):
-    def __init__(self, conf_file, instrument, bar_length, units, SMA, dev, sl_perc = None, tsl_perc = None, tp_perc = None):
+    def __init__(self, conf_file, instrument, bar_length, units_to_trade, SMA, dev, sl_perc = None, tsl_perc = None, tp_perc = None):
         super().__init__(conf_file)
         self.instrument = instrument
         self.bar_length = timedelta(minutes = bar_length)
+        self.refresh_strategy_time = timedelta(minutes = 5)
         self.tick_data = pd.DataFrame()
         self.data = None 
         self.last_bar = None
-        self.units = units
+        self.units = 0
+        self.units_to_trade = units_to_trade
         self.position = 0
         self.profits = [] 
         self.sl_perc = sl_perc 
@@ -48,7 +67,7 @@ class ConTrader(tpqoa.tpqoa):
             if self.last_bar is not None:
                 past = self.last_bar
 
-            print (f"Getting candles for {self.instrument}, from {past} to {now}")
+            logger.debug (f"Getting candles for {self.instrument}, from {past} to {now}")
             
             df = self.get_history(instrument = self.instrument, start = past, end = now,
                                    granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
@@ -62,63 +81,63 @@ class ConTrader(tpqoa.tpqoa):
 
             self.last_bar = self.data.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
 
-            # print (f"Raw data size: {self.data.size} - Last candle date {self.last_bar}")
-            # print (f"bar_length: {self.bar_length}")
-            # print (f"now - last_bar: {now - self.last_bar}")
+            # logger.debug (f"Raw data size: {self.data.size} - Last candle date {self.last_bar}")
+            # logger.debug (f"bar_length: {self.bar_length}")
+            # logger.debug (f"now - last_bar: {now - self.last_bar}")
 
             if now - self.last_bar <= self.bar_length:
-                print ("break")
+                logger.debug ("break")
                 break
                 
         df.rename(columns = {"c":self.instrument}, inplace = True)
 
-        print ("starting df")
-        print(df)
+        logger.debug ("starting df")
+        logger.debug(df)
 
         self.data = df
             
     def start_trading(self, days, max_attempts = 5, wait = 20, wait_increase = 0):
-        
-        print (f"Started: {datetime.now()}")
+
+        logger.info ("Started Trading Session")
 
         attempt = 0
         success = False
         while True:
             try:
-                print (f"Getting  candles for: {self.instrument}")
+                logger.info (f"Getting  candles for: {self.instrument}")
                 self.get_most_recent(days)
 
-                print ("Define strategy for the first time")
+                logger.info ("Define strategy for the first time")
                 self.define_strategy()
 
-                print (f"Starting to stream for: {self.instrument}")
+                logger.info (f"Starting to stream for: {self.instrument}")
                 self.stream_data(self.instrument)
             except Exception as e:
-                print(e, end = " | ")
-                traceback.print_exc() 
+                logger.error(e)
+                traceback.logger.debug_exc() 
             else:
                 success = True
                 break    
-            finally:
-                attempt +=1
-                print("Attempt: {}".format(attempt), end = '\n')
+            finally:                
                 if success == False:
+                    attempt +=1
+                    logger.error("Attempt: {}".format(attempt))
                     if attempt >= max_attempts:
-                        print("max_attempts reached!")
+                        logger.error("max_attempts reached!")
                         try: # try to terminate session
                             time.sleep(wait)
                             self.terminate_session(cause = "Unexpected Session Stop (too many errors).")
                         except Exception as e:
-                            print(e, end = " | ")
-                            print("Could not terminate session properly!")
+                            logger.error(e)
+                            logger.error("Could not terminate session properly!")
                         finally: 
                             break
                     else: # try again
                         time.sleep(wait)
                         wait += wait_increase
                         self.tick_data = pd.DataFrame()
-        
-        print (f"Ended: {datetime.now()}")
+                else:
+                    logger.info ("Ended Trading Session")
 
 
     def on_success(self, time, bid, ask):
@@ -127,9 +146,9 @@ class ConTrader(tpqoa.tpqoa):
         recent_tick = pd.to_datetime(time).to_pydatetime(warn=False).replace(tzinfo=None).replace(microsecond=0)
         # recent_tick = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=None).replace(microsecond=0)
 
-        print(f"{self.ticks} ----- time: {recent_tick}  ---- ask: {ask} ----- bid: {bid}")
+        logger.debug(f"{self.ticks} ----- time: {recent_tick}  ---- ask: {ask} ----- bid: {bid}")
 
-         # print(f"{self.ticks}, time: {time}, ask: {ask}, bid: {bid}", flush = True)
+         # logger.debug(f"{self.ticks}, time: {time}, ask: {ask}, bid: {bid}", flush = True)
         
         
         # used for testing only
@@ -140,7 +159,7 @@ class ConTrader(tpqoa.tpqoa):
         df = pd.DataFrame({self.instrument: (ask + bid)/2}, index=[recent_tick])
         self.tick_data = pd.concat([self.tick_data, df])
  
-        if recent_tick.replace(tzinfo=None) - self.last_bar >= self.bar_length:
+        if recent_tick.replace(tzinfo=None) - self.last_bar >= self.refresh_strategy_time:
             resampled_tick_data = self.resample()
             self.define_strategy(resampled_tick_data)
 
@@ -158,8 +177,8 @@ class ConTrader(tpqoa.tpqoa):
 
         self.last_bar = df.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
 
-        print ("Before resampling")
-        print(df)
+        logger.debug ("Before resampling")
+        logger.debug(df)
 
         # self.tick_data.resample(self.bar_length, label="right").last().ffill().iloc[:-1]
         df = df.resample("1Min").last()
@@ -168,8 +187,8 @@ class ConTrader(tpqoa.tpqoa):
         df.set_index('time', inplace=True)
                 
 
-        print ("After resampling")
-        print(df)
+        logger.debug ("After resampling")
+        logger.debug(df)
 
         return df
         
@@ -180,8 +199,8 @@ class ConTrader(tpqoa.tpqoa):
         
         if resampled_tick_data is not None and resampled_tick_data.size > 0:
             df = pd.concat([df, resampled_tick_data])
-            print ("Concatenated")
-            print (df)
+            logger.debug ("Concatenated")
+            logger.debug (df)
             df = df.tail(self.SMA * 2)
       
         # ******************** define your strategy here ************************
@@ -207,12 +226,12 @@ class ConTrader(tpqoa.tpqoa):
 
         self.data = df.copy()
         
-        print ("After defining strategy")
-        print(self.data)
+        logger.debug ("After defining strategy")
+        logger.debug(self.data)
 
     def determine_action(self, bid, ask):
 
-        # print ("Inside determine_action")        
+        # logger.debug ("Inside determine_action")        
         pos = 0
         price = None
 
@@ -221,18 +240,17 @@ class ConTrader(tpqoa.tpqoa):
         if ask < self.bb_lower:
            pos = 1
            price = ask
-           print (f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
+           logger.info (f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
     
         elif bid > self.bb_upper:
            pos = -1
            price = bid
-           print (f"Signal SELL at price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
+           logger.info (f"Signal SELL at price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
 
         else:
            pos = 0
-           price = ask + (bid - ask)/2
+           price = ask
         
-        print (f"bid: {bid}, ask: {ask}, price: {price}, pos: {pos}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
         #     pos = 0
 
@@ -243,7 +261,7 @@ class ConTrader(tpqoa.tpqoa):
 
     def execute_trades(self, pos, price):
 
-        # print ("Inside execute_trades")
+        # logger.debug ("Inside execute_trades")
         current_price = price
         
         if self.sl_perc:
@@ -267,51 +285,51 @@ class ConTrader(tpqoa.tpqoa):
             tp_price = None
         
         if pos == 1:
-            print ("Signal = BUY")
+            logger.info ("Signal = BUY")
             if self.position == 0:
-                print ("No current possitions")
-                order = self.create_order(self.instrument, self.units, suppress = True, ret = True,
+                logger.info ("No current possitions")
+                order = self.create_order(self.instrument, self.units_to_trade, suppress = True, ret = True,
                                           sl_distance = sl_dist, tsl_distance = tsl_dist, tp_price = tp_price)
                 self.report_trade(order, "GOING LONG")  
             elif self.position == -1:
-                print ("Have short positions")
-                order = self.create_order(self.instrument, self.units * 2, suppress = True, ret = True,
+                logger.info (f"Already have {self.units} short positions")
+                order = self.create_order(self.instrument, self.units_to_trade * 2, suppress = True, ret = True,
                                           sl_distance = sl_dist, tsl_distance = tsl_dist, tp_price = tp_price) 
                 self.report_trade(order, "GOING LONG")
             elif self.position == 1:
-                print ("Already have long positions...skipping trade")
+                logger.info (f"Already have {self.units} long positions...skipping trade")
             self.position = 1
         elif pos == -1: 
-            print ("Signal = SELL")
+            logger.info ("Signal = SELL")
             if self.position == 0:
-                print ("No current possitions")
-                order = self.create_order(self.instrument, -self.units, suppress = True, ret = True,
+                logger.info ("No current possitions")
+                order = self.create_order(self.instrument, -self.units_to_trade, suppress = True, ret = True,
                                           sl_distance = sl_dist, tsl_distance = tsl_dist, tp_price = tp_price)
                 self.report_trade(order, "GOING SHORT")  
             elif self.position == 1:
-                print ("Have longs positions")
-                order = self.create_order(self.instrument, -self.units * 2, suppress = True, ret = True,
+                logger.info (f"Already have {self.units} longs positions")
+                order = self.create_order(self.instrument, -self.units_to_trade * 2, suppress = True, ret = True,
                                           sl_distance = sl_dist, tsl_distance = tsl_dist, tp_price = tp_price)
                 self.report_trade(order, "GOING SHORT")
             elif self.position == -1:
-                print ("Already have short positions...skipping trade")
+                logger.info (f"Already have short {self.units} positions...skipping trade")
             
             self.position = -1
         elif pos == 0: 
-            print ("Signal = Neutral - Do nothing")
+            logger.info ("Signal = Neutral - Do nothing")
             
             # if self.position == -1:
-            #     print ("Have short positions")
+            #     logger.debug ("Have short positions")
             #     order = self.create_order(self.instrument, self.units, suppress = True, ret = True) 
             #     self.report_trade(order, "GOING NEUTRAL")  
             # elif self.position == 1:
-            #     print ("Have longs positions")
+            #     logger.debug ("Have longs positions")
             #     order = self.create_order(self.instrument, -self.units, suppress = True, ret = True)
             #     self.report_trade(order, "GOING NEUTRAL")  
             # self.position = 0
     
     def report_trade(self, order, going):  
-        print(f"Inside report_trade: {json.dumps(order, indent = 2)}")
+        logger.debug(f"Inside report_trade: {json.dumps(order, indent = 2)}")
         self.order_id = order.get("id") 
         time = order.get("time")
         units = order.get("units")
@@ -319,10 +337,10 @@ class ConTrader(tpqoa.tpqoa):
         pl = float(order.get("pl"))
         self.profits.append(pl)
         cumpl = sum(self.profits)
-        print("\n" + 100* "-")
-        print("{} | {}".format(time, going))
-        print("{} | units = {} | price = {} | P&L = {} | Cum P&L = {}".format(time, units, price, pl, cumpl))
-        print(100 * "-" + "\n")  
+        logger.info("\n" + 100* "-")
+        logger.info("{} | {}".format(time, going))
+        logger.info("{} | units = {} | price = {} | P&L = {} | Cum P&L = {}".format(time, units, price, pl, cumpl))
+        logger.info(100 * "-" + "\n")  
         
     def terminate_session(self, cause):
         self.stop_stream = True
@@ -331,16 +349,16 @@ class ConTrader(tpqoa.tpqoa):
         #                                     suppress = True, ret = True) 
         #     self.report_trade(close_order, "GOING NEUTRAL")
         #     self.position = 0
-        # print(cause, end = " | ")
+        logger.info(cause)
     
     def check_positions(self): 
-        print ("inside check_positions")
+        logger.debug ("inside check_positions")
         
         positions = self.get_positions()
         for position in positions:
             if position["instrument"] == self.instrument:
                 self.units = round(float(position["long"]["units"]) + float(position["short"]["units"]), 0)
-                print (f"currently have: {self.units}")
+                logger.info (f"Currently have: {self.units} position of {self.instrument}")
         
 
         if self.units == 0:
@@ -356,7 +374,7 @@ if __name__ == "__main__":
     #insert the file path of your config file below!
    
     trader = ConTrader(conf_file = "oanda.cfg",
-                       instrument = "EUR_USD", bar_length = 1, units = 10000, SMA=125, dev=2, sl_perc = 0.05, tp_perc = 0.01)
+                       instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=125, dev=2, sl_perc = 0.05, tp_perc = 0.01)
     trader.start_trading(days = 1, max_attempts =  1, wait = 20, wait_increase = 0)
     
     
