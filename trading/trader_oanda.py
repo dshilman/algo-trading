@@ -15,7 +15,6 @@ class ConTrader(tpqoa.tpqoa):
         self.instrument = instrument
         self.bar_length = timedelta(minutes = bar_length)
         self.tick_data = pd.DataFrame()
-        self.raw_data = None
         self.data = None 
         self.last_bar = None
         self.units = units
@@ -36,8 +35,9 @@ class ConTrader(tpqoa.tpqoa):
     
     def get_most_recent(self, days = 1):
         
-        self.raw_data = None
         self.last_bar = None
+        self.data = None
+
 
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
@@ -53,16 +53,16 @@ class ConTrader(tpqoa.tpqoa):
             df = self.get_history(instrument = self.instrument, start = past, end = now,
                                    granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
             df.rename(columns = {"c":self.instrument}, inplace = True)
-            df = df.resample(self.bar_length, label = "right").last().dropna().iloc[:-1]
+            # df = df.resample("1M", label = "right").last().dropna().iloc[:-1]
             
-            if self.raw_data is None:
-                self.raw_data = df.copy()
+            if self.data is None:
+                self.data = df.copy()
             else:
-                self.raw_data = pd.concat([self.raw_data, df])
+                self.data = pd.concat([self.data, df])
 
-            self.last_bar = self.raw_data.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
+            self.last_bar = self.data.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
 
-            # print (f"Raw data size: {self.raw_data.size} - Last candle date {self.last_bar}")
+            # print (f"Raw data size: {self.data.size} - Last candle date {self.last_bar}")
             # print (f"bar_length: {self.bar_length}")
             # print (f"now - last_bar: {now - self.last_bar}")
 
@@ -72,7 +72,8 @@ class ConTrader(tpqoa.tpqoa):
                 
         df.rename(columns = {"c":self.instrument}, inplace = True)
 
-        print ("resampled", df)
+        print ("starting df")
+        print(df)
 
         self.data = df
             
@@ -122,25 +123,26 @@ class ConTrader(tpqoa.tpqoa):
 
     def on_success(self, time, bid, ask):
 
-        print(f"# {self.ticks} ---- time: {time} ---- ask: {ask} ----- bid: {bid}")
+        # 2023-12-19T13:28:35.194571445Z
+        recent_tick = pd.to_datetime(time).to_pydatetime(warn=False).replace(tzinfo=None).replace(microsecond=0)
+        # recent_tick = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=None).replace(microsecond=0)
+
+        print(f"{self.ticks} ----- time: {recent_tick}  ---- ask: {ask} ----- bid: {bid}")
 
          # print(f"{self.ticks}, time: {time}, ask: {ask}, bid: {bid}", flush = True)
         
         
         # used for testing only
-        if self.ticks >= 100:
+        if self.ticks >= 200:
             self.terminate_session(cause = "Scheduled Session End.")
             return
-
-        
-        recent_tick = pd.to_datetime(time)
 
         df = pd.DataFrame({self.instrument: (ask + bid)/2}, index=[recent_tick])
         self.tick_data = pd.concat([self.tick_data, df])
  
         if recent_tick.replace(tzinfo=None) - self.last_bar >= self.bar_length:
-            self.resample_and_join()
-            self.define_strategy()
+            resampled_tick_data = self.resample()
+            self.define_strategy(resampled_tick_data)
 
         pos, price = self.determine_action(bid, ask)
 
@@ -149,57 +151,73 @@ class ConTrader(tpqoa.tpqoa):
             self.execute_trades(pos, price) 
 
             
-    def resample_and_join(self):
+    def resample(self) -> pd.DataFrame:
+
+        df = self.tick_data.copy()
+        self.tick_data = pd.DataFrame()
+
+        self.last_bar = df.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
+
+        print ("Before resampling")
+        print(df)
 
         # self.tick_data.resample(self.bar_length, label="right").last().ffill().iloc[:-1]
-        self.tick_data.resample(self.bar_length, label="right").last().ffill()
-        self.raw_data = pd.concat([self.raw_data, self.tick_data])
-        
-        if self.raw_data.size > self.SMA:
-            self.raw_data = self.raw_data.tail(self.SMA)
+        df = df.resample("1Min").last()
+        df.reset_index(inplace=True)
+        df.rename(columns = {"index":'time'}, inplace = True)
+        df.set_index('time', inplace=True)
+                
 
-        print ("After resampling", self.raw_data)
+        print ("After resampling")
+        print(df)
 
-        self.tick_data = pd.DataFrame()
-        self.last_bar = self.raw_data.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
+        return df
         
-    def define_strategy(self): # "strategy-specific"
+        
+    def define_strategy(self, resampled_tick_data = None): # "strategy-specific"
         
         df = self.data.copy()
+        
+        if resampled_tick_data is not None and resampled_tick_data.size > 0:
+            df = pd.concat([df, resampled_tick_data])
+            print ("Concatenated")
+            print (df)
+            df = df.tail(self.SMA * 2)
       
         # ******************** define your strategy here ************************
         df["SMA"] = df[self.instrument].rolling(self.SMA).mean()
-        df.dropna(subset=['SMA'], inplace=True)
 
         df["Lower"] = df["SMA"] - df[self.instrument].rolling(self.SMA).std() * self.dev
         df["Upper"] = df["SMA"] + df[self.instrument].rolling(self.SMA).std() * self.dev
+        # df.dropna(subset=['Lower'], inplace=True)
+
         df["distance"] = df[self.instrument] - df.SMA
         
         df["position"] = np.where(df[self.instrument] < df.Lower, 1, np.nan)
 
         df["position"] = np.where(df[self.instrument] > df.Upper, -1, np.nan)
         
-        df["position"] = np.where(df.distance * df.distance.shift(1) < 0, 0, df["position"])
+        # df["position"] = np.where(df.distance * df.distance.shift(1) < 0, 0, df["position"])
 
         df["position"] = df.position.ffill().fillna(0)
         # ***********************************************************************
 
-        self.bb_lower = df["Lower"].iloc[-1]
-        self.bb_upper =  df["Upper"].iloc[-1]
+        self.bb_lower = df.Lower.iloc[-1]
+        self.bb_upper =  df.Upper.iloc[-1]
 
         self.data = df.copy()
         
-        print ("After defining strategy:", self.data)
+        print ("After defining strategy")
+        print(self.data)
 
     def determine_action(self, bid, ask):
 
-        # print ("Inside determine_action")
-        df = self.data.copy()
+        # print ("Inside determine_action")        
         pos = 0
         price = None
 
         # update the latest position
-
+   
         if ask < self.bb_lower:
            pos = 1
            price = ask
@@ -214,12 +232,12 @@ class ConTrader(tpqoa.tpqoa):
            pos = 0
            price = ask + (bid - ask)/2
         
+        print (f"bid: {bid}, ask: {ask}, price: {price}, pos: {pos}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
         #     pos = 0
 
         # df["position"].iloc[-1] = pos
-        self.data = df.copy()
-
+        
         return pos, price
 
 
@@ -229,7 +247,7 @@ class ConTrader(tpqoa.tpqoa):
         current_price = price
         
         if self.sl_perc:
-            sl_dist = round(current_price * self.sl_perc, 4) 
+            sl_dist = round(current_price * self.sl_perc, 4)            
         else: 
             sl_dist = None
             
