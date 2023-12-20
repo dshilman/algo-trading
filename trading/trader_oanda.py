@@ -361,7 +361,7 @@ if __name__ == "__main__":
     #insert the file path of your config file below!
    
     trader = ConTrader(conf_file = "oanda.cfg",
-                       instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=125, dev=2, sl_perc = 0.05, tp_perc = 0.01)
+                       instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.05, tp_perc = 0.01)
     trader.start_trading(days = 1, max_attempts =  1, wait = 20, wait_increase = 0)
     
     
