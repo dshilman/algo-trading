@@ -238,8 +238,8 @@ class ConTrader(tpqoa.tpqoa):
            pos = 0
            price = (bid + ask)/2
 
-        if self.ticks / 100 == 0:
-            logger.info (f"instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
+        if self.ticks % 100 == 0:
+            logger.info (f"Hearbeat --- instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
 
 
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
@@ -319,7 +319,10 @@ class ConTrader(tpqoa.tpqoa):
     
     def report_trade(self, order, going):  
         logger.debug(f"Inside report_trade: {json.dumps(order, indent = 2)}")
-        self.order_id = order.get("id") 
+        self.order_id = order.get("id")
+        if self.order_id == None:
+            logger.info ("Order has been submitted but not filled")
+             
         time = order.get("time")
         units = order.get("units")
         price = order.get("price")
