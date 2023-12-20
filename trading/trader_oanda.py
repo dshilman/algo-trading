@@ -100,44 +100,24 @@ class ConTrader(tpqoa.tpqoa):
 
         logger.info ("Started Trading Session")
 
-        attempt = 0
         success = False
-        while True:
-            try:
-                logger.info (f"Getting  candles for: {self.instrument}")
-                self.get_most_recent(days)
+        try:
+            logger.info (f"Getting  candles for: {self.instrument}")
+            self.get_most_recent(days)
 
-                logger.info ("Define strategy for the first time")
-                self.define_strategy()
+            logger.info ("Define strategy for the first time")
+            self.define_strategy()
 
-                logger.info (f"Starting to stream for: {self.instrument}")
-                self.stream_data(self.instrument)
-            except Exception as e:
-                logger.error(e)
-                traceback.logger.debug_exc() 
-            else:
-                success = True
-                break    
-            finally:                
-                if success == False:
-                    attempt +=1
-                    logger.error("Attempt: {}".format(attempt))
-                    if attempt >= max_attempts:
-                        logger.error("max_attempts reached!")
-                        try: # try to terminate session
-                            time.sleep(wait)
-                            self.terminate_session(cause = "Unexpected Session Stop (too many errors).")
-                        except Exception as e:
-                            logger.error(e)
-                            logger.error("Could not terminate session properly!")
-                        finally: 
-                            break
-                    else: # try again
-                        time.sleep(wait)
-                        wait += wait_increase
-                        self.tick_data = pd.DataFrame()
-                else:
-                    logger.info ("Ended Trading Session")
+            logger.info (f"Starting to stream for: {self.instrument}")
+            self.stream_data(self.instrument)
+
+            sucess = True
+            
+        except Exception as e:
+            logger.error("Error: ", e)
+            traceback.logger.debug_exc()
+        
+            logger.info (f"Ended Trading Session with success = {success}")
 
 
     def on_success(self, time, bid, ask):
@@ -152,7 +132,7 @@ class ConTrader(tpqoa.tpqoa):
         
         
         # used for testing only
-        if self.ticks >= 200:
+        if self.ticks >= 10000:
             self.terminate_session(cause = "Scheduled Session End.")
             return
 
@@ -224,6 +204,8 @@ class ConTrader(tpqoa.tpqoa):
         self.bb_lower = df.Lower.iloc[-1]
         self.bb_upper =  df.Upper.iloc[-1]
 
+        logger.info (f"new Bollinger Band  - lower: {self.bb_lower}, upper: {self.bb_upper}")
+
         self.data = df.copy()
         
         logger.debug ("After defining strategy")
@@ -231,7 +213,8 @@ class ConTrader(tpqoa.tpqoa):
 
     def determine_action(self, bid, ask):
 
-        # logger.debug ("Inside determine_action")        
+        # logger.debug ("Inside determine_action")
+        
         pos = 0
         price = None
 
@@ -240,17 +223,21 @@ class ConTrader(tpqoa.tpqoa):
         if ask < self.bb_lower:
            pos = 1
            price = ask
-           logger.info (f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
+           logger.info (f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {bid - ask}")
     
         elif bid > self.bb_upper:
            pos = -1
            price = bid
-           logger.info (f"Signal SELL at price: {price}, bb_lower: {self.bb_lower}, bb_upper: {self.bb_upper}")
+           logger.info (f"Signal SELL at price: {price}, bb_upper: {self.bb_upper}, spread: {bid - ask}")
 
         else:
            pos = 0
-           price = ask
-        
+           price = (bid + ask)/2
+
+        if self.ticks / 100 == 0:
+            logger.info (f"instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
+
+
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
         #     pos = 0
 
