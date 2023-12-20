@@ -1,11 +1,6 @@
-2023-12-19 14:20:22,463 - trader_oanda - INFO - Started Trading Session
-2023-12-19 14:20:22,463 - trader_oanda - INFO - Getting  candles for: EUR_USD
-2023-12-19 14:20:22,825 - trader_oanda - INFO - Define strategy for the first time
-2023-12-19 14:20:22,830 - trader_oanda - INFO - Starting to stream for: EUR_USD
-2023-12-19 14:21:01,109 - trader_oanda - ERROR - Attempt: 1
-2023-12-19 14:21:01,109 - trader_oanda - INFO - Ended Trading Session
-2023-12-19 18:48:03,209 - INFO - Started Trading Session
-2023-12-19 18:48:03,210 - INFO - Getting  candles for: EUR_USD
-2023-12-19 18:48:08,160 - INFO - Define strategy for the first time
-2023-12-19 18:48:08,172 - INFO - Starting to stream for: EUR_USD
-2023-12-19 18:49:13,241 - INFO - Scheduled Session End.
+2023-12-20 12:13:50,314 - INFO - Started Trading Session
+2023-12-20 12:13:50,314 - INFO - Getting  candles for: EUR_USD
+2023-12-20 12:13:50,725 - INFO - Define strategy for the first time
+2023-12-20 12:13:50,744 - INFO - new Bollinger Band  - lower: 1.0952772804454594, upper: 1.0979567195545406
+2023-12-20 12:13:50,744 - INFO - Starting to stream for: EUR_USD
+2023-12-20 12:14:13,784 - INFO - Finished Trading Session

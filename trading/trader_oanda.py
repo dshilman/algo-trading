@@ -1,17 +1,14 @@
 import json
+import logging
+import logging.handlers as handlers
+import sys
 import time
-import traceback
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
 import pytz
 import tpqoa
-
-
-import logging
-import logging.handlers as handlers
-import time
 
 logger = logging.getLogger('trader_oanda')
 logger.setLevel(logging.DEBUG)
@@ -51,7 +48,6 @@ class ConTrader(tpqoa.tpqoa):
         self.bb_lower = None
         self.bb_upper =  None
         self.target = None
-        self.stop_after = 10000
 
     
     def get_most_recent(self, days = 1):
@@ -98,7 +94,7 @@ class ConTrader(tpqoa.tpqoa):
 
         self.data = df
             
-    def start_trading(self, days, max_attempts = 5, wait = 20, wait_increase = 0):
+    def start_trading(self, days, stop_after = 10):
 
         logger.info ("Started Trading Session")
 
@@ -111,15 +107,17 @@ class ConTrader(tpqoa.tpqoa):
             self.define_strategy()
 
             logger.info (f"Starting to stream for: {self.instrument}")
-            self.stream_data(self.instrument, stop= self.stop_after)
+            self.stream_data(self.instrument, stop= stop_after)
 
-            sucess = True
+            success = True
             
         except Exception as e:
-            logger.error("Error: ", e)
-            traceback.logger.debug_exc()
-        
-            logger.info (f"Ended Trading Session with success = {success}")
+            logger.exception("Exception occurred")
+        finally:
+            if success:
+                self.terminate_session("Finished Trading Session")
+            else:
+                self.terminate_session("Finished Trading Session with Errors")
 
 
     def on_success(self, time, bid, ask):
@@ -234,7 +232,7 @@ class ConTrader(tpqoa.tpqoa):
            price = (bid + ask)/2
 
         if self.ticks % 100 == 0:
-            logger.info (f"Hearbeat current tick {self.ticks} to {self.stop_after} --- instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
+            logger.info (f"Hearbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
 
 
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
@@ -336,7 +334,7 @@ class ConTrader(tpqoa.tpqoa):
         #                                     suppress = True, ret = True) 
         #     self.report_trade(close_order, "GOING NEUTRAL")
         #     self.position = 0
-        logger.info(f"Terminating session due to: {cause}")
+        logger.info (cause)
     
     def check_positions(self): 
         logger.debug ("inside check_positions")
@@ -359,10 +357,18 @@ class ConTrader(tpqoa.tpqoa):
 if __name__ == "__main__":
         
     #insert the file path of your config file below!
-   
+    days = 1
+    stop_after = 10
+    args = sys.argv[1:]
+
+    if args and len(args) == 2:
+        days = int(args[0])
+        stop_after = int(args[1])
+
+
     trader = ConTrader(conf_file = "oanda.cfg",
                        instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.005, tp_perc = 0.008)
-    trader.start_trading(days = 1, max_attempts =  1, wait = 20, wait_increase = 0)
+    trader.start_trading(days = days, stop_after = stop_after)
     
     
     
