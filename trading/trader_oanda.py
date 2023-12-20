@@ -50,6 +50,7 @@ class ConTrader(tpqoa.tpqoa):
 
         self.bb_lower = None
         self.bb_upper =  None
+        self.target = None
 
     
     def get_most_recent(self, days = 1):
@@ -185,9 +186,11 @@ class ConTrader(tpqoa.tpqoa):
       
         # ******************** define your strategy here ************************
         df["SMA"] = df[self.instrument].rolling(self.SMA).mean()
+        std = df[self.instrument].rolling(self.SMA).std() * self.dev
 
-        df["Lower"] = df["SMA"] - df[self.instrument].rolling(self.SMA).std() * self.dev
-        df["Upper"] = df["SMA"] + df[self.instrument].rolling(self.SMA).std() * self.dev
+        df["Lower"] = df["SMA"] - std
+        df["Upper"] = df["SMA"] + std
+
         # df.dropna(subset=['Lower'], inplace=True)
 
         df["distance"] = df[self.instrument] - df.SMA
@@ -203,6 +206,7 @@ class ConTrader(tpqoa.tpqoa):
 
         self.bb_lower = df.Lower.iloc[-1]
         self.bb_upper =  df.Upper.iloc[-1]
+        self.target = df.SMA.iloc[-1]
 
         logger.info (f"new Bollinger Band  - lower: {self.bb_lower}, upper: {self.bb_upper}")
 
@@ -248,7 +252,6 @@ class ConTrader(tpqoa.tpqoa):
 
     def execute_trades(self, pos, price):
 
-        # logger.debug ("Inside execute_trades")
         current_price = price
         
         if self.sl_perc:
@@ -264,12 +267,11 @@ class ConTrader(tpqoa.tpqoa):
             
         
         if self.tp_perc:
-            if pos == 1:
-                tp_price = round(current_price * (1 + self.tp_perc), 2) 
-            elif pos == -1:
-                tp_price = round(current_price * (1 - self.tp_perc), 2)      
+            tp_price = round(current_price * (1 + pos * self.tp_perc), 2) 
         else: 
             tp_price = None
+
+        # tp_price = round(self.target, 4)
         
         if pos == 1:
             logger.info ("Signal = BUY")
@@ -294,12 +296,12 @@ class ConTrader(tpqoa.tpqoa):
                                           sl_distance = sl_dist, tsl_distance = tsl_dist, tp_price = tp_price)
                 self.report_trade(order, "GOING SHORT")  
             elif self.position == 1:
-                logger.info (f"Already have {self.units} longs positions")
+                logger.info (f"Already have {self.units} long positions")
                 order = self.create_order(self.instrument, -self.units_to_trade * 2, suppress = True, ret = True,
                                           sl_distance = sl_dist, tsl_distance = tsl_dist, tp_price = tp_price)
                 self.report_trade(order, "GOING SHORT")
             elif self.position == -1:
-                logger.info (f"Already have short {self.units} positions...skipping trade")
+                logger.info (f"Already have {self.units} short positions...skipping trade")
             
             self.position = -1
         elif pos == 0: 
@@ -361,7 +363,7 @@ if __name__ == "__main__":
     #insert the file path of your config file below!
    
     trader = ConTrader(conf_file = "oanda.cfg",
-                       instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.05, tp_perc = 0.01)
+                       instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.005, tp_perc = 0.008)
     trader.start_trading(days = 1, max_attempts =  1, wait = 20, wait_increase = 0)
     
     
