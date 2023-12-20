@@ -51,6 +51,7 @@ class ConTrader(tpqoa.tpqoa):
         self.bb_lower = None
         self.bb_upper =  None
         self.target = None
+        self.stop_after = 10000
 
     
     def get_most_recent(self, days = 1):
@@ -110,7 +111,7 @@ class ConTrader(tpqoa.tpqoa):
             self.define_strategy()
 
             logger.info (f"Starting to stream for: {self.instrument}")
-            self.stream_data(self.instrument)
+            self.stream_data(self.instrument, stop= self.stop_after)
 
             sucess = True
             
@@ -131,12 +132,6 @@ class ConTrader(tpqoa.tpqoa):
 
          # logger.debug(f"{self.ticks}, time: {time}, ask: {ask}, bid: {bid}", flush = True)
         
-        
-        # used for testing only
-        if self.ticks >= 10000:
-            self.terminate_session(cause = "Scheduled Session End.")
-            return
-
         df = pd.DataFrame({self.instrument: (ask + bid)/2}, index=[recent_tick])
         self.tick_data = pd.concat([self.tick_data, df])
  
@@ -239,7 +234,7 @@ class ConTrader(tpqoa.tpqoa):
            price = (bid + ask)/2
 
         if self.ticks % 100 == 0:
-            logger.info (f"Hearbeat --- instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
+            logger.info (f"Hearbeat current tick {self.ticks} to {self.stop_after} --- instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
 
 
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
@@ -341,7 +336,7 @@ class ConTrader(tpqoa.tpqoa):
         #                                     suppress = True, ret = True) 
         #     self.report_trade(close_order, "GOING NEUTRAL")
         #     self.position = 0
-        logger.info(cause)
+        logger.info(f"Terminating session due to: {cause}")
     
     def check_positions(self): 
         logger.debug ("inside check_positions")
