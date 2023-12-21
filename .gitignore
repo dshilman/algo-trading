@@ -4,3 +4,4 @@ __pycache__
 .pic
 venv
 .log*
+*.ppk
