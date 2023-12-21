@@ -94,31 +94,35 @@ class ConTrader(tpqoa.tpqoa):
 
         self.data = df
             
-    def start_trading(self, days, stop_after = 10):
+    def start_trading(self, days, stop_after = 10, max_attempts = 5):
 
         logger.info("\n" + 100* "-")
-        logger.info ("Started New Trading Session")
+        success = True
 
-        success = False
-        try:
-            logger.info (f"Getting  candles for: {self.instrument}")
-            self.get_most_recent(days)
+        for i in range(max_attempts):
+            try:
+                logger.info ("Started New Trading Session")
+                logger.info (f"Getting  candles for: {self.instrument}")
+                self.get_most_recent(days)
 
-            logger.info ("Define strategy for the first time")
-            self.define_strategy()
+                logger.info ("Define strategy for the first time")
+                self.define_strategy()
 
-            logger.info (f"Starting to stream for: {self.instrument}")
-            self.stream_data(self.instrument, stop= stop_after)
+                logger.info (f"Starting to stream for: {self.instrument}")
+                self.stream_data(self.instrument, stop= stop_after)
 
-            success = True
-            
-        except Exception as e:
-            logger.exception("Exception occurred")
-        finally:
-            if success:
-                self.terminate_session("Finished Trading Session")
-            else:
-                self.terminate_session("Finished Trading Session with Errors")
+                success = True
+
+                break
+                
+            except Exception as e:
+                logger.exception(f"Attempt: {i + 1}, Exception occurred")
+                success = False
+
+        if success:
+            self.terminate_session("Finished Trading Session")
+        else:
+            self.terminate_session("Finished Trading Session with Errors")
 
 
     def on_success(self, time, bid, ask):
@@ -233,7 +237,7 @@ class ConTrader(tpqoa.tpqoa):
            price = (bid + ask)/2
 
         if self.ticks % 100 == 0:
-            logger.info (f"Hearbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
+            logger.info (f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {ask}, bid: {bid}, spread: {bid - ask}, signal: {pos}, price: {price}")    
 
 
         # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
@@ -371,7 +375,7 @@ if __name__ == "__main__":
 
     trader = ConTrader(conf_file = "oanda.cfg",
                        instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.005, tp_perc = 0.008)
-    trader.start_trading(days = days, stop_after = stop_after)
+    trader.start_trading(days = days, stop_after = stop_after, max_attempts = 5)
     
     
     
