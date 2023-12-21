@@ -96,7 +96,8 @@ class ConTrader(tpqoa.tpqoa):
             
     def start_trading(self, days, stop_after = 10):
 
-        logger.info ("Started Trading Session")
+        logger.info("\n" + 100* "-")
+        logger.info ("Started New Trading Session")
 
         success = False
         try:
@@ -335,6 +336,8 @@ class ConTrader(tpqoa.tpqoa):
         #     self.report_trade(close_order, "GOING NEUTRAL")
         #     self.position = 0
         logger.info (cause)
+        logger.info("\n" + 100* "-")
+
     
     def check_positions(self): 
         logger.debug ("inside check_positions")
