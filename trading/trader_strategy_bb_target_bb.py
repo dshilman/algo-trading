@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
     print ("Initializing BB Strategy Trader")
     trader = BB_Strategy_BB_Target_Trader(conf_file = "oanda.cfg",
-                       instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.0015, tp_perc = 0.003)
+                       instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.0002, tp_perc = 0.0004)
     print ("Start Trading")
     trader.start_trading(days = days, stop_after = stop_after, max_attempts = 5)
     
