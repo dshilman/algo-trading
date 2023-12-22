@@ -127,8 +127,9 @@ class Trader(tpqoa.tpqoa):
 
         if signal != 0:
             self.check_positions()
-            self.execute_trades(signal, price) 
-
+            self.execute_trades(signal, price)
+        
+        return
             
     def resample(self) -> pd.DataFrame:
 

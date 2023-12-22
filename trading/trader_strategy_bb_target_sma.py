@@ -75,6 +75,9 @@ class BB_Strategy_SMA_Target_Trader(Trader):
         
         return signal, price
 
+    def on_success(self, time, bid, ask):
+        super().on_success(time, bid, ask)
+      
 
     def execute_trades(self, signal, price):
 
