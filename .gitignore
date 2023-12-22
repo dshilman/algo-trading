@@ -3,5 +3,6 @@ __pycache__
 .vscode
 .pic
 venv
+>log
 .log*
 *.ppk
