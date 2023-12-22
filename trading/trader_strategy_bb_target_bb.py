@@ -120,16 +120,9 @@ class BB_Strategy_BB_Target_Trader(Trader):
         elif signal == 0: 
             logger.info ("Signal = Neutral - Do nothing")
             
-            # if self.position == -1:
-            #     logger.debug ("Have short positions")
-            #     order = self.create_order(self.instrument, self.units, suppress = True, ret = True) 
-            #     self.report_trade(order, "GOING NEUTRAL")  
-            # elif self.position == 1:
-            #     logger.debug ("Have longs positions")
-            #     order = self.create_order(self.instrument, -self.units, suppress = True, ret = True)
-            #     self.report_trade(order, "GOING NEUTRAL")  
-            # self.position = 0
-    
+        signal = 0
+        
+        return
  
 
 if __name__ == "__main__":

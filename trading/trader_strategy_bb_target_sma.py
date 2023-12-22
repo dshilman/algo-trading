@@ -15,10 +15,6 @@ from trader import Trader
 logger = logging.getLogger('trader_oanda')
 logger.setLevel(logging.INFO)
 
-## Here we define our formatter
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
-
 class BB_Strategy_SMA_Target_Trader(Trader):
     def __init__(self, conf_file, instrument, bar_length, units_to_trade, SMA, dev, sl_perc = None, tsl_perc = None, tp_perc = None):
         super().__init__(conf_file, instrument, bar_length, units_to_trade, SMA, dev, sl_perc, tsl_perc, tp_perc)
@@ -67,17 +63,8 @@ class BB_Strategy_SMA_Target_Trader(Trader):
         if self.ticks % 100 == 0:
             logger.info (f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(bid - ask, 4)}, signal: {signal}")    
 
-
-        # if df.distance.iloc[-1] * df.distance.iloc[-2] < 0:
-        #     pos = 0
-
-        # df["position"].iloc[-1] = pos
-        
         return signal, price
-
-    def on_success(self, time, bid, ask):
-        super().on_success(time, bid, ask)
-      
+ 
 
     def execute_trades(self, signal, price):
 
@@ -119,9 +106,13 @@ class BB_Strategy_SMA_Target_Trader(Trader):
                 self.report_trade(order, "GOING SHORT")  
             else: # Already have a SHORT position
                 logger.info (f"Already have {self.units} short positions...skipping trade")
-            self.position = -1
+            self.positin = -1
         elif signal == 0: 
             logger.info ("Signal = Neutral - Do nothing")
+
+        signal = 0
+
+        return
   
 
 if __name__ == "__main__":

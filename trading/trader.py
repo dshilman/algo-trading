@@ -64,8 +64,6 @@ class Trader(tpqoa.tpqoa):
         df.rename(columns = {"c":self.instrument}, inplace = True)
         # df = df.resample("1M", label = "right").last().dropna().iloc[:-1]
 
-        self.last_bar = df.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
-
         logger.debug ("starting df")
         logger.debug(df)
 
@@ -73,7 +71,7 @@ class Trader(tpqoa.tpqoa):
             
     def start_trading(self, days, stop_after = 10, max_attempts = 5):
 
-        logger.info("\n" + 100* "-")
+        logger.info("\n" + 100 * "-")
         success = True
 
         for i in range(max_attempts):
@@ -150,6 +148,8 @@ class Trader(tpqoa.tpqoa):
         logger.debug ("After resampling")
         logger.debug(df)
 
+        self.last_bar = df.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
+
         return df
         
         
@@ -185,6 +185,7 @@ class Trader(tpqoa.tpqoa):
         self.bb_lower = df.Lower.iloc[-1]
         self.bb_upper =  df.Upper.iloc[-1]
         self.target = df.SMA.iloc[-1] # not used for stategy bb target bb
+        self.last_bar = df.index[-1].to_pydatetime(warn=False).replace(tzinfo=None)
 
         logger.info (f"new Bollinger Band  - lower: {self.bb_lower}, upper: {self.bb_upper}")
 
@@ -199,8 +200,8 @@ class Trader(tpqoa.tpqoa):
     
     def report_trade(self, order, going):  
         logger.debug(f"Inside report_trade: {json.dumps(order, indent = 2)}")
-        self.order_id = order.get("id")
-        if self.order_id == None:
+        order_id = order.get("id")
+        if order_id == None:
             logger.info ("Order has been submitted but not filled")
              
         time = order.get("time")
@@ -208,7 +209,7 @@ class Trader(tpqoa.tpqoa):
         price = order.get("price")
         logger.info("\n" + 100* "-")
         logger.info("{} | {}".format(time, going))
-        logger.info("{} | units = {} | price = {} ".format(time, units, price))
+        logger.info("order id = {} | units = {} | price = {} ".format(order_id, units, price))
         logger.info("\n" + 100 * "-" + "\n")  
         
     def terminate_session(self, cause):
@@ -239,4 +240,6 @@ class Trader(tpqoa.tpqoa):
             self.position = 1
         elif self.units < 0:
             self.position = -1
+
+        return
         
