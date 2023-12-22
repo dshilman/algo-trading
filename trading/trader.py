@@ -1,6 +1,7 @@
 import json
 import logging
 import logging.handlers as handlers
+import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -9,10 +10,9 @@ import numpy as np
 import pandas as pd
 import pytz
 import tpqoa
-import os
 
 logger = logging.getLogger('trader_oanda')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 class Trader(tpqoa.tpqoa):
     def __init__(self, conf_file, instrument, bar_length, units_to_trade, SMA, dev, sl_perc = None, tsl_perc = None, tp_perc = None):

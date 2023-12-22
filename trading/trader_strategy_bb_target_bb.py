@@ -9,13 +9,13 @@ import numpy as np
 import pandas as pd
 import pytz
 import tpqoa
+
 from trader import Trader
 
-
 logger = logging.getLogger('trader_oanda')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
-class BB_STrategy_BB_Target_Trader(Trader):
+class BB_Strategy_BB_Target_Trader(Trader):
     def __init__(self, conf_file, instrument, bar_length, units_to_trade, SMA, dev, sl_perc = None, tsl_perc = None, tp_perc = None):
         super().__init__(conf_file, instrument, bar_length, units_to_trade, SMA, dev, sl_perc, tsl_perc, tp_perc)
          
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
 
     print ("Initializing BB Strategy Trader")
-    trader = BB_STrategy_BB_Target_Trader(conf_file = "oanda.cfg",
+    trader = BB_Strategy_BB_Target_Trader(conf_file = "oanda.cfg",
                        instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.0015, tp_perc = 0.003)
     print ("Start Trading")
     trader.start_trading(days = days, stop_after = stop_after, max_attempts = 5)

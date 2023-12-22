@@ -9,16 +9,17 @@ import numpy as np
 import pandas as pd
 import pytz
 import tpqoa
+
 from trader import Trader
 
 logger = logging.getLogger('trader_oanda')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 ## Here we define our formatter
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
 
-class BB_STrategy_SMA_Target_Trader(Trader):
+class BB_Strategy_SMA_Target_Trader(Trader):
     def __init__(self, conf_file, instrument, bar_length, units_to_trade, SMA, dev, sl_perc = None, tsl_perc = None, tp_perc = None):
         super().__init__(conf_file, instrument, bar_length, units_to_trade, SMA, dev, sl_perc, tsl_perc, tp_perc)
     
@@ -142,7 +143,7 @@ if __name__ == "__main__":
         stop_after = int(args[1])
 
 
-    trader = BB_STrategy_SMA_Target_Trader(conf_file = "oanda.cfg",
+    trader = BB_Strategy_SMA_Target_Trader(conf_file = "oanda.cfg",
                        instrument = "EUR_USD", bar_length = 1, units_to_trade = 10000, SMA=100, dev=2, sl_perc = 0.0015, tp_perc = 0.003)
     trader.start_trading(days = days, stop_after = stop_after, max_attempts = 5)
     
