@@ -26,7 +26,6 @@ class Trader(tpqoa.tpqoa):
         self.units = 0
         self.units_to_trade = units_to_trade
         self.position = 0
-        self.profits = [] 
         self.sl_perc = sl_perc 
         self.tsl_perc = tsl_perc 
         self.tp_perc = tp_perc 
@@ -50,10 +49,9 @@ class Trader(tpqoa.tpqoa):
     
     def get_most_recent(self, days = 1):
         
-        self.last_bar = None
-        self.data = None
-
         now = datetime.utcnow()
+        self.last_bar = now
+
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = days)
         
@@ -208,9 +206,11 @@ class Trader(tpqoa.tpqoa):
         units = order.get("units")
         price = order.get("price")
         logger.info("\n" + 100* "-")
-        logger.info("{} | {}".format(time, going))
-        logger.info("order id = {} | units = {} | price = {} ".format(order_id, units, price))
-        logger.info("\n" + 100 * "-" + "\n")  
+        logger.info(f"{going}")
+        logger.info("order id = {} |  time filled: {}| units = {} | price = {} ".format(order_id,time, units, price))
+        logger.info("\n" + 100 * "-" + "\n")
+
+        return
         
     def terminate_session(self, cause):
         self.stop_stream = True
@@ -231,8 +231,8 @@ class Trader(tpqoa.tpqoa):
         for position in positions:
             if position["instrument"] == self.instrument:
                 self.units = round(float(position["long"]["units"]) + float(position["short"]["units"]), 0)
-                logger.info (f"Currently have: {self.units} position of {self.instrument}")
         
+        logger.info (f"Currently have: {self.units} position of {self.instrument}")
 
         if self.units == 0:
             self.position = 0
