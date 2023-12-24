@@ -213,7 +213,7 @@ class Trader(tpqoa.tpqoa):
 
         # 2023-12-19T13:28:35.194571445Z
         # date_time = pd.to_datetime(time).to_pydatetime(warn=False).replace(tzinfo=None).replace(microsecond=0)
-        date_time = pd.to_datetime(time).to_pydatetime(warn=False).replace(tzinfo=None)
+        date_time = pd.to_datetime(time).replace(tzinfo=None)
        
         # date_time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=None).replace(microsecond=0)
         
@@ -225,21 +225,24 @@ class Trader(tpqoa.tpqoa):
 
         logger.info(f"Submitting Order: {order}")
         if order != None:            
-            order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=False, ret=False)
+            oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=False, ret=False)
             self.units = self.units + order.units
-            self.report_trade(order, "GOING LONG" if order.units > 0 else "GOING SHORT")
+            self.report_trade(oanda_order, "GOING LONG" if order.units > 0 else "GOING SHORT")
 
 
     def refresh_strategy(self, refresh_strategy_time):
 
         while not self.stop_refresh:
+
+            logger.info ("Refreshing Strategy")
+
             try:
                 time.sleep(refresh_strategy_time)
-                logger.info ("Refreshing Strategy")
+
+                self.check_positions()
+                
                 tick_data = self.tick_data
                 self.tick_data = []
-
-                self.tick_data = pd.DataFrame()
 
                 logger.debug ("Before resampling")
                 logger.debug(tick_data)
@@ -249,7 +252,6 @@ class Trader(tpqoa.tpqoa):
 
                 df = pd.DataFrame(tick_data, columns=["time", self.instrument])
                 df.reset_index(inplace=True)
-                # df.rename(columns = {"index":'time'}, inplace = True)
                 df.set_index('time', inplace=True)    
                 df.drop(columns=['index'], inplace=True)
 
@@ -298,9 +300,8 @@ class Trader(tpqoa.tpqoa):
 
     
     def check_positions(self): 
+
         logger.debug ("inside check_positions")
-        
-        self.units = 0
         positions = self.get_positions()
         for position in positions:
             if position["instrument"] == self.instrument:
@@ -308,5 +309,4 @@ class Trader(tpqoa.tpqoa):
         
         logger.info (f"Currently have: {self.units} position of {self.instrument}")
 
-        return
         
