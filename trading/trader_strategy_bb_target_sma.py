@@ -11,66 +11,43 @@ import pytz
 import tpqoa
 
 from trader import Trader
+from trader import Trade_Action
+from trader import Strategy
+from trader import Order
 
 logger = logging.getLogger("trader_oanda")
 logger.setLevel(logging.INFO)
 
 
-class BB_Strategy_SMA_Target_Trader(Trader):
-    def __init__(
-        self,
-        conf_file,
-        instrument,
-        bar_length,
-        units_to_trade,
-        SMA,
-        dev,
-        sl_perc=None,
-        tsl_perc=None,
-        tp_perc=None,
-    ):
-        super().__init__(
-            conf_file,
-            instrument,
-            bar_length,
-            units_to_trade,
-            SMA,
-            dev,
-            sl_perc,
-            tsl_perc,
-            tp_perc,
-        )
+class BB_to_SMA_Strategy(Strategy):
+    def __init__(self, instrument, SMA, dev):
+        super().__init__(instrument,SMA, dev)
+  
 
-    def define_strategy(self, resampled_tick_data=None):  # "strategy-specific"
-        super().define_strategy(resampled_tick_data)
-        self.target = self.data.SMA.iloc[-1]  # not used for stategy bb target bb
-
-        logger.debug("After defining strategy")
-        logger.debug(self.data)
-
-        return
-
-    def determine_action(self, bid, ask):
+    def determine_action(self, bid, ask, units) -> Trade_Action:
+        trade_action = None
         signal = 0
         price = None
         spread = ask - bid
+        instrument = self.instrument
 
-        if self.units > 0:  # if already have long positions
-            logger.debug(f"Have {self.units} positions, checking if need to close")
-            if bid > self.target + spread:  # if price is above target SMA, SELL
+        if units > 0:  # if already have long positions
+            logger.debug(f"Have {units} positions, checking if need to close")
+            target = self.target + spread
+            if bid > target:  # if price is above target SMA, SELL
                 signal = -1
                 price = bid
                 logger.info(
                     f"Signal SELL at price: {round(price, 4)}, sma: {round(self.target, 4)}, spread: {round(spread, 4)}"
                 )
-        elif self.units < 0:  # if alredy have short positions
-            if ask < self.target - spread:  # price is below target SMA, BUY
+        elif units < 0:  # if alredy have short positions
+            target = self.target - spread
+            if ask < target:  # price is below target SMA, BUY
                 signal = 1
                 price = ask
                 logger.info(
                     f"Signal BUY at price: {round(price, 4)}, sma: {round(self.target, 4)}, spread: {round(spread, 4)}"
                 )
-
         else:  # if no positions
             logger.debug("Don't have any positions, checking if need to open")
             if ask < self.bb_lower:  # if price is below lower BB, BUY
@@ -79,87 +56,76 @@ class BB_Strategy_SMA_Target_Trader(Trader):
                 logger.info(
                     f"Signal BUY at price: {round(price, 4)}, bb_lower: {round(self.bb_lower, 4)}, spread: {round(spread, 4)}"
                 )
-
             elif bid > self.bb_upper:  # if price is above upper BB, SELL
                 signal = -1
                 price = bid
                 logger.info(
                     f"Signal SELL at price: {round(price, 4)}, bb_upper: {self.bb_upper}, spread: {round(spread, 4)}"
                 )
+        trade_action = Trade_Action(signal, instrument, price, target, spread)
+        logger.debug(f"Trade Action: {trade_action}")
 
-        if self.ticks % 100 == 0:
-            logger.info(
-                f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(bid - ask, 4)}, signal: {signal}"
-            )
+        return trade_action
 
-        return signal, price
+    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units, units_to_trade) -> Order:
+        
+        order = None
 
-    def execute_trades(self, signal, price):
+        if trade_action.signal == 0:
+            return None
 
-        if signal == 0:
-            return
-
-        current_price = price
-
-        if self.sl_perc:
-            sl_dist = round(current_price * self.sl_perc, 4)
+        if sl_perc:
+            sl_dist = round(trade_action.price * sl_perc, 4)
         else:
             sl_dist = None
 
-        if self.tsl_perc:
-            tsl_dist = round(current_price * self.tsl_perc, 4)
-        else:
-            tsl_dist = None
-
-        if self.tp_perc:
-            tp_price = round(current_price * (1 + signal * self.tp_perc), 2)
+        if tp_perc:
+            tp_price = round(
+                trade_action.price * (1 + trade_action.signal * tp_perc), 2
+            )
         else:
             tp_price = None
 
-        # tp_price = round(self.target, 4)
-
-        if signal == 1:  # if signal is BUY
+        if trade_action.signal == 1:  # if signal is BUY
             logger.info("Signal = BUY")
-            if self.position < 1:
-                order = self.create_order(
-                    self.instrument,
-                    max(self.units_to_trade, self.units),
-                    suppress=True,
-                    ret=True,
-                    sl_distance=sl_dist,
-                    tsl_distance=tsl_dist,
-                    tp_price=tp_price,
+            if have_units < 0:  # has short positions
+                trade_units = max(units_to_trade, have_units)
+                order = Order(
+                    trade_action.signal,
+                    trade_action.instrument,
+                    trade_units,
+                    sl_dist,
+                    tp_price,
                 )
-                self.report_trade(order, "GOING LONG")
             else:  # Already have a LONG position
                 logger.info(
-                    f"Already have {self.units} long positions...skipping trade"
+                    f"Already have {have_units} long positions...skipping trade"
                 )
-            self.position = 1
-        elif signal == -1:  # if signal is SELL
+        elif trade_action.signal == -1:  # if signal is SELL
             logger.info("Signal = SELL")
-            if self.position > -1:
-                order = self.create_order(
-                    self.instrument,
-                    min(-self.units_to_trade, self.units),
-                    suppress=True,
-                    ret=True,
-                    sl_distance=sl_dist,
-                    tsl_distance=tsl_dist,
-                    tp_price=tp_price,
+            if self.units >= 0:
+                trade_units = min(-units_to_trade, have_units)
+                order = Order(
+                    trade_action.signal,
+                    trade_action.instrument,
+                    trade_units,
+                    sl_dist,
+                    tp_price,
                 )
-                self.report_trade(order, "GOING SHORT")
             else:  # Already have a SHORT position
                 logger.info(
-                    f"Already have {self.units} short positions...skipping trade"
+                    f"Already have {have_units} short positions...skipping trade"
                 )
-            self.positin = -1
-        elif signal == 0:
-            logger.info("Signal = Neutral - Do nothing")
+        logger.debug(f"Order: {order}")
+        return order
 
-        signal = 0
 
-        return
+class BB_Strategy_SMA_Target_Trader(Trader):
+    def __init__(self, conf_file, instrument, units_to_trade, SMA, dev, sl_perc=None, tp_perc=None):
+
+        strategy = BB_to_SMA_Strategy(instrument, SMA, dev)
+
+        super().__init__(conf_file, strategy, units_to_trade, sl_perc, tp_perc)
 
 
 if __name__ == "__main__":
@@ -175,7 +141,6 @@ if __name__ == "__main__":
     trader = BB_Strategy_SMA_Target_Trader(
         conf_file="oanda.cfg",
         instrument="EUR_USD",
-        bar_length=1,
         units_to_trade=10000,
         SMA=100,
         dev=2,
