@@ -16,7 +16,7 @@ from trader import Strategy
 from trader import Order
 
 logger = logging.getLogger("trader_oanda")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 class BB_to_SMA_Strategy(Strategy):
@@ -29,6 +29,7 @@ class BB_to_SMA_Strategy(Strategy):
         signal = 0
         price = None
         spread = ask - bid
+        target = None
         instrument = self.instrument
 
         if units > 0:  # if already have long positions
