@@ -22,6 +22,4 @@ jobs:
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: ${{ secrets.TARGET }}
-      - name: CD algo trading dir
-        run: pwd
-        shell: bash
+
