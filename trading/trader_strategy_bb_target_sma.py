@@ -1,3 +1,4 @@
+import threading
 import json
 import logging
 import logging.handlers as handlers
@@ -16,13 +17,13 @@ from trader import Strategy
 from trader import Order
 
 logger = logging.getLogger("trader_oanda")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class BB_to_SMA_Strategy(Strategy):
     def __init__(self, instrument, SMA, dev):
         super().__init__(instrument,SMA, dev)
-  
+
 
     def determine_action(self, bid, ask, units) -> Trade_Action:
         trade_action = None
@@ -64,7 +65,7 @@ class BB_to_SMA_Strategy(Strategy):
                     f"Signal SELL at price: {round(price, 4)}, bb_upper: {self.bb_upper}, spread: {round(spread, 4)}"
                 )
         trade_action = Trade_Action(signal, instrument, price, target, spread)
-        logger.debug(f"Trade Action: {trade_action}")
+        logger.debug(trade_action)
 
         return trade_action
 
@@ -89,11 +90,12 @@ class BB_to_SMA_Strategy(Strategy):
 
         if trade_action.signal == 1:  # if signal is BUY
             logger.info("Signal = BUY")
-            if have_units < 0:  # has short positions
+            if have_units <= 0:  # has short positions
                 trade_units = max(units_to_trade, have_units)
                 order = Order(
                     trade_action.signal,
                     trade_action.instrument,
+                    trade_action.price,
                     trade_units,
                     sl_dist,
                     tp_price,
@@ -104,11 +106,12 @@ class BB_to_SMA_Strategy(Strategy):
                 )
         elif trade_action.signal == -1:  # if signal is SELL
             logger.info("Signal = SELL")
-            if self.units >= 0:
+            if have_units >= 0:
                 trade_units = min(-units_to_trade, have_units)
                 order = Order(
                     trade_action.signal,
                     trade_action.instrument,
+                    trade_action.price,
                     trade_units,
                     sl_dist,
                     tp_price,
@@ -117,7 +120,7 @@ class BB_to_SMA_Strategy(Strategy):
                 logger.info(
                     f"Already have {have_units} short positions...skipping trade"
                 )
-        logger.debug(f"Order: {order}")
+        logger.debug(order)
         return order
 
 
@@ -145,7 +148,8 @@ if __name__ == "__main__":
         units_to_trade=10000,
         SMA=100,
         dev=2,
-        sl_perc=0.0015,
-        tp_perc=0.003,
+        sl_perc=0.001,
+        tp_perc=0.002,
     )
     trader.start_trading(days=days, stop_after=stop_after, max_attempts=5)
+

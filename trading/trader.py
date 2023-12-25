@@ -13,7 +13,7 @@ import pytz
 import tpqoa
 
 logger = logging.getLogger('trader_oanda')
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 class Trade_Action():
@@ -33,19 +33,20 @@ class Trade_Action():
         return f"Trade_Action: instrument: {self.instrument}, signal: {self.signal}, price: {self.price}, target: {self.target}, spread: {self.spread}"       
 
 class Order ():
-    def __init__(self, signal, instrument, trade_units,sl_dist, tp_price):
+    def __init__(self, signal, instrument, price, trade_units,sl_dist, tp_price):
         super().__init__()
         self.signal = signal
         self.instrument = instrument
+        self.price = price
         self.units = trade_units
         self.sl = sl_dist
         self.tp = tp_price
 
     def __str__(self):
-        return f"Order: instrument: {self.instrument}, units: {self.units}, stopp loss: {self.sl}, take profit: {self.tp}"
+        return f"Order: instrument: {self.instrument}, units: {self.units}, price: {self.price}, stopp loss: {self.sl}, take profit: {self.tp}"
 
     def __repr__(self):
-        return f"Order: instrument: {self.instrument}, units: {self.units}, stopp loss: {self.sl}, take profit: {self.tp}"
+        return f"Order: instrument: {self.instrument}, units: {self.units}, price: {self.price}, stopp loss: {self.sl}, take profit: {self.tp}"
 
 class Strategy():
     def __init__(self, instrument, SMA, dev):
@@ -69,8 +70,8 @@ class Strategy():
         
         if resampled_tick_data is not None and resampled_tick_data.size > 0:
             df = pd.concat([df, resampled_tick_data])
-            logger.debug ("Concatenated")
-            logger.debug (df)            
+            # logger.debug ("Concatenated")
+            # logger.debug (df)            
       
         df = df.tail(self.SMA * 2)
 
@@ -96,14 +97,14 @@ class Strategy():
         self.bb_upper =  df.Upper.iloc[-1]
         self.target = df.SMA.iloc[-1]
 
-        logger.info (f"new Bollinger Band  - lower: {self.bb_lower}, upper: {self.bb_upper}")
+        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}")
 
         self.data = df.copy()
 
     def determine_action(self, bid, ask, units) -> Trade_Action:
         pass
 
-    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
+    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units, units_to_trade) -> Order:
         pass
 
 class Trader(tpqoa.tpqoa):
@@ -115,6 +116,7 @@ class Trader(tpqoa.tpqoa):
         self.strategy: Strategy = strategy
         self.instrument = self.strategy.instrument
         self.tick_data = []
+        self.trades = []
 
         self.units = 0
         self.units_to_trade = units_to_trade
@@ -122,6 +124,8 @@ class Trader(tpqoa.tpqoa):
         self.tp_perc = tp_perc 
         
         self.stop_refresh = False
+        self.unit_test = False
+   
 
         ## Here we define our formatter
         log_file = os.path.join("logs",self.__class__.__name__ + ".log")
@@ -130,7 +134,8 @@ class Trader(tpqoa.tpqoa):
         logHandler.setFormatter(formatter)
 
         logger.addHandler(logHandler)
-    
+
+ 
 
     def start_trading(self, days = 1, stop_after = 10, max_attempts = 5):
 
@@ -198,11 +203,20 @@ class Trader(tpqoa.tpqoa):
 
         if trade_action and trade_action.signal != 0:
             # self.check_positions()
-            order = self.strategy.create_order(trade_action, self.sl_perc, self.tp_perc)
+            order = self.strategy.create_order(trade_action, self.sl_perc, self.tp_perc, self.units, self.units_to_trade)
 
             if order != None:
                 self.submit_order(order)
-        
+                if self.unit_test:
+                    self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, trade_action.signal, order.units, order.price, self.units])
+            else:
+                if self.unit_test:
+                    self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, trade_action.signal, 0, 0, self.units])
+
+        else:
+            if self.unit_test:
+                self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 0, 0, 0, self.units])
+
         if self.ticks % 100 == 0:
             logger.info(
                 f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(bid - ask, 4)}, signal: {trade_action.signal}"
@@ -224,11 +238,13 @@ class Trader(tpqoa.tpqoa):
     def submit_order(self, order: Order):
 
         logger.info(f"Submitting Order: {order}")
-        if order != None:            
-            oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=False, ret=False)
-            self.units = self.units + order.units
-            self.report_trade(oanda_order, "GOING LONG" if order.units > 0 else "GOING SHORT")
+        if order != None:
+            if not self.unit_test:        
+                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=False, ret=False)
+                self.report_trade(oanda_order, "GOING LONG" if order.units > 0 else "GOING SHORT")
 
+            self.units = self.units + order.units
+                
 
     def refresh_strategy(self, refresh_strategy_time):
 
@@ -244,8 +260,8 @@ class Trader(tpqoa.tpqoa):
                 tick_data = self.tick_data
                 self.tick_data = []
 
-                logger.debug ("Before resampling")
-                logger.debug(tick_data)
+                # logger.debug ("Before resampling")
+                # logger.debug(tick_data)
 
                 if len(tick_data) == 0:
                     continue
@@ -255,13 +271,13 @@ class Trader(tpqoa.tpqoa):
                 df.set_index('time', inplace=True)    
                 df.drop(columns=['index'], inplace=True)
 
-                logger.debug("Before resampling")
-                logger.debug(df)
+                # logger.debug("Before resampling")
+                # logger.debug(df)
 
                 df = df.resample("1Min").last()
 
-                logger.debug("After resampling")
-                logger.debug(df)
+                # logger.debug("After resampling")
+                # logger.debug(df)
 
                 self.strategy.define_strategy(df)
 
@@ -290,6 +306,10 @@ class Trader(tpqoa.tpqoa):
         
     def terminate_session(self, cause):
         self.stop_stream = True
+
+        if self.unit_test:
+            df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "signal", "trade_units", "price", "have_units"])
+            df.to_csv("report.csv")
         # if self.position != 0:
         #     close_order = self.create_order(self.instrument, units = -self.position * self.units,
         #                                     suppress = True, ret = True) 
@@ -301,12 +321,15 @@ class Trader(tpqoa.tpqoa):
     
     def check_positions(self): 
 
-        logger.debug ("inside check_positions")
+        # logger.debug ("inside check_positions")
+
+        units = 0
         positions = self.get_positions()
         for position in positions:
             if position["instrument"] == self.instrument:
-                self.units = round(float(position["long"]["units"]) + float(position["short"]["units"]), 0)
+                units = round(float(position["long"]["units"]) + float(position["short"]["units"]), 0)
         
+        self.units = units
         logger.info (f"Currently have: {self.units} position of {self.instrument}")
 
         
