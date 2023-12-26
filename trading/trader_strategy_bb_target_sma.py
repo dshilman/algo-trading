@@ -139,11 +139,13 @@ if __name__ == "__main__":
     print_trades = False
     args = sys.argv[1:]
 
-    if args and len(args) > 1:
+    if args and len(args) > 0:
         days = int(args[0])
-        if args and len(args) > 2:
+
+        if args and len(args) > 1:
             stop_after = int(args[1])
-            if args and len(args) > 3:
+
+            if args and len(args) > 2:
                 print_trades = bool(args[2])
 
     trader = BB_Strategy_SMA_Target_Trader(
