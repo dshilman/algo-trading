@@ -108,10 +108,10 @@ class Strategy():
         pass
 
 class Trader(tpqoa.tpqoa):
-    def __init__(self, conf_file, strategy, units_to_trade, sl_perc = None, tp_perc = None):
+    def __init__(self, conf_file, strategy, units_to_trade, sl_perc = None, tp_perc = None, print_trades = False):
         super().__init__(conf_file)
 
-        self.refresh_strategy_time = 1 * 60 # 5 minutes
+        self.refresh_strategy_time = 5 * 60 # 5 minutes
 
         self.strategy: Strategy = strategy
         self.instrument = self.strategy.instrument
@@ -125,6 +125,8 @@ class Trader(tpqoa.tpqoa):
         
         self.stop_refresh = False
         self.unit_test = False
+        self.print_trades = print_trades
+
    
 
         ## Here we define our formatter
@@ -207,15 +209,15 @@ class Trader(tpqoa.tpqoa):
 
             if order != None:
                 self.submit_order(order)
-                if self.unit_test:
+                if self.print_trades:
                     self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, trade_action.signal, order.units, order.price, self.units])
-            else:
-                if self.unit_test:
-                    self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, trade_action.signal, 0, 0, self.units])
+            # else:
+            #     if self.print_trades:
+            #         self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, trade_action.signal, 0, 0, self.units])
 
-        else:
-            if self.unit_test:
-                self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 0, 0, 0, self.units])
+        # else:
+        #     if self.print_trades:
+        #         self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 0, 0, 0, self.units])
 
         if self.ticks % 100 == 0:
             logger.info(
@@ -306,17 +308,20 @@ class Trader(tpqoa.tpqoa):
         
     def terminate_session(self, cause):
         self.stop_stream = True
+        logger.info (cause)
 
-        if self.unit_test:
+        logger.info("\n" + 100* "-")
+
+        if self.print_trades:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "signal", "trade_units", "price", "have_units"])
-            df.to_csv("report.csv")
+            logger.info("\n" + df.to_string(header=True))
+            logger.info("\n" + 100* "-")
+
         # if self.position != 0:
         #     close_order = self.create_order(self.instrument, units = -self.position * self.units,
         #                                     suppress = True, ret = True) 
         #     self.report_trade(close_order, "GOING NEUTRAL")
         #     self.position = 0
-        logger.info (cause)
-        logger.info("\n" + 100* "-")
 
     
     def check_positions(self): 

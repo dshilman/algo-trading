@@ -11,8 +11,8 @@ logger.setLevel(logging.INFO)
 
 
 class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
-    def __init__(self, conf_file, instrument, units_to_trade, SMA, dev, sl_perc=None, tp_perc=None):
-        super().__init__(conf_file, instrument, units_to_trade, SMA, dev, sl_perc, tp_perc)
+    def __init__(self, conf_file, instrument, units_to_trade, SMA, dev, sl_perc=None, tp_perc=None, print_trades = False):
+        super().__init__(conf_file, instrument, units_to_trade, SMA, dev, sl_perc, tp_perc, print_trades)
         self.unit_test = True
 
     
@@ -61,8 +61,8 @@ class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
         
     def get_tick(self):
 
-        num_1 = random.uniform(self.strategy.bb_lower * (1 - .05), self.strategy.bb_upper * (1 + .05))
-        num_2 = random.uniform(self.strategy.bb_lower * (1 - .05), self.strategy.bb_upper * (1 + .05))
+        num_1 = random.uniform(self.strategy.bb_lower * (1 - .1), self.strategy.bb_upper * (1 + .1))
+        num_2 = random.uniform(self.strategy.bb_lower * (1 - .1), self.strategy.bb_upper * (1 + .1))
 
         ask = max(num_1, num_2)
         bid = min(num_1, num_2)
@@ -74,11 +74,20 @@ if __name__ == "__main__":
     # insert the file path of your config file below!
     days = 1
     stop_after = 10
+    print_trades = False
     args = sys.argv[1:]
 
-    if args and len(args) == 2:
+    print (f"argument length: {len(args)}")
+
+    if args and len(args) > 0:
         days = int(args[0])
-        stop_after = int(args[1])
+
+        if args and len(args) > 1:
+            stop_after = int(args[1])
+
+            if args and len(args) > 2:
+                print_trades = bool(args[2])
+
 
     trader = Trader_Unit_Test(
         conf_file="oanda.cfg",
@@ -88,6 +97,7 @@ if __name__ == "__main__":
         dev=2,
         sl_perc=0.001,
         tp_perc=0.002,
+        print_trades = print_trades
     )
     trader.start_trading(days=days, stop_after=stop_after)
 
