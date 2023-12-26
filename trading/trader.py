@@ -242,7 +242,7 @@ class Trader(tpqoa.tpqoa):
         logger.info(f"Submitting Order: {order}")
         if order != None:
             if not self.unit_test:        
-                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=False, ret=False)
+                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=False, ret=True)
                 self.report_trade(oanda_order, "GOING LONG" if order.units > 0 else "GOING SHORT")
 
             self.units = self.units + order.units
@@ -293,8 +293,8 @@ class Trader(tpqoa.tpqoa):
     def report_trade(self, order, going):
 
         logger.debug(f"Inside report_trade: {json.dumps(order, indent = 2)}")
-        order_id = order.get("id")
-        if order_id == None:
+        order_id = order.get("id", 0)
+        if order_id == 0:
             logger.info ("Order has been submitted but not filled")
             
         time = order.get("time")
