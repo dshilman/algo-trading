@@ -1,3 +1,4 @@
+import configparser
 import threading
 import json
 import logging
@@ -133,24 +134,21 @@ class BB_Strategy_SMA_Target_Trader(Trader):
 
 
 if __name__ == "__main__":
-    # insert the file path of your config file below!
-    days = 1
-    stop_after = 10
-    print_trades = False
+
     args = sys.argv[1:]
 
-    if args and len(args) > 0:
-        days = int(args[0])
+    pair = args[0]
 
-        if args and len(args) > 1:
-            stop_after = int(args[1])
-
-            if args and len(args) > 2:
-                print_trades = bool(args[2])
+    config = configparser.ConfigParser()  
+    # Read the contents of the `config.ini` file:
+    config.read('pairs.ini')
+    days = int(config.get(pair, 'days'))
+    stop_after = int(config.get(pair, 'stop_after'))
+    print_trades = bool(config.get(pair, 'print_trades'))
 
     trader = BB_Strategy_SMA_Target_Trader(
         conf_file="oanda.cfg",
-        instrument="EUR_USD",
+        instrument=pair,
         units_to_trade=10000,
         SMA=100,
         dev=2,

@@ -130,7 +130,7 @@ class Trader(tpqoa.tpqoa):
    
 
         ## Here we define our formatter
-        log_file = os.path.join("logs",self.__class__.__name__ + ".log")
+        log_file = os.path.join("logs",self.__class__.__name__ + "_" + self.instrument + ".log")
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
         logHandler.setFormatter(formatter)
