@@ -145,11 +145,12 @@ if __name__ == "__main__":
     days = int(config.get(pair, 'days'))
     stop_after = int(config.get(pair, 'stop_after'))
     print_trades = bool(config.get(pair, 'print_trades'))
+    units_to_trade = int(config.get(pair, 'units_to_trade'))
 
     trader = BB_Strategy_SMA_Target_Trader(
         conf_file="oanda.cfg",
         instrument=pair,
-        units_to_trade=10000,
+        units_to_trade=units_to_trade,
         SMA=100,
         dev=2,
         sl_perc=0.001,
