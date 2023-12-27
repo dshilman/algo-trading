@@ -150,15 +150,17 @@ class Trader(tpqoa.tpqoa):
                 logger.info (f"Getting  candles for: {self.instrument}")
                 self.strategy.data = self.get_most_recent(self.instrument, days)
 
-                logger.info ("Define strategy for the first time")
-                self.strategy.define_strategy()
+                # logger.info ("Define strategy for the first time")
+                # self.strategy.define_strategy()
 
                 logger.info ("Starting Refresh Strategy Thread")
                 refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time,))
                 refresh_thread.start()
 
-                logger.info ("Check  Positions")
-                self.check_positions()
+                # logger.info ("Check  Positions")
+                # self.check_positions()
+                
+                time.sleep(1)
 
                 logger.info (f"Starting to stream for: {self.instrument}")
                 self.stream_data(self.instrument, stop= stop_after)
@@ -242,7 +244,7 @@ class Trader(tpqoa.tpqoa):
         logger.info(f"Submitting Order: {order}")
         if order != None:
             if not self.unit_test:        
-                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=False, ret=True)
+                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True)
                 self.report_trade(oanda_order, "GOING LONG" if order.units > 0 else "GOING SHORT")
 
             self.units = self.units + order.units
@@ -255,8 +257,6 @@ class Trader(tpqoa.tpqoa):
             logger.info ("Refreshing Strategy")
 
             try:
-                time.sleep(refresh_strategy_time)
-
                 self.check_positions()
                 
                 tick_data = self.tick_data
@@ -265,23 +265,25 @@ class Trader(tpqoa.tpqoa):
                 # logger.debug ("Before resampling")
                 # logger.debug(tick_data)
 
-                if len(tick_data) == 0:
-                    continue
+                df = None
 
-                df = pd.DataFrame(tick_data, columns=["time", self.instrument])
-                df.reset_index(inplace=True)
-                df.set_index('time', inplace=True)    
-                df.drop(columns=['index'], inplace=True)
+                if len(tick_data) > 0:
+                    df = pd.DataFrame(tick_data, columns=["time", self.instrument])
+                    df.reset_index(inplace=True)
+                    df.set_index('time', inplace=True)    
+                    df.drop(columns=['index'], inplace=True)
 
-                # logger.debug("Before resampling")
-                # logger.debug(df)
+                    # logger.debug("Before resampling")
+                    # logger.debug(df)
 
-                df = df.resample("1Min").last()
+                    df = df.resample("1Min").last()
 
-                # logger.debug("After resampling")
-                # logger.debug(df)
+                    # logger.debug("After resampling")
+                    # logger.debug(df)
 
                 self.strategy.define_strategy(df)
+
+                time.sleep(refresh_strategy_time)
 
             except Exception as e:
                 logger.exception("Exception occurred while refreshing strategy")
@@ -312,7 +314,7 @@ class Trader(tpqoa.tpqoa):
 
         logger.info("\n" + 100* "-")
 
-        if self.print_trades:
+        if self.print_trades and self.trades != None and len(self.trades) > 0:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "signal", "trade_units", "price", "have_units"])
             logger.info("\n" + df.to_string(header=True))
             logger.info("\n" + 100* "-")
