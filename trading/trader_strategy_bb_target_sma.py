@@ -1,16 +1,6 @@
 import configparser
-import threading
-import json
 import logging
-import logging.handlers as handlers
 import sys
-import time
-from datetime import datetime, timedelta, timezone
-
-import numpy as np
-import pandas as pd
-import pytz
-import tpqoa
 
 from trader import Trader
 from trader import Trade_Action
@@ -22,14 +12,14 @@ logger.setLevel(logging.INFO)
 
 
 class BB_to_SMA_Strategy(Strategy):
-    def __init__(self, instrument, SMA, dev):
-        super().__init__(instrument,SMA, dev)
+    def __init__(self, instrument, pairs_file):
+        super().__init__(instrument, pairs_file)
 
 
     def determine_action(self, bid, ask, units) -> Trade_Action:
         trade_action = None
         signal = 0
-        price = None
+        price = (bid + ask) / 2
         spread = ask - bid
         target = None
         instrument = self.instrument
@@ -37,31 +27,35 @@ class BB_to_SMA_Strategy(Strategy):
         if units > 0:  # if already have long positions
             logger.debug(f"Have {units} positions, checking if need to close")
             target = self.target + spread
-            if bid > target:  # if price is above target SMA, SELL
+            # if bid > target:  # if price is above target SMA, SELL
+            if price > target:  # if price is above target SMA, SELL
                 signal = -1
-                price = bid
+                # price = bid
                 logger.info(
                     f"Signal SELL at price: {round(price, 4)}, sma: {round(self.target, 4)}, spread: {round(spread, 4)}"
                 )
         elif units < 0:  # if alredy have short positions
             target = self.target - spread
-            if ask < target:  # price is below target SMA, BUY
+            # if ask < target:  # price is below target SMA, BUY
+            if price < target:  # price is below target SMA, BUY
                 signal = 1
-                price = ask
+                # price = ask
                 logger.info(
                     f"Signal BUY at price: {round(price, 4)}, sma: {round(self.target, 4)}, spread: {round(spread, 4)}"
                 )
         else:  # if no positions
             logger.debug("Don't have any positions, checking if need to open")
-            if ask < self.bb_lower:  # if price is below lower BB, BUY
+            # if ask < self.bb_lower:  # if price is below lower BB, BUY
+            if price < self.bb_lower:  # if price is below lower BB, BUY
                 signal = 1
-                price = ask
+                # price = ask
                 logger.info(
                     f"Signal BUY at price: {round(price, 4)}, bb_lower: {round(self.bb_lower, 4)}, spread: {round(spread, 4)}"
                 )
-            elif bid > self.bb_upper:  # if price is above upper BB, SELL
+            # elif bid > self.bb_upper:  # if price is above upper BB, SELL
+            elif price > self.bb_upper:  # if price is above upper BB, SELL
                 signal = -1
-                price = bid
+                # price = bid
                 logger.info(
                     f"Signal SELL at price: {round(price, 4)}, bb_upper: {self.bb_upper}, spread: {round(spread, 4)}"
                 )
@@ -126,11 +120,11 @@ class BB_to_SMA_Strategy(Strategy):
 
 
 class BB_Strategy_SMA_Target_Trader(Trader):
-    def __init__(self, conf_file, instrument, units_to_trade, SMA, dev, sl_perc=None, tp_perc=None, print_trades = False):
+    def __init__(self, conf_file, pairs_file, instrument):
 
-        strategy = BB_to_SMA_Strategy(instrument, SMA, dev)
+        strategy = BB_to_SMA_Strategy(instrument, pairs_file)
 
-        super().__init__(conf_file, strategy, units_to_trade, sl_perc, tp_perc, print_trades)
+        super().__init__(conf_file, pairs_file, strategy)
 
 
 if __name__ == "__main__":
@@ -139,23 +133,11 @@ if __name__ == "__main__":
 
     pair = args[0]
 
-    config = configparser.ConfigParser()  
-    # Read the contents of the `config.ini` file:
-    config.read('pairs.ini')
-    days = int(config.get(pair, 'days'))
-    stop_after = int(config.get(pair, 'stop_after'))
-    print_trades = bool(config.get(pair, 'print_trades'))
-    units_to_trade = int(config.get(pair, 'units_to_trade'))
-
+    
     trader = BB_Strategy_SMA_Target_Trader(
         conf_file="oanda.cfg",
-        instrument=pair,
-        units_to_trade=units_to_trade,
-        SMA=100,
-        dev=2,
-        sl_perc=0.001,
-        tp_perc=0.002,
-        print_trades = print_trades
+        pairs_file="pairs.ini",
+        instrument=pair
     )
-    trader.start_trading(days=days, stop_after=stop_after, max_attempts=5)
+    trader.start_trading()
 

@@ -1,3 +1,4 @@
+import configparser
 import threading
 import json
 import logging
@@ -49,17 +50,18 @@ class Order ():
         return f"Order: instrument: {self.instrument}, units: {self.units}, price: {self.price}, stopp loss: {self.sl}, take profit: {self.tp}"
 
 class Strategy():
-    def __init__(self, instrument, SMA, dev):
+    def __init__(self, instrument, pairs_file):
         super().__init__()
 
         self.instrument = instrument
-        self.data = None
         
-        self.SMA = SMA
-        self.dev = dev
+        config = configparser.ConfigParser()  
+        config.read(pairs_file)
+        self.SMA = int(config.get(instrument, 'SMA'))
+        self.dev = int(config.get(instrument, 'dev'))
 
+        self.data = None
         # Caculated attributes
-        self.bb_lower = None
         self.bb_upper =  None
         self.target = None
 
@@ -108,24 +110,31 @@ class Strategy():
         pass
 
 class Trader(tpqoa.tpqoa):
-    def __init__(self, conf_file, strategy, units_to_trade, sl_perc = None, tp_perc = None, print_trades = False):
+    def __init__(self, conf_file, pair_file, strategy):
         super().__init__(conf_file)
 
         self.refresh_strategy_time = 5 * 60 # 5 minutes
 
         self.strategy: Strategy = strategy
         self.instrument = self.strategy.instrument
+
+
+        config = configparser.ConfigParser()  
+        config.read(pair_file)
+        self.days = int(config.get(self.instrument, 'days'))
+        self.stop_after = int(config.get(self.instrument, 'stop_after'))
+        self.print_trades = bool(config.get(self.instrument, 'print_trades'))
+        self.units_to_trade = int(config.get(self.instrument, 'units_to_trade'))
+        self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
+        self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
+
         self.tick_data = []
         self.trades = []
 
         self.units = 0
-        self.units_to_trade = units_to_trade
-        self.sl_perc = sl_perc 
-        self.tp_perc = tp_perc 
         
         self.stop_refresh = False
         self.unit_test = False
-        self.print_trades = print_trades
 
    
 
@@ -139,7 +148,7 @@ class Trader(tpqoa.tpqoa):
 
  
 
-    def start_trading(self, days = 1, stop_after = 10, max_attempts = 5):
+    def start_trading(self, max_attempts = 2):
 
         logger.info("\n" + 100 * "-")
 
@@ -148,7 +157,7 @@ class Trader(tpqoa.tpqoa):
             try:
                 logger.info ("Started New Trading Session")
                 logger.info (f"Getting  candles for: {self.instrument}")
-                self.strategy.data = self.get_most_recent(self.instrument, days)
+                self.strategy.data = self.get_most_recent(self.instrument, self.days)
 
                 # logger.info ("Define strategy for the first time")
                 # self.strategy.define_strategy()
@@ -156,21 +165,18 @@ class Trader(tpqoa.tpqoa):
                 logger.info ("Starting Refresh Strategy Thread")
                 refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time,))
                 refresh_thread.start()
-
-                # logger.info ("Check  Positions")
-                # self.check_positions()
                 
                 time.sleep(1)
 
                 logger.info (f"Starting to stream for: {self.instrument}")
-                self.stream_data(self.instrument, stop= stop_after)
-
+                self.stream_data(self.instrument, stop= self.stop_after - self.ticks)
                 self.terminate_session("Finished Trading Session")
 
                 break
                 
             except Exception as e:
-                logger.exception(f"Attempt: {i + 1}, Exception occurred")
+                logger.exception(e)
+                logger.error(f"Error in attempt {i+1} of {max_attempts} to start trading")
                 self.terminate_session("Finished Trading Session with Errors")
             finally:
                 self.stop_refresh = True
@@ -244,7 +250,7 @@ class Trader(tpqoa.tpqoa):
         logger.info(f"Submitting Order: {order}")
         if order != None:
             if not self.unit_test:        
-                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True)
+                oanda_order = self.create_order(instrument = order.instrument, units = order.units, price = order.price, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True)
                 self.report_trade(oanda_order, "GOING LONG" if order.units > 0 else "GOING SHORT")
 
             self.units = self.units + order.units
@@ -273,13 +279,7 @@ class Trader(tpqoa.tpqoa):
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    # logger.debug("Before resampling")
-                    # logger.debug(df)
-
                     df = df.resample("1Min").last()
-
-                    # logger.debug("After resampling")
-                    # logger.debug(df)
 
                 self.strategy.define_strategy(df)
 
@@ -309,7 +309,7 @@ class Trader(tpqoa.tpqoa):
 
         
     def terminate_session(self, cause):
-        self.stop_stream = True
+        # self.stop_stream = True
         logger.info (cause)
 
         logger.info("\n" + 100* "-")
@@ -318,6 +318,8 @@ class Trader(tpqoa.tpqoa):
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "signal", "trade_units", "price", "have_units"])
             logger.info("\n" + df.to_string(header=True))
             logger.info("\n" + 100* "-")
+        
+        self.trades = []
 
         # if self.position != 0:
         #     close_order = self.create_order(self.instrument, units = -self.position * self.units,
