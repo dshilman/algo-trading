@@ -250,7 +250,7 @@ class Trader(tpqoa.tpqoa):
         logger.info(f"Submitting Order: {order}")
         if order != None:
             if not self.unit_test:        
-                oanda_order = self.create_order(instrument = order.instrument, units = order.units, price = order.price, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True)
+                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True)
                 self.report_trade(oanda_order, "GOING LONG" if order.units > 0 else "GOING SHORT")
 
             self.units = self.units + order.units
