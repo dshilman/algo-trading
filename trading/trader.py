@@ -171,19 +171,23 @@ class Trader(tpqoa.tpqoa):
 
                 logger.info (f"Starting to stream for: {self.instrument}")
                 self.stream_data(self.instrument, stop= self.stop_after)
+          
+
                 self.terminate_session("Finished Trading Session")
 
                 break
-                
+
             except Exception as e:
                 logger.exception(e)
                 logger.error(f"Error in attempt {i+1} of {max_attempts} to start trading")
                 self.terminate_session("Finished Trading Session with Errors")
             finally:
+                logger.info("Stopping Refresh Strategy Thread")
                 self.stop_refresh = True
-
                 if refresh_thread is not None and refresh_thread.is_alive():
-                    refresh_thread.join()
+                    refresh_thread.join(timeout=self.refresh_strategy_time)
+                
+
 
 
     def get_most_recent(self, instrument, days = 1):
@@ -230,7 +234,7 @@ class Trader(tpqoa.tpqoa):
 
         if self.ticks % 100 == 0:
             logger.info(
-                f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(bid - ask, 4)}, signal: {trade_action.signal}"
+                f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(ask - bid, 4)}, signal: {trade_action.signal}"
         )
         
 
@@ -252,10 +256,13 @@ class Trader(tpqoa.tpqoa):
         if order != None:
             if not self.unit_test:        
                 oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True, comment=order.comment)
-                self.report_trade(oanda_order, order.comment)
-
-            self.units = self.units + order.units
-                
+                if oanda_order != None:
+                    self.report_trade(oanda_order, order.comment)
+                    self.units = self.units + order.units
+                    logger.info(f"Units: {self.units}")  
+            else:
+                self.units = self.units + order.units
+                logger.info(f"Units: {self.units}")
 
     def refresh_strategy(self, refresh_strategy_time):
 

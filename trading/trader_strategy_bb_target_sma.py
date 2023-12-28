@@ -24,11 +24,17 @@ class BB_to_SMA_Strategy(Strategy):
         target = None
         instrument = self.instrument
 
+        if self.bb_upper - self.target <= spread:
+            logger.warning(
+                f"BB upper {self.bb_upper} is too close to SMA {self.target} for spread {spread}"
+            )
+            return None
+
         if units > 0:  # if already have long positions
             logger.debug(f"Have {units} positions, checking if need to close")
             target = self.target + spread
-            # if bid > target:  # if price is above target SMA, SELL
-            if price > target:  # if price is above target SMA, SELL
+            if bid > target:  # if price is above target SMA, SELL
+            # if price > target:  # if price is above target SMA, SELL
                 signal = -1
                 # price = bid
                 logger.info(
@@ -36,26 +42,26 @@ class BB_to_SMA_Strategy(Strategy):
                 )
         elif units < 0:  # if alredy have short positions
             target = self.target - spread
-            # if ask < target:  # price is below target SMA, BUY
-            if price < target:  # price is below target SMA, BUY
+            if ask < target:  # price is below target SMA, BUY
+            # if price < target:  # price is below target SMA, BUY
                 signal = 1
-                # price = ask
+                price = ask
                 logger.info(
                     f"Signal BUY at price: {round(price, 4)}, sma: {round(self.target, 4)}, spread: {round(spread, 4)}"
                 )
         else:  # if no positions
             logger.debug("Don't have any positions, checking if need to open")
-            # if ask < self.bb_lower:  # if price is below lower BB, BUY
-            if price < self.bb_lower:  # if price is below lower BB, BUY
+            if ask < self.bb_lower:  # if price is below lower BB, BUY
+            # if price < self.bb_lower:  # if price is below lower BB, BUY
                 signal = 1
-                # price = ask
+                price = ask
                 logger.info(
                     f"Signal BUY at price: {round(price, 4)}, bb_lower: {round(self.bb_lower, 4)}, spread: {round(spread, 4)}"
                 )
-            # elif bid > self.bb_upper:  # if price is above upper BB, SELL
-            elif price > self.bb_upper:  # if price is above upper BB, SELL
+            elif bid > self.bb_upper:  # if price is above upper BB, SELL
+            # elif price > self.bb_upper:  # if price is above upper BB, SELL
                 signal = -1
-                # price = bid
+                price = bid
                 logger.info(
                     f"Signal SELL at price: {round(price, 4)}, bb_upper: {self.bb_upper}, spread: {round(spread, 4)}"
                 )
@@ -73,6 +79,11 @@ class BB_to_SMA_Strategy(Strategy):
 
         if sl_perc:
             sl_dist = round(trade_action.price * sl_perc, 4)
+            if sl_perc <= round(trade_action.spread / trade_action.price, 4):
+                logger.warning(
+                    f"SL distance {sl_dist} is too small for spread {trade_action.spread} and price {trade_action.price}"
+                )
+                return None
         else:
             sl_dist = None
 
@@ -87,7 +98,7 @@ class BB_to_SMA_Strategy(Strategy):
             logger.info("Signal = BUY")
             if have_units <= 0:  # has short positions
                 trade_units = max(units_to_trade, have_units)
-                
+
                 order = Order(
                     signal = trade_action.signal,
                     instrument = trade_action.instrument,
