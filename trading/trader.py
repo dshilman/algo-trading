@@ -343,10 +343,14 @@ class Trader(tpqoa.tpqoa):
         units = 0
         positions = self.get_positions()
         for position in positions:
-            if position["instrument"] == self.instrument:
-                units = round(float(position["long"]["units"]) + float(position["short"]["units"]), 0)
+            instrument = position["instrument"]
+            long_units = position["long"]["units"]
+            short_units = position["short"]["units"]
+            logger.info (f"Currently have position: {instrument} | long_units: {long_units} | short_units: {short_units}")
+            if str(instrument).upper() == self.instrument:
+                units = round(float(long_units) + float(short_units), 0)
         
         self.units = units
-        logger.info (f"Currently have: {self.units} position of {self.instrument}")
+        logger.info (f"Currently have: {units} position of {self.instrument}")
 
         
