@@ -87,13 +87,15 @@ class BB_to_SMA_Strategy(Strategy):
             logger.info("Signal = BUY")
             if have_units <= 0:  # has short positions
                 trade_units = max(units_to_trade, have_units)
+                
                 order = Order(
-                    trade_action.signal,
-                    trade_action.instrument,
-                    trade_action.price,
-                    trade_units,
-                    sl_dist,
-                    tp_price,
+                    signal = trade_action.signal,
+                    instrument = trade_action.instrument,
+                    price = trade_action.price,
+                    trade_units = trade_units,
+                    sl_dist = sl_dist,
+                    tp_price = tp_price,
+                    comment = "Going Long" if have_units == 0 else "Closing Short"
                 )
             else:  # Already have a LONG position
                 logger.info(
@@ -103,13 +105,15 @@ class BB_to_SMA_Strategy(Strategy):
             logger.info("Signal = SELL")
             if have_units >= 0:
                 trade_units = min(-units_to_trade, have_units)
+                
                 order = Order(
-                    trade_action.signal,
-                    trade_action.instrument,
-                    trade_action.price,
-                    trade_units,
-                    sl_dist,
-                    tp_price,
+                    signal = trade_action.signal,
+                    instrument = trade_action.instrument,
+                    price = trade_action.price,
+                    trade_units = trade_units,
+                    sl_dist = sl_dist,
+                    tp_price = tp_price,
+                    comment = "Going Short" if have_units == 0 else "Closing Long"
                 )
             else:  # Already have a SHORT position
                 logger.info(

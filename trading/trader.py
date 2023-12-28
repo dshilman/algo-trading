@@ -34,7 +34,7 @@ class Trade_Action():
         return f"Trade_Action: instrument: {self.instrument}, signal: {self.signal}, price: {self.price}, target: {self.target}, spread: {self.spread}"       
 
 class Order ():
-    def __init__(self, signal, instrument, price, trade_units,sl_dist, tp_price):
+    def __init__(self, signal, instrument, price, trade_units, sl_dist, tp_price, comment):
         super().__init__()
         self.signal = signal
         self.instrument = instrument
@@ -42,6 +42,7 @@ class Order ():
         self.units = trade_units
         self.sl = sl_dist
         self.tp = tp_price
+        self.comment = comment
 
     def __str__(self):
         return f"Order: instrument: {self.instrument}, units: {self.units}, price: {self.price}, stopp loss: {self.sl}, take profit: {self.tp}"
@@ -169,7 +170,7 @@ class Trader(tpqoa.tpqoa):
                 time.sleep(1)
 
                 logger.info (f"Starting to stream for: {self.instrument}")
-                self.stream_data(self.instrument, stop= self.stop_after - self.ticks)
+                self.stream_data(self.instrument, stop= self.stop_after)
                 self.terminate_session("Finished Trading Session")
 
                 break
@@ -250,8 +251,8 @@ class Trader(tpqoa.tpqoa):
         logger.info(f"Submitting Order: {order}")
         if order != None:
             if not self.unit_test:        
-                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True)
-                self.report_trade(oanda_order, "GOING LONG" if order.units > 0 else "GOING SHORT")
+                oanda_order = self.create_order(instrument = order.instrument, units = order.units, price = order.price, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True, comment=order.comment)
+                self.report_trade(oanda_order, order.comment)
 
             self.units = self.units + order.units
                 
@@ -292,7 +293,7 @@ class Trader(tpqoa.tpqoa):
                 self.stop_refresh = True
 
     
-    def report_trade(self, order, going):
+    def report_trade(self, order, comment):
 
         logger.debug(f"Inside report_trade: {json.dumps(order, indent = 2)}")
         order_id = order.get("id", 0)
@@ -303,7 +304,7 @@ class Trader(tpqoa.tpqoa):
         units = order.get("units")
         price = order.get("price")
         logger.info("\n" + 100* "-")
-        logger.info(f"{going}")
+        logger.info(f"{comment}")
         logger.info("order id = {} |  time filled: {}| units = {} | price = {} ".format(order_id,time, units, price))
         logger.info("\n" + 100 * "-" + "\n")
 

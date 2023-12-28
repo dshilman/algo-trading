@@ -80,7 +80,8 @@ if __name__ == "__main__":
         instrument=pair
     )
     trader.unit_test = True
-    trader.stop_after = 1000
+    trader.stop_after = 100
+    trader.refresh_strategy_time = 60
 
     trader.start_trading()
 
