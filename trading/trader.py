@@ -233,8 +233,10 @@ class Trader(tpqoa.tpqoa):
         #         self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 0, 0, 0, self.units])
 
         if self.ticks % 100 == 0:
+            spread = ask - bid
+            spread_prct = spread / ((ask + bid) / 2)
             logger.info(
-                f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(ask - bid, 4)}, signal: {trade_action.signal}"
+                f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(spread, 4)}, spread %: {round(spread_prct, 4)}, signal: {trade_action.signal}"
         )
         
 
