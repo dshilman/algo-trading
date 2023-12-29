@@ -103,7 +103,7 @@ class BB_to_SMA_Strategy(Strategy):
                     price = trade_action.price,
                     trade_units = trade_units,
                     sl_dist = sl_dist,
-                    tp_price = tp_price,
+                    tp_price = None,
                     comment = "Going Long" if have_units == 0 else "Closing Short"
                 )
             else:  # Already have a LONG position
