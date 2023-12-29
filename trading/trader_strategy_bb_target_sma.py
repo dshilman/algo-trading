@@ -78,7 +78,7 @@ class BB_to_SMA_Strategy(Strategy):
             return None
 
         if sl_perc:
-            sl_dist = round(trade_action.price * sl_perc, 4)
+            sl_dist = round(trade_action.price * sl_perc, 2)
             if sl_perc <= trade_action.spread / trade_action.price:
                 logger.warning(
                     f"SL distance {sl_dist} is too small for spread {trade_action.spread} and price {trade_action.price}"
@@ -88,9 +88,7 @@ class BB_to_SMA_Strategy(Strategy):
             sl_dist = None
 
         if tp_perc:
-            tp_price = round(
-                trade_action.price * (1 + trade_action.signal * tp_perc), 2
-            )
+            tp_price = round(trade_action.price * (1 + trade_action.signal * tp_perc), 2)
         else:
             tp_price = None
 
