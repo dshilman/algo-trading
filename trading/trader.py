@@ -261,10 +261,10 @@ class Trader(tpqoa.tpqoa):
                 if oanda_order != None:
                     self.report_trade(oanda_order, order.comment)
                     self.units = self.units + order.units
-                    logger.info(f"Units: {self.units}")  
+                    logger.info(f"New # of {order.instrument} units: {self.units}")  
             else:
                 self.units = self.units + order.units
-                logger.info(f"Units: {self.units}")
+                logger.info(f"New # of {order.instrument} units: {self.units}")
 
     def refresh_strategy(self, refresh_strategy_time):
 
@@ -304,17 +304,18 @@ class Trader(tpqoa.tpqoa):
     
     def report_trade(self, order, comment):
 
-        logger.debug(f"Inside report_trade: {json.dumps(order, indent = 2)}")
-        order_id = order.get("id", 0)
-        if order_id == 0:
-            logger.info ("Order has been submitted but not filled")
+        logger.info("\n" + 100* "-" + "\n")
+        logger.info(json.dumps(order, indent = 2))
+        # order_id = order.get("id", 0)
+        # if order_id == 0:
+        #     logger.info ("Order has been submitted but not filled")
             
-        time = order.get("time")
-        units = order.get("units")
-        price = order.get("price")
-        logger.info("\n" + 100* "-")
-        logger.info(f"{comment}")
-        logger.info("order id = {} |  time filled: {}| units = {} | price = {} ".format(order_id,time, units, price))
+        # time = order.get("time")
+        # units = order.get("units")
+        # price = order.get("price")
+        # logger.info("\n" + 100* "-")
+        # logger.info(f"{comment}")
+        # logger.info("order id = {} |  time filled: {}| units = {} | price = {} ".format(order_id,time, units, price))
         logger.info("\n" + 100 * "-" + "\n")
 
         
