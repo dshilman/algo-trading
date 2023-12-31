@@ -96,9 +96,9 @@ class Strategy():
         df["signal"] = df.signal.ffill().fillna(0)
         # ***********************************************************************
 
-        self.bb_lower = df.Lower.iloc[-1]
-        self.bb_upper =  df.Upper.iloc[-1]
-        self.target = df.SMA.iloc[-1]
+        self.bb_lower = round(df.Lower.iloc[-1], 4)
+        self.bb_upper =  round(df.Upper.iloc[-1], 4)
+        self.target = round(df.SMA.iloc[-1], 4)
 
         logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}")
 
@@ -179,7 +179,7 @@ class Trader(tpqoa.tpqoa):
 
             except Exception as e:
                 logger.exception(e)
-                logger.error(f"Error in attempt {i+1} of {max_attempts} to start trading")
+                logger.error(f"Error in attempt {i + 1} of {max_attempts} to start trading")
                 self.terminate_session("Finished Trading Session with Errors")
             finally:
                 logger.info("Stopping Refresh Strategy Thread")
@@ -258,10 +258,14 @@ class Trader(tpqoa.tpqoa):
         if order != None:
             if not self.unit_test:        
                 oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True, comment=order.comment)
-                if oanda_order != None:
-                    self.report_trade(oanda_order, order.comment)
+                self.report_trade(oanda_order, order.comment)
+                if oanda_order["rejectReason"] is None:
                     self.units = self.units + order.units
-                    logger.info(f"New # of {order.instrument} units: {self.units}")  
+                    logger.info(f"New # of {order.instrument} units: {self.units}")
+                else:
+                    error = f"Order was not filled: {oanda_order ['type']}, reason: {oanda_order['rejectReason']}"
+                    logger.error(error)
+                    raise Exception(error)
             else:
                 self.units = self.units + order.units
                 logger.info(f"New # of {order.instrument} units: {self.units}")
