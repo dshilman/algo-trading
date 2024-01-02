@@ -257,7 +257,7 @@ class Trader(tpqoa.tpqoa):
         logger.info(f"Submitting Order: {order}")
         if order != None:
             if not self.unit_test:        
-                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price = order.tp, suppress=True, ret=True, comment=order.comment)
+                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, suppress=True, ret=True, comment=order.comment)
                 self.report_trade(oanda_order, order.comment)
                 if oanda_order["rejectReason"] is None:
                     self.units = self.units + order.units
