@@ -7,10 +7,10 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from collections import deque
 
 import numpy as np
 import pandas as pd
-import pytz
 import tpqoa
 
 logger = logging.getLogger('trader_oanda')
@@ -137,10 +137,8 @@ class Trader(tpqoa.tpqoa):
         self.stop_refresh = False
         self.unit_test = False
 
-   
-
         ## Here we define our formatter
-        log_file = os.path.join("logs",self.__class__.__name__ + "_" + self.instrument + ".log")
+        log_file = os.path.join("logs", self.__class__.__name__ + "_" + self.instrument + ".log")
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
         logHandler.setFormatter(formatter)
@@ -259,7 +257,7 @@ class Trader(tpqoa.tpqoa):
             if not self.unit_test:        
                 oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, suppress=True, ret=True, comment=order.comment)
                 self.report_trade(oanda_order, order.comment)
-                if oanda_order.get("rejectReason") is None:
+                if not "rejectReason" in oanda_order:
                     self.units = self.units + order.units
                     logger.info(f"New # of {order.instrument} units: {self.units}")
                 else:

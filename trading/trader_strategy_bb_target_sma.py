@@ -53,6 +53,7 @@ class BB_to_SMA_Strategy(Strategy):
                 if price < self.bb_lower:  # if price is below lower BB, BUY
                     signal = 1
                     # price = ask
+
                     logger.info(
                         f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {spread}"
                     )
@@ -81,7 +82,7 @@ class BB_to_SMA_Strategy(Strategy):
                 logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
                 return None
             # sl_dist = round(trade_action.price - trade_action.signal * trade_action.price * sl_perc, 4)
-            sl_dist = round(trade_action.price * sl_perc, 4)
+            sl_dist = round(trade_action.price * sl_perc, 2)
 
         else:
             sl_dist = None
