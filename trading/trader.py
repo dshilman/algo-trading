@@ -59,7 +59,7 @@ class Strategy():
         config = configparser.ConfigParser()  
         config.read(pairs_file)
         self.SMA = int(config.get(instrument, 'SMA'))
-        self.dev = int(config.get(instrument, 'dev'))
+        self.dev = float(config.get(instrument, 'dev'))
 
         self.data = None
         # Caculated attributes

@@ -47,7 +47,7 @@ class BB_to_SMA_Strategy(Strategy):
             logger.debug("Don't have any positions, checking if need to open")
             if spread >= (self.bb_upper - target):
                 signal = 0
-                logger.warn (f"Current spread: {spread} is too large for price: {price} and target: {target}")
+                logger.warning (f"Current spread: {spread} is too large for price: {price} and target: {target}")
             else:
                 # if ask < self.bb_lower:  # if price is below lower BB, BUY
                 if price < self.bb_lower:  # if price is below lower BB, BUY
@@ -77,8 +77,8 @@ class BB_to_SMA_Strategy(Strategy):
             return None
 
         if sl_perc:
-            if sl_perc > trade_action.spread / trade_action.price:
-                logger.warn(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
+            if trade_action.spread / trade_action.price >= sl_perc:
+                logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
                 return None
             sl_dist = round(trade_action.price - trade_action.signal * trade_action.price * sl_perc, 4)
         else:
