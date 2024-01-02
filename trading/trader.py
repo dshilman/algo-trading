@@ -259,7 +259,7 @@ class Trader(tpqoa.tpqoa):
             if not self.unit_test:        
                 oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, suppress=True, ret=True, comment=order.comment)
                 self.report_trade(oanda_order, order.comment)
-                if oanda_order["rejectReason"] is None:
+                if oanda_order.get("rejectReason") is None:
                     self.units = self.units + order.units
                     logger.info(f"New # of {order.instrument} units: {self.units}")
                 else:
