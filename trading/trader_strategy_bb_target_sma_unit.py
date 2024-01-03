@@ -17,7 +17,7 @@ class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
         self.unit_test = True
 
     
-    def start_trading(self):
+    def start_trading_random(self):
 
         logger.info("\n" + 100 * "-")
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     )
     trader.days = 5
     trader.unit_test = True
-    trader.stop_after = 100
+    trader.stop_after = 10
     trader.refresh_strategy_time = 60
 
     trader.start_trading()

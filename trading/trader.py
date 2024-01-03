@@ -1,17 +1,19 @@
 import configparser
-import threading
 import json
 import logging
 import logging.handlers as handlers
 import os
 import sys
+import threading
 import time
-from datetime import datetime, timedelta, timezone
 from collections import deque
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
 import tpqoa
+
+import MyTT
 
 logger = logging.getLogger('trader_oanda')
 # logger.setLevel(logging.DEBUG)
@@ -65,6 +67,7 @@ class Strategy():
         # Caculated attributes
         self.bb_upper =  None
         self.target = None
+        self.rsi = None
 
 
     def define_strategy(self, resampled_tick_data: pd.DataFrame = None): # "strategy-specific"
@@ -99,10 +102,11 @@ class Strategy():
         self.bb_lower = round(df.Lower.iloc[-1], 4)
         self.bb_upper =  round(df.Upper.iloc[-1], 4)
         self.target = round(df.SMA.iloc[-1], 4)
-
-        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}")
+        self.rsi = MyTT.RSI (df[self.instrument].tail(28).values, N=14)
+        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}")
 
         self.data = df.copy()
+    
 
     def determine_action(self, bid, ask, units) -> Trade_Action:
         pass
@@ -114,7 +118,7 @@ class Trader(tpqoa.tpqoa):
     def __init__(self, conf_file, pair_file, strategy):
         super().__init__(conf_file)
 
-        self.refresh_strategy_time = 5 * 60 # 5 minutes
+        self.refresh_strategy_time = 1 * 60 # 2 minutes
 
         self.strategy: Strategy = strategy
         self.instrument = self.strategy.instrument
@@ -184,6 +188,8 @@ class Trader(tpqoa.tpqoa):
                 self.stop_refresh = True
                 if refresh_thread is not None and refresh_thread.is_alive():
                     refresh_thread.join(timeout=self.refresh_strategy_time)
+                    logger.info("Stopped Refresh Strategy Thread")
+
                 
 
 

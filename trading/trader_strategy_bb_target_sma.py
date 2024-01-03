@@ -2,10 +2,7 @@ import configparser
 import logging
 import sys
 
-from trader import Trader
-from trader import Trade_Action
-from trader import Strategy
-from trader import Order
+from trader import Order, Strategy, Trade_Action, Trader
 
 logger = logging.getLogger("trader_oanda")
 logger.setLevel(logging.INFO)
@@ -46,23 +43,22 @@ class BB_to_SMA_Strategy(Strategy):
         else:  # if no positions
             logger.debug("Don't have any positions, checking if need to open")
             if spread >= (self.bb_upper - target):
-                signal = 0
+                signal = 0                
                 logger.warning (f"Current spread: {spread} is too large for price: {price} and target: {target}")
             else:
                 # if ask < self.bb_lower:  # if price is below lower BB, BUY
-                if price < self.bb_lower:  # if price is below lower BB, BUY
+                if price < self.bb_lower and self.rsi <= 30: # if price is below lower BB, BUY
                     signal = 1
                     # price = ask
-
                     logger.info(
-                        f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {spread}"
+                        f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {spread}, rsi: {self.rsi}"
                     )
                 # elif bid > self.bb_upper:  # if price is above upper BB, SELL
-                elif price > self.bb_upper:  # if price is above upper BB, SELL
+                elif price > self.bb_upper and self.rsi >= 70:  # if price is above upper BB, SELL
                     signal = -1
                     # price = bid
                     logger.info(
-                        f"Signal SELL at price: {price}, bb_upper: {self.bb_upper}, spread: {spread}"
+                        f"Signal SELL at price: {price}, bb_upper: {self.bb_upper}, spread: {spread}, rsi: {self.rsi}"
                     )
           
         trade_action = Trade_Action(signal, instrument, price, target, spread)
