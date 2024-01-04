@@ -333,18 +333,18 @@ class Trader(tpqoa.tpqoa):
 
         logger.info("\n" + 100* "-")
 
+        if self.units != 0 and not self.unit_test:
+            close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True) 
+            self.report_trade(close_order, "GOING NEUTRAL")
+            self.units = 0
+            self.trades.append([0, 0, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if float(close_order.get("units")) > 0 else -1, close_order.get("units"), close_order.get("price"), self.units])
+
         if self.print_trades and self.trades != None and len(self.trades) > 0:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "signal", "trade_units", "price", "have_units"])
             logger.info("\n" + df.to_string(header=True))
             logger.info("\n" + 100* "-")
         
         self.trades = []
-
-        # if self.position != 0:
-        #     close_order = self.create_order(self.instrument, units = -self.position * self.units,
-        #                                     suppress = True, ret = True) 
-        #     self.report_trade(close_order, "GOING NEUTRAL")
-        #     self.position = 0
 
     
     def check_positions(self): 
