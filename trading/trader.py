@@ -15,6 +15,7 @@ import tpqoa
 
 import MyTT
 import watchtower
+import boto3
 
 logger = logging.getLogger('trader_oanda')
 
@@ -150,7 +151,7 @@ class Trader(tpqoa.tpqoa):
             logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
         else:
             logger.setLevel(logging.INFO)
-            logger.addHandler(watchtower.CloudWatchLogHandler())
+            logger.addHandler(watchtower.CloudWatchLogHandler(boto3_client=boto3.client("logs", region_name="us-east-1")))
 
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
