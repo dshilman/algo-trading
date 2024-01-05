@@ -146,13 +146,13 @@ class Trader(tpqoa.tpqoa):
         
 
         if self.unit_test:
-            logger.setLevel(logging.DEBUG)
-            log_file = os.path.join("logs", __name__ + "_" + self.instrument + ".log")
-            logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
+            logger.setLevel(logging.DEBUG)            
         else:
             logger.setLevel(logging.INFO)
-            logger.addHandler(watchtower.CloudWatchLogHandler(boto3_client=boto3.client("logs", region_name="us-east-1")))
+            # logger.addHandler(watchtower.CloudWatchLogHandler(boto3_client=boto3.client("logs", region_name="us-east-1")))
 
+        log_file = os.path.join("logs", __name__ + "_" + self.instrument + ".log")
+        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
@@ -286,7 +286,7 @@ class Trader(tpqoa.tpqoa):
 
         while not self.stop_refresh:
 
-            logger.info ("Refreshing Strategy")
+            logger.debug ("Refreshing Strategy")
 
             try:
                 self.check_positions()
