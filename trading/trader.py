@@ -120,6 +120,7 @@ class Trader(tpqoa.tpqoa):
 
         self.strategy: Strategy = strategy
         self.instrument = self.strategy.instrument
+        self.refresh_thread = None
 
 
         config = configparser.ConfigParser()  
@@ -160,7 +161,6 @@ class Trader(tpqoa.tpqoa):
 
         logger.info("\n" + 100 * "-")
 
-        refresh_thread = None
         for i in range(max_attempts):
             try:
                 logger.info ("Started New Trading Session")
@@ -171,8 +171,9 @@ class Trader(tpqoa.tpqoa):
                 # self.strategy.define_strategy()
 
                 logger.info ("Starting Refresh Strategy Thread")
-                refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time,))
-                refresh_thread.start()
+                self.stop_refresh = False
+                self.refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time,))
+                self.refresh_thread.start()
                 
                 time.sleep(1)
 
@@ -191,8 +192,8 @@ class Trader(tpqoa.tpqoa):
             finally:
                 logger.info("Stopping Refresh Strategy Thread")
                 self.stop_refresh = True
-                if refresh_thread is not None and refresh_thread.is_alive():
-                    refresh_thread.join(timeout=self.refresh_strategy_time)
+                if self.refresh_thread is not None and self.refresh_thread.is_alive():
+                    self.refresh_thread.join(timeout=self.refresh_strategy_time)
                     logger.info("Stopped Refresh Strategy Thread")
 
                 
@@ -246,8 +247,10 @@ class Trader(tpqoa.tpqoa):
             spread_prct = spread / ((ask + bid) / 2)
             logger.info(
                 f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(spread, 4)}, spread %: {round(spread_prct, 4)}, signal: {trade_action.signal}"
-        )
-        
+            )
+            if self.refresh_thread == None or not self.refresh_thread.is_alive():
+                raise Exception("Refresh Strategy Thread is not alive")
+
 
     def capture(self, time, bid, ask):
 
@@ -281,6 +284,7 @@ class Trader(tpqoa.tpqoa):
 
     def refresh_strategy(self, refresh_strategy_time):
 
+        i: int = 0
         while not self.stop_refresh:
 
             logger.debug ("Refreshing Strategy")
@@ -311,8 +315,9 @@ class Trader(tpqoa.tpqoa):
             except Exception as e:
                 logger.exception("Exception occurred while refreshing strategy")
                 logger.exception(e)
-
-                self.stop_refresh = True
+                i += 1
+                if i > 3:
+                    self.stop_refresh = True
 
     
     def report_trade(self, order, comment):
