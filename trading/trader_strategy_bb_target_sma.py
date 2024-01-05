@@ -129,11 +129,11 @@ class BB_to_SMA_Strategy(Strategy):
 
 
 class BB_Strategy_SMA_Target_Trader(Trader):
-    def __init__(self, conf_file, pairs_file, instrument):
+    def __init__(self, conf_file, pairs_file, instrument, unit_test = False):
 
         strategy = BB_to_SMA_Strategy(instrument, pairs_file)
 
-        super().__init__(conf_file, pairs_file, strategy)
+        super().__init__(conf_file, pairs_file, strategy, unit_test)
 
 
 if __name__ == "__main__":

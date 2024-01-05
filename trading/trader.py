@@ -14,9 +14,9 @@ import pandas as pd
 import tpqoa
 
 import MyTT
+import watchtower
 
 logger = logging.getLogger('trader_oanda')
-# logger.setLevel(logging.DEBUG)
 
 
 class Trade_Action():
@@ -115,7 +115,7 @@ class Strategy():
         pass
 
 class Trader(tpqoa.tpqoa):
-    def __init__(self, conf_file, pair_file, strategy):
+    def __init__(self, conf_file, pair_file, strategy, unit_test = False):
         super().__init__(conf_file)
 
         self.refresh_strategy_time = 1 * 60 # 2 minutes
@@ -139,14 +139,21 @@ class Trader(tpqoa.tpqoa):
         self.units = 0
         
         self.stop_refresh = False
-        self.unit_test = False
+        self.unit_test = unit_test
 
         ## Here we define our formatter
-        log_file = os.path.join("logs", self.__class__.__name__ + "_" + self.instrument + ".log")
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
-        logHandler.setFormatter(formatter)
+        
 
+        if self.unit_test:
+            logger.setLevel(logging.DEBUG)
+            log_file = os.path.join("logs", __name__ + "_" + self.instrument + ".log")
+            logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
+        else:
+            logger.setLevel(logging.INFO)
+            logger.addHandler(watchtower.CloudWatchLogHandler())
+
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
 
  

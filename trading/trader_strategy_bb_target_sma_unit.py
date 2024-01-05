@@ -13,8 +13,7 @@ logger.setLevel(logging.INFO)
 class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
     
     def __init__(self, conf_file, pairs_file, instrument):
-        super().__init__(conf_file, pairs_file, instrument)
-        self.unit_test = True
+        super().__init__(conf_file, pairs_file, instrument, unit_test=True)
 
     
     def start_trading_random(self):
@@ -80,7 +79,6 @@ if __name__ == "__main__":
         instrument=pair
     )
     trader.days = 5
-    trader.unit_test = True
     trader.stop_after = 10
     trader.refresh_strategy_time = 60
 
