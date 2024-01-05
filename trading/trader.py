@@ -3,7 +3,6 @@ import json
 import logging
 import logging.handlers as handlers
 import os
-import sys
 import threading
 import time
 from collections import deque
@@ -14,8 +13,6 @@ import pandas as pd
 import tpqoa
 
 import MyTT
-import watchtower
-import boto3
 
 logger = logging.getLogger('trader_oanda')
 
