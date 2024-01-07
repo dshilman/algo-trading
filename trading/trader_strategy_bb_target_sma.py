@@ -25,20 +25,20 @@ class BB_to_SMA_Strategy(Strategy):
             logger.debug(f"Have {units} positions, checking if need to close")
             # target = self.target + spread
             # if bid > target:  # if price is above target SMA, SELL
-            if price > (target + spread):  # if price is above target SMA, SELL
+            if price > target and self.slope5 < 0:  # if price is above target SMA, SELL
                 signal = -1
                 # price = bid
                 logger.info(
-                    f"Close {units} long position - signal SELL at price: {price}, sma: {self.target}, spread: {spread}"
+                    f"Close {units} long position - signal SELL at price: {price}, sma: {self.target}, spread: {spread}, slope: {self.slope5}"
                 )
         elif units < 0:  # if alredy have short positions
             # target = self.target - spread
             # if ask < target:  # price is below target SMA, BUY
-            if price < (target - spread):  # price is below target SMA, BUY
+            if price < target and self.slope5 > 0:  # price is below target SMA, BUY
                 signal = 1
                 # price = ask
                 logger.info(
-                    f"Close {units} short position - Signal BUY at price: {price}, sma: {self.target}, spread: {spread}"
+                    f"Close {units} short position - Signal BUY at price: {price}, sma: {self.target}, spread: {spread}, slope: {self.slope5}"
                 )
         else:  # if no positions
             logger.debug("Don't have any positions, checking if need to open")

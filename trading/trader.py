@@ -217,9 +217,7 @@ class Trader(tpqoa.tpqoa):
                                 granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
         df.rename(columns = {"c":instrument}, inplace = True)
 
-        logger.debug ("starting df")
-        logger.debug(df)
-
+        logger.info (f"history data_frame: {df.shape}")
         return df
 
   
@@ -298,7 +296,7 @@ class Trader(tpqoa.tpqoa):
 
             try:
 
-                if refresh_check_positions_count > 5:
+                if refresh_check_positions_count >= 5:
                     self.check_positions()
                     refresh_check_positions_count = 0
 
