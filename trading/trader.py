@@ -66,6 +66,7 @@ class Strategy():
         self.bb_upper =  None
         self.target = None
         self.rsi = None
+        self.slope = None
 
 
     def define_strategy(self, resampled_tick_data: pd.DataFrame = None): # "strategy-specific"
@@ -100,8 +101,10 @@ class Strategy():
         self.bb_lower = round(df.Lower.iloc[-1], 4)
         self.bb_upper =  round(df.Upper.iloc[-1], 4)
         self.target = round(df.SMA.iloc[-1], 4)
-        self.rsi = MyTT.RSI (df[self.instrument].tail(28).values, N=14)
-        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}")
+        self.rsi = MyTT.RSI(df[self.instrument].tail(28).values, N=14)
+        self.slope = MyTT.SLOPE(df[self.instrument].tail(10).values, N=5)
+
+        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, slope: {self.slope}")
 
         self.data = df.copy()
     
@@ -242,7 +245,7 @@ class Trader(tpqoa.tpqoa):
         #     if self.print_trades:
         #         self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 0, 0, 0, self.units])
 
-        if self.ticks % 100 == 0:
+        if self.ticks % 500 == 0:
             spread = ask - bid
             spread_prct = spread / ((ask + bid) / 2)
             logger.info(
@@ -285,13 +288,20 @@ class Trader(tpqoa.tpqoa):
     def refresh_strategy(self, refresh_strategy_time):
 
         i: int = 0
+        refresh_check_positions_count = 6
+
         while not self.stop_refresh:
 
             logger.debug ("Refreshing Strategy")
 
             try:
-                self.check_positions()
-                
+
+                if refresh_check_positions_count > 5:
+                    self.check_positions()
+                    refresh_check_positions_count = 0
+
+                refresh_check_positions_count += 1
+
                 tick_data = self.tick_data
                 self.tick_data = []
 
@@ -344,10 +354,13 @@ class Trader(tpqoa.tpqoa):
         logger.info("\n" + 100* "-")
 
         if self.units != 0 and not self.unit_test:
-            close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True) 
-            self.report_trade(close_order, "GOING NEUTRAL")
-            self.units = 0
-            self.trades.append([0, 0, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if float(close_order.get("units")) > 0 else -1, close_order.get("units"), close_order.get("price"), self.units])
+            close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True)
+            if not "rejectReason" in close_order:
+                self.report_trade(close_order, "GOING NEUTRAL")
+                self.units = 0
+                self.trades.append([close_order["fullPrice"]["bids"]["price"], close_order["fullPrice"]["asks"]["price"], self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units])
+            else:
+                logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
 
         if self.print_trades and self.trades != None and len(self.trades) > 0:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "signal", "trade_units", "price", "have_units"])
