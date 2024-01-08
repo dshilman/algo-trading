@@ -67,7 +67,7 @@ class Strategy():
         self.target = None
         self.rsi = None
         self.slope5 = None
-        self.slope14 = None
+        self.slope10 = None
 
 
     def define_strategy(self, resampled_tick_data: pd.DataFrame = None): # "strategy-specific"
@@ -104,9 +104,9 @@ class Strategy():
         self.target = round(df.SMA.iloc[-1], 4)
         self.rsi = MyTT.RSI(df[self.instrument].tail(28).values, N=14)
         self.slope5 = MyTT.SLOPE(df[self.instrument].tail(10).values, N=5)
-        self.slope14 = MyTT.SLOPE(df[self.instrument].tail(20).values, N=14)
+        self.slope10 = MyTT.SLOPE(df[self.instrument].tail(20).values, N=10)
 
-        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, slope5: {self.slope5}, slope14: {self.slope14}")
+        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, slope5: {self.slope5}, slope10: {self.slope10}")
 
         self.data = df.copy()
     
