@@ -155,7 +155,7 @@ class Trader(tpqoa.tpqoa):
             # logger.addHandler(watchtower.CloudWatchLogHandler(boto3_client=boto3.client("logs", region_name="us-east-1")))
 
         log_file = os.path.join("logs", __name__ + "_" + self.instrument + ".log")
-        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024, backupCount=5)
+        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
