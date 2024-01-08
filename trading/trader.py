@@ -155,19 +155,21 @@ class Trader(tpqoa.tpqoa):
             # logger.addHandler(watchtower.CloudWatchLogHandler(boto3_client=boto3.client("logs", region_name="us-east-1")))
 
         log_file = os.path.join("logs", __name__ + "_" + self.instrument + ".log")
-        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
+        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
 
  
 
-    def start_trading(self, max_attempts = 2):
+    def start_trading(self, max_attempts = 3):
 
         logger.info("\n" + 100 * "-")
 
-        for i in range(max_attempts):
+        for i in range(1, max_attempts + 1):
             try:
+                success = True
+
                 logger.info ("Started New Trading Session")
                 logger.info (f"Getting  candles for: {self.instrument}")
                 self.strategy.data = self.get_most_recent(self.instrument, self.days)
@@ -184,16 +186,13 @@ class Trader(tpqoa.tpqoa):
 
                 logger.info (f"Starting to stream for: {self.instrument}")
                 self.stream_data(self.instrument, stop= self.stop_after)
-          
-
-                self.terminate_session("Finished Trading Session")
-
+                         
                 break
 
             except Exception as e:
+                success = False
                 logger.exception(e)
-                logger.error(f"Error in attempt {i + 1} of {max_attempts} to start trading")
-                self.terminate_session("Finished Trading Session with Errors")
+                logger.error(f"Error in attempt {i} of {max_attempts} to start trading")
             finally:
                 logger.info("Stopping Refresh Strategy Thread")
                 self.stop_refresh = True
@@ -201,7 +200,11 @@ class Trader(tpqoa.tpqoa):
                     self.refresh_thread.join(timeout=self.refresh_strategy_time)
                     logger.info("Stopped Refresh Strategy Thread")
 
-                
+        try:
+            self.terminate_session("Finished Trading Session " + "Successfully" if success else "with Errors")
+        except Exception as e:
+            logger.exception(e)
+            logger.error("Error terminating session")
 
 
 
