@@ -356,14 +356,14 @@ class Trader(tpqoa.tpqoa):
 
         logger.info("\n" + 100* "-")
 
-        if self.units != 0 and not self.unit_test:
-            close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True)
-            if not "rejectReason" in close_order:
-                self.report_trade(close_order, "GOING NEUTRAL")
-                self.units = 0
-                self.trades.append([close_order["fullPrice"]["bids"]["price"], close_order["fullPrice"]["asks"]["price"], self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units])
-            else:
-                logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
+        # if self.units != 0 and not self.unit_test:
+        #     close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True)
+        #     if not "rejectReason" in close_order:
+        #         self.report_trade(close_order, "GOING NEUTRAL")
+        #         self.units = 0
+        #         self.trades.append([close_order["fullPrice"]["bids"]["price"], close_order["fullPrice"]["asks"]["price"], self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units])
+        #     else:
+        #         logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
 
         if self.print_trades and self.trades != None and len(self.trades) > 0:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "signal", "trade_units", "price", "have_units"])
