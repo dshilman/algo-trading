@@ -48,7 +48,7 @@ class BB_to_SMA_Strategy(Strategy):
             else:
                 # if ask < self.bb_lower:  # if price is below lower BB, BUY
                 # if price < self.bb_lower and self.rsi <= 30 and self.slope5 > 0: # if price is below lower BB, BUY
-                if price < self.bb_lower and self.slope05 > 0: # if price is below lower BB, BUY
+                if price < self.bb_lower and price > self.min and self.slope05 > 0: # if price is below lower BB, BUY
 
                     signal = 1
                     # price = ask
@@ -57,7 +57,7 @@ class BB_to_SMA_Strategy(Strategy):
                     )
                 # elif bid > self.bb_upper:  # if price is above upper BB, SELL
                 # elif price > self.bb_upper and self.rsi >= 70:  # if price is above upper BB, SELL
-                elif price > self.bb_upper and self.slope05 < 0:  # if price is above upper BB, SELL
+                elif price > self.bb_upper and price < self.max and self.slope05 < 0:  # if price is above upper BB, SELL
 
                     signal = -1
                     # price = bid

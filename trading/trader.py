@@ -70,6 +70,8 @@ class Strategy():
         self.slope05 = None
         self.slope10 = None
 
+        self.start_s = datetime.now().replace(hour=0, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S")
+
 
     def define_strategy(self, resampled_tick_data: pd.DataFrame = None): # "strategy-specific"
         
@@ -107,7 +109,12 @@ class Strategy():
         self.slope05 = MyTT.SLOPE(df[self.instrument].tail(10).values, N=5)
         self.slope10 = MyTT.SLOPE(df[self.instrument].tail(20).values, N=10)
 
-        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, slope05: {self.slope05}, slope10: {self.slope10}")
+        filtered_df = df.loc[(df.index >= self.start_s)]
+        self.min = filtered_df[self.instrument].min()
+        self.max = filtered_df[self.instrument].max()
+
+
+        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, slope05: {self.slope05}, slope10: {self.slope10}, min: {self.min}, max: {self.max}")
 
         self.data = df.copy()
     
