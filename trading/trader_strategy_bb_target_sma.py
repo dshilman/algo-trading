@@ -25,20 +25,20 @@ class BB_to_SMA_Strategy(Strategy):
             logger.debug(f"Have {units} positions, checking if need to close")
             # target = self.target + spread
             # if bid > target:  # if price is above target SMA, SELL
-            if price > target and self.slope < 0:  # if price is above target SMA, SELL
+            if price > target and self.slope10 < 0:  # if price is above target SMA, SELL
                 signal = -1
                 # price = bid
                 logger.info(
-                    f"Close {units} long position - signal SELL at price: {price}, sma: {self.target}, spread: {spread}, slope: {self.slope}"
+                    f"Close long position - Sell {units} units at price: {price}, sma: {self.target}, spread: {spread}, slope10: {self.slope10}"
                 )
         elif units < 0:  # if alredy have short positions
             # target = self.target - spread
             # if ask < target:  # price is below target SMA, BUY
-            if price < target and self.slope > 0:  # price is below target SMA, BUY
+            if price < target and self.slope10 > 0:  # price is below target SMA, BUY
                 signal = 1
                 # price = ask
                 logger.info(
-                    f"Close {units} short position - Signal BUY at price: {price}, sma: {self.target}, spread: {spread}, slope: {self.slope}"
+                    f"Close short position  - Buy {units} units at price: {price}, sma: {self.target}, spread: {spread}, slope10: {self.slope10}"
                 )
         else:  # if no positions
             logger.debug("Don't have any positions, checking if need to open")
@@ -48,21 +48,21 @@ class BB_to_SMA_Strategy(Strategy):
             else:
                 # if ask < self.bb_lower:  # if price is below lower BB, BUY
                 # if price < self.bb_lower and self.rsi <= 30 and self.slope5 > 0: # if price is below lower BB, BUY
-                if price < self.bb_lower and self.slope > 0: # if price is below lower BB, BUY
+                if price < self.bb_lower and self.slope05 > 0: # if price is below lower BB, BUY
 
                     signal = 1
                     # price = ask
                     logger.info(
-                        f"Signal BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {spread}, rsi: {self.rsi}, slope: {self.slope}"
+                        f"Go Long - BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {spread}, rsi: {self.rsi}, slope05: {self.slope05}"
                     )
                 # elif bid > self.bb_upper:  # if price is above upper BB, SELL
                 # elif price > self.bb_upper and self.rsi >= 70:  # if price is above upper BB, SELL
-                elif price > self.bb_upper and self.slope < 0:  # if price is above upper BB, SELL
+                elif price > self.bb_upper and self.slope05 < 0:  # if price is above upper BB, SELL
 
                     signal = -1
                     # price = bid
                     logger.info(
-                        f"Signal SELL at price: {price}, bb_upper: {self.bb_upper}, spread: {spread}, rsi: {self.rsi}, slope: {self.slope}"
+                        f"Go Short - SELL at price: {price}, bb_upper: {self.bb_upper}, spread: {spread}, rsi: {self.rsi}, slope05: {self.slope05}"
                     )
           
         trade_action = Trade_Action(signal, instrument, price, target, spread)

@@ -107,8 +107,6 @@ class Strategy():
         self.slope05 = MyTT.SLOPE(df[self.instrument].tail(10).values, N=5)
         self.slope10 = MyTT.SLOPE(df[self.instrument].tail(20).values, N=10)
 
-        self.slope = self.slope05
-
         logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, slope05: {self.slope05}, slope10: {self.slope10}")
 
         self.data = df.copy()
