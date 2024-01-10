@@ -91,16 +91,6 @@ class Strategy():
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
 
-        # df.dropna(subset=['Lower'], inplace=True)
-        
-        df["signal"] = np.where(df[self.instrument] < df.Lower, 1, np.nan)
-
-        df["signal"] = np.where(df[self.instrument] > df.Upper, -1, np.nan)
-        
-        # df["position"] = np.where(df.distance * df.distance.shift(1) < 0, 0, df["position"])
-
-        df["signal"] = df.signal.ffill().fillna(0)
-        # ***********************************************************************
 
         self.bb_lower = round(df.Lower.iloc[-1], 4)
         self.bb_upper =  round(df.Upper.iloc[-1], 4)
@@ -109,12 +99,17 @@ class Strategy():
         self.slope05 = MyTT.SLOPE(df[self.instrument].tail(10).values, N=5)
         self.slope10 = MyTT.SLOPE(df[self.instrument].tail(20).values, N=10)
 
-        filtered_df = df.loc[(df.index >= self.start_s)]
-        self.min = filtered_df[self.instrument].min()
-        self.max = filtered_df[self.instrument].max()
+        df.loc[df.index[-1], 'slope05'] = self.slope05
+        df.loc[df.index[-1], 'slope10'] = self.slope10
 
+        self.slope05_05 = MyTT.SLOPE(df["slope05"].tail(10).values, N=5)
+        df.loc[df.index[-1], 'slope0505'] = self.slope05_05       
+        self.slope10_10 = MyTT.SLOPE(df["slope10"].tail(20).values, N=10)
+        df.loc[df.index[-1], 'slope1010'] = self.slope10_10
 
-        logger.info (f"new indicators  - bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, slope05: {self.slope05}, slope10: {self.slope10}, min: {self.min}, max: {self.max}")
+        logger.info ("new indicators:")
+        logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}")
+        logger.info (f"slope05: {self.slope05}, slope05_05: {self.slope05_05} -- slope10: {self.slope10}, slope10_10: {self.slope10_10}")
 
         self.data = df.copy()
     
@@ -160,10 +155,9 @@ class Trader(tpqoa.tpqoa):
             logger.setLevel(logging.DEBUG)            
         else:
             logger.setLevel(logging.INFO)
-            # logger.addHandler(watchtower.CloudWatchLogHandler(boto3_client=boto3.client("logs", region_name="us-east-1")))
 
         log_file = os.path.join("logs", __name__ + "_" + self.instrument + ".log")
-        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=5)
+        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
@@ -181,9 +175,6 @@ class Trader(tpqoa.tpqoa):
                 logger.info ("Started New Trading Session")
                 logger.info (f"Getting  candles for: {self.instrument}")
                 self.strategy.data = self.get_most_recent(self.instrument, self.days)
-
-                # logger.info ("Define strategy for the first time")
-                # self.strategy.define_strategy()
 
                 logger.info ("Starting Refresh Strategy Thread")
                 self.stop_refresh = False
@@ -241,20 +232,12 @@ class Trader(tpqoa.tpqoa):
         trade_action = self.strategy.determine_action(bid, ask, self.units)
 
         if trade_action and trade_action.signal != 0:
-            # self.check_positions()
             order = self.strategy.create_order(trade_action, self.sl_perc, self.tp_perc, self.units, self.units_to_trade)
 
             if order != None:
                 self.submit_order(order)
                 if self.print_trades:
                     self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, trade_action.signal, order.units, order.price, self.units])
-            # else:
-            #     if self.print_trades:
-            #         self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, trade_action.signal, 0, 0, self.units])
-
-        # else:
-        #     if self.print_trades:
-        #         self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 0, 0, 0, self.units])
 
         if self.ticks % 500 == 0:
             spread = ask - bid
@@ -269,10 +252,7 @@ class Trader(tpqoa.tpqoa):
     def capture(self, time, bid, ask):
 
         # 2023-12-19T13:28:35.194571445Z
-        # date_time = pd.to_datetime(time).to_pydatetime(warn=False).replace(tzinfo=None).replace(microsecond=0)
         date_time = pd.to_datetime(time).replace(tzinfo=None)
-       
-        # date_time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=None).replace(microsecond=0)
         
         recent_tick = [date_time, (ask + bid)/2]
         self.tick_data.append(recent_tick)
@@ -316,9 +296,6 @@ class Trader(tpqoa.tpqoa):
                 tick_data = self.tick_data
                 self.tick_data = []
 
-                # logger.debug ("Before resampling")
-                # logger.debug(tick_data)
-
                 df = None
 
                 if len(tick_data) > 0:
@@ -345,16 +322,6 @@ class Trader(tpqoa.tpqoa):
 
         logger.info("\n" + 100* "-" + "\n")
         logger.info(json.dumps(order, indent = 2))
-        # order_id = order.get("id", 0)
-        # if order_id == 0:
-        #     logger.info ("Order has been submitted but not filled")
-            
-        # time = order.get("time")
-        # units = order.get("units")
-        # price = order.get("price")
-        # logger.info("\n" + 100* "-")
-        # logger.info(f"{comment}")
-        # logger.info("order id = {} |  time filled: {}| units = {} | price = {} ".format(order_id,time, units, price))
         logger.info("\n" + 100 * "-" + "\n")
 
         
@@ -382,8 +349,6 @@ class Trader(tpqoa.tpqoa):
 
     
     def check_positions(self): 
-
-        # logger.debug ("inside check_positions")
 
         units = 0
         positions = self.get_positions()

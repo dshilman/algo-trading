@@ -23,20 +23,14 @@ class BB_to_SMA_Strategy(Strategy):
 
         if units > 0:  # if already have long positions
             logger.debug(f"Have {units} positions, checking if need to close")
-            # target = self.target + spread
-            # if bid > target:  # if price is above target SMA, SELL
             if price > target and self.slope10 < 0:  # if price is above target SMA, SELL
                 signal = -1
-                # price = bid
                 logger.info(
                     f"Close long position - Sell {units} units at price: {price}, sma: {self.target}, spread: {spread}, slope10: {self.slope10}"
                 )
         elif units < 0:  # if alredy have short positions
-            # target = self.target - spread
-            # if ask < target:  # price is below target SMA, BUY
             if price < target and self.slope10 > 0:  # price is below target SMA, BUY
                 signal = 1
-                # price = ask
                 logger.info(
                     f"Close short position  - Buy {units} units at price: {price}, sma: {self.target}, spread: {spread}, slope10: {self.slope10}"
                 )
@@ -46,21 +40,13 @@ class BB_to_SMA_Strategy(Strategy):
                 signal = 0                
                 logger.warning (f"Current spread: {spread} is too large for price: {price} and target: {target}")
             else:
-                # if ask < self.bb_lower:  # if price is below lower BB, BUY
-                # if price < self.bb_lower and self.rsi <= 30 and self.slope5 > 0: # if price is below lower BB, BUY
-                if price < self.bb_lower and price > self.min and self.slope05 > 0: # if price is below lower BB, BUY
-
+                if price < self.bb_lower and self.slope05 > 0: # if price is below lower BB, BUY
                     signal = 1
-                    # price = ask
                     logger.info(
                         f"Go Long - BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {spread}, rsi: {self.rsi}, slope05: {self.slope05}"
                     )
-                # elif bid > self.bb_upper:  # if price is above upper BB, SELL
-                # elif price > self.bb_upper and self.rsi >= 70:  # if price is above upper BB, SELL
-                elif price > self.bb_upper and price < self.max and self.slope05 < 0:  # if price is above upper BB, SELL
-
+                elif price > self.bb_upper and self.slope05 < 0:  # if price is above upper BB, SELL
                     signal = -1
-                    # price = bid
                     logger.info(
                         f"Go Short - SELL at price: {price}, bb_upper: {self.bb_upper}, spread: {spread}, rsi: {self.rsi}, slope05: {self.slope05}"
                     )
@@ -81,7 +67,6 @@ class BB_to_SMA_Strategy(Strategy):
             if trade_action.spread / trade_action.price >= sl_perc:
                 logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
                 return None
-            # sl_dist = round(trade_action.price - trade_action.signal * trade_action.price * sl_perc, 4)
             sl_dist = round(trade_action.price * sl_perc, 2)
 
         else:
