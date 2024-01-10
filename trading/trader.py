@@ -69,6 +69,8 @@ class Strategy():
 
         self.slope05 = None
         self.slope10 = None
+        self.slope05_05 = None
+        self.slope10_10 = None
 
         self.start_s = datetime.now().replace(hour=0, minute=0, second=0).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -102,10 +104,13 @@ class Strategy():
         df.loc[df.index[-1], 'slope05'] = self.slope05
         df.loc[df.index[-1], 'slope10'] = self.slope10
 
-        self.slope05_05 = MyTT.SLOPE(df["slope05"].tail(10).values, N=5)
-        df.loc[df.index[-1], 'slope0505'] = self.slope05_05       
-        self.slope10_10 = MyTT.SLOPE(df["slope10"].tail(20).values, N=10)
-        df.loc[df.index[-1], 'slope1010'] = self.slope10_10
+        if df["slope05"].tail(10).dropna().size > 5:
+            self.slope05_05 = MyTT.SLOPE(df["slope05"].tail(10).values, N=5)
+            df.loc[df.index[-1], 'slope0505'] = self.slope05_05    
+
+        if df["slope10"].tail(11).dropna().size > 10:
+            self.slope10_10 = MyTT.SLOPE(df["slope10"].tail(20).values, N=10)
+            df.loc[df.index[-1], 'slope1010'] = self.slope10_10
 
         logger.info ("new indicators:")
         logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}")
