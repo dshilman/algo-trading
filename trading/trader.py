@@ -85,36 +85,33 @@ class Strategy():
             # logger.debug (df)            
       
         df = df.tail(self.SMA * 2)
+        df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
 
         # ******************** define your strategy here ************************
         df["SMA"] = df[self.instrument].rolling(self.SMA).mean()
         std = df[self.instrument].rolling(self.SMA).std() * self.dev
-
+        
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
-
+        df["RSI"] = df [self.instrument].rolling(15).apply(lambda x: MyTT.RSI(x.values, N=14))
+        df["slope05"] = df [self.instrument].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=5))
+        df["slope10"] = df [self.instrument].rolling(10).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=10))
+        df["rsi_slope"] = df ["RSI"].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=5))
 
         self.bb_lower = round(df.Lower.iloc[-1], 4)
         self.bb_upper =  round(df.Upper.iloc[-1], 4)
         self.target = round(df.SMA.iloc[-1], 4)
-        self.rsi = MyTT.RSI(df[self.instrument].tail(28).values, N=14)
-        self.slope05 = MyTT.SLOPE(df[self.instrument].tail(10).values, N=5)
-        self.slope10 = MyTT.SLOPE(df[self.instrument].tail(20).values, N=10)
+        self.rsi = df.RSI.iloc[-1]
+        self.rsi_slope = df.rsi_slope.iloc[-1]
+        self.rsi_slope_flat = True if self.rsi_slope > -0.25 and self.rsi_slope < 0.25 else False
+        self.slope05 = df.slope05.iloc[-1]
+        self.slope10 = df.slope10.iloc[-1]
 
-        df.loc[df.index[-1], 'slope05'] = self.slope05
-        df.loc[df.index[-1], 'slope10'] = self.slope10
-
-        if df["slope05"].tail(10).dropna().size > 5:
-            self.slope05_05 = MyTT.SLOPE(df["slope05"].tail(10).values, N=5)
-            df.loc[df.index[-1], 'slope0505'] = self.slope05_05    
-
-        if df["slope10"].tail(11).dropna().size > 10:
-            self.slope10_10 = MyTT.SLOPE(df["slope10"].tail(20).values, N=10)
-            df.loc[df.index[-1], 'slope1010'] = self.slope10_10
+        logger.info (df)
 
         logger.info ("new indicators:")
         logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}")
-        logger.info (f"slope05: {self.slope05}, slope05_05: {self.slope05_05} -- slope10: {self.slope10}, slope10_10: {self.slope10_10}")
+        logger.info (f"slope05: {self.slope05}, slope10: {self.slope10}")
 
         self.data = df.copy()
     
@@ -230,7 +227,7 @@ class Trader(tpqoa.tpqoa):
   
     def on_success(self, time, bid, ask):
 
-        logger.debug(f"{self.ticks} ----- time: {time}  ---- ask: {ask} ----- bid: {bid}")
+        # logger.debug(f"{self.ticks} ----- time: {time}  ---- ask: {ask} ----- bid: {bid}")
 
         self.capture(time, bid, ask)
 
