@@ -96,6 +96,12 @@ class Strategy():
         df["RSI"] = df [self.instrument].rolling(15).apply(lambda x: MyTT.RSI(x.values, N=14))
       
         df["rsi_slope"] = df ["RSI"].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=5))
+        df ['prev_rsi_slope'] = df.rsi_slope.shift(1)
+
+        df.dropna(subset=['rsi_slope'], inplace=True)
+        df.dropna(subset=['prev_rsi_slope'], inplace=True)
+        df["rsi_slope_change"] = df["rsi_slope"] * df["prev_rsi_slope"]
+
         # df["slope05"] = df [self.instrument].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=5))
         # df["slope10"] = df [self.instrument].rolling(10).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=10))
 
@@ -104,14 +110,15 @@ class Strategy():
         self.target = round(df.SMA.iloc[-1], 4)
         self.rsi = round(df.RSI.iloc[-1], 0)
         self.rsi_slope = round(df.rsi_slope.iloc[-1], 4)
-        self.rsi_slope_flat = True if self.rsi_slope > -0.25 and self.rsi_slope < 0.25 else False
+        # self.rsi_slope_flat = True if self.rsi_slope > -0.25 and self.rsi_slope < 0.25 else False
+        self.rsi_reversed = True if df.rsi_slope_change.iloc[-1] < 0 else False
         # self.slope05 = df.slope05.iloc[-1]
         # self.slope10 = df.slope10.iloc[-1]
 
         logger.debug (df.tail(20))
 
         logger.info ("new indicators:")
-        logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}, rsi_slope_flat: {self.rsi_slope_flat}")
+        logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}, rsi_reversed: {self.rsi_reversed}")
         # logger.info (f"slope05: {self.slope05}, slope10: {self.slope10}")
 
         self.data = df.copy()
