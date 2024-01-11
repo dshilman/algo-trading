@@ -5,8 +5,6 @@ import sys
 from trader import Order, Strategy, Trade_Action, Trader
 
 logger = logging.getLogger("trader_oanda")
-logger.setLevel(logging.INFO)
-
 
 class BB_to_SMA_Strategy(Strategy):
     def __init__(self, instrument, pairs_file):
@@ -23,13 +21,13 @@ class BB_to_SMA_Strategy(Strategy):
 
         if units > 0:  # if already have long positions
             logger.debug(f"Have {units} positions, checking if need to close")
-            if price > target and self.rsi_slope_flat:  # if price is above target SMA, SELL
+            if price > target and self.rsi_reversed:  # if price is above target SMA, SELL
                 signal = -1
                 logger.info(
                     f"Close long position - Sell {units} units at price: {price}, sma: {self.target}, spread: {spread}"
                 )
         elif units < 0:  # if alredy have short positions
-            if price < target and self.rsi_slope_flat:  # price is below target SMA, BUY
+            if price < target and self.rsi_reversed:  # price is below target SMA, BUY
                 signal = 1
                 logger.info(
                     f"Close short position  - Buy {units} units at price: {price}, sma: {self.target}, spread: {spread}"
@@ -40,12 +38,12 @@ class BB_to_SMA_Strategy(Strategy):
                 signal = 0                
                 logger.warning (f"Current spread: {spread} is too large for price: {price} and target: {target}")
             else:
-                if price < self.bb_lower and self.rsi < 30 and self.rsi_slope_flat: # if price is below lower BB, BUY
+                if price < self.bb_lower and self.rsi < 30 and self.rsi_reversed: # if price is below lower BB, BUY
                     signal = 1
                     logger.info(
                         f"Go Long - BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {spread}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}"
                     )
-                elif price > self.bb_upper and self.rsi > 70 and self.rsi_slope_flat:  # if price is above upper BB, SELL
+                elif price > self.bb_upper and self.rsi > 70 and self.rsi_reversed:  # if price is above upper BB, SELL
                     signal = -1
                     logger.info(
                         f"Go Short - SELL at price: {price}, bb_upper: {self.bb_upper}, spread: {spread}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}"

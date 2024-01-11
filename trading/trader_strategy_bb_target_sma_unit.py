@@ -7,8 +7,6 @@ from datetime import datetime, timedelta, timezone
 from trader_strategy_bb_target_sma import BB_Strategy_SMA_Target_Trader
 
 logger = logging.getLogger("trader_oanda")
-logger.setLevel(logging.INFO)
-
 
 class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
     
