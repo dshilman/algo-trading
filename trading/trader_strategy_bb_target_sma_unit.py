@@ -79,7 +79,7 @@ if __name__ == "__main__":
         instrument=pair
     )
     trader.days = 1
-    trader.stop_after = 50
+    trader.stop_after = 5
     trader.refresh_strategy_time = 60
 
     trader.start_trading()

@@ -94,24 +94,25 @@ class Strategy():
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         df["RSI"] = df [self.instrument].rolling(15).apply(lambda x: MyTT.RSI(x.values, N=14))
-        df["slope05"] = df [self.instrument].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=5))
-        df["slope10"] = df [self.instrument].rolling(10).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=10))
+      
         df["rsi_slope"] = df ["RSI"].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=5))
+        # df["slope05"] = df [self.instrument].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=5))
+        # df["slope10"] = df [self.instrument].rolling(10).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=10))
 
         self.bb_lower = round(df.Lower.iloc[-1], 4)
         self.bb_upper =  round(df.Upper.iloc[-1], 4)
         self.target = round(df.SMA.iloc[-1], 4)
-        self.rsi = df.RSI.iloc[-1]
-        self.rsi_slope = df.rsi_slope.iloc[-1]
+        self.rsi = round(df.RSI.iloc[-1], 0)
+        self.rsi_slope = round(df.rsi_slope.iloc[-1], 4)
         self.rsi_slope_flat = True if self.rsi_slope > -0.25 and self.rsi_slope < 0.25 else False
-        self.slope05 = df.slope05.iloc[-1]
-        self.slope10 = df.slope10.iloc[-1]
+        # self.slope05 = df.slope05.iloc[-1]
+        # self.slope10 = df.slope10.iloc[-1]
 
-        logger.info (df)
+        logger.debug (df.tail(20))
 
         logger.info ("new indicators:")
-        logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}")
-        logger.info (f"slope05: {self.slope05}, slope10: {self.slope10}")
+        logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}, rsi_slope_flat: {self.rsi_slope_flat}")
+        # logger.info (f"slope05: {self.slope05}, slope10: {self.slope10}")
 
         self.data = df.copy()
     
