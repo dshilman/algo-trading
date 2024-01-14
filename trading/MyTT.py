@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger("trader_oanda")
 
 # ------------------ 0 level：core tools function --------------------------------------------
-def RD(N, D=3):
+def RD(N, D=4):
     return np.round(N, D)
 
 
@@ -135,7 +135,7 @@ def KDJ(CLOSE, HIGH, LOW, N=9, M1=3, M2=3):
 
 def RSI(CLOSE, N = 14):
     DIF = CLOSE - REF(CLOSE, 1)
-    result =RD(100 - (100/(1 + (SMA(MAX(DIF, 0), N)[-1] / SMA(ABS(MIN(DIF, 0)), N)[-1]))))
+    result =RD(100 - (100/(1 + (SMA(MAX(DIF, 0), N)[-1] / SMA(ABS(MIN(DIF, 0)), N)[-1]))), 4)
     return result
     
 

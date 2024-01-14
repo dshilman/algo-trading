@@ -50,7 +50,7 @@ class BB_to_SMA_Strategy(Strategy):
                 logger.info(f"Go Short - SELL at price: {price}, rsi: {self.rsi}")
         
         if signal != 0:
-            return Trade_Action(signal, instrument, price, target, spread)
+            return Trade_Action(instrument, signal * units_to_trade, price, target, spread)
 
         return None
 
@@ -70,19 +70,16 @@ class BB_to_SMA_Strategy(Strategy):
                 logger.info(f"Close short position  - Buy {units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
 
         if signal != 0:
-            return Trade_Action(signal, instrument, price, target, spread)
+            return Trade_Action(instrument, signal * units, price, target, spread)
 
         return None
 
 
 
 
-    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units, units_to_trade) -> Order:
+    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
         
         order = None
-
-        if trade_action.signal == 0:
-            return None
 
         if sl_perc:
             if trade_action.spread / trade_action.price >= sl_perc:
@@ -94,47 +91,30 @@ class BB_to_SMA_Strategy(Strategy):
             sl_dist = None
 
         if tp_perc:
-            tp_price = round(trade_action.price + trade_action.signal * trade_action.price * tp_perc, 2)
+            tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, 2)
         else:
             tp_price = None
 
-        if trade_action.signal == 1:  # if signal is BUY
-            logger.info("Signal = BUY")
-            if have_units <= 0:  # has short positions
-                trade_units = max(units_to_trade, have_units)
+        comment = None
+        if have_units >= 0 and trade_action.units > 0:
+            comment = "Going Long"
+        elif have_units <= 0 and trade_action.units < 0:
+            comment = "Going Short"
+        elif have_units > 0 and trade_action.units < 0:
+            comment = "Closing Long"
+        elif have_units < 0 and trade_action.units > 0:
+            comment = "Closing Short"
 
-                order = Order(
-                    signal = trade_action.signal,
-                    instrument = trade_action.instrument,
-                    price = trade_action.price,
-                    trade_units = trade_units,
-                    sl_dist = sl_dist,
-                    tp_price = tp_price,
-                    comment = "Going Long" if have_units == 0 else "Closing Short"
-                )
-            else:  # Already have a LONG position
-                logger.info(
-                    f"Already have {have_units} long positions...skipping trade"
-                )
-        elif trade_action.signal == -1:  # if signal is SELL
-            logger.info("Signal = SELL")
-            if have_units >= 0:
-                trade_units = min(-units_to_trade, have_units)
-                
-                order = Order(
-                    signal = trade_action.signal,
-                    instrument = trade_action.instrument,
-                    price = trade_action.price,
-                    trade_units = trade_units,
-                    sl_dist = sl_dist,
-                    tp_price = tp_price,
-                    comment = "Going Short" if have_units == 0 else "Closing Long"
-                )
-            else:  # Already have a SHORT position
-                logger.info(
-                    f"Already have {have_units} short positions...skipping trade"
-                )
+        order = Order(
+            instrument = trade_action.instrument,
+            price = trade_action.price,
+            trade_units = trade_action.units,
+            sl_dist = sl_dist,
+            tp_price = tp_price,
+            comment = comment
+        )
         logger.debug(order)
+
         return order
 
 

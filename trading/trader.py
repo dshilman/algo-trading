@@ -18,25 +18,24 @@ logger = logging.getLogger('trader_oanda')
 
 
 class Trade_Action():
-    def __init__(self, signal, instrument, price, target, spread):
+    def __init__(self, instrument, units, price, target, spread):
         super().__init__()
-        self.signal = signal
         self.instrument = instrument
+        self.units = units
         self.price = price
         self.target = target
         self.spread = spread
 
 
     def __str__(self):
-        return f"Trade_Action: instrument: {self.instrument}, signal: {self.signal}, price: {self.price}, target: {self.target}, spread: {self.spread}" 
+        return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}, target: {self.target}, spread: {self.spread}" 
 
     def __repr__(self):
-        return f"Trade_Action: instrument: {self.instrument}, signal: {self.signal}, price: {self.price}, target: {self.target}, spread: {self.spread}"       
+        return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}, target: {self.target}, spread: {self.spread}"       
 
 class Order ():
-    def __init__(self, signal, instrument, price, trade_units, sl_dist, tp_price, comment):
+    def __init__(self, instrument, price, trade_units, sl_dist, tp_price, comment):
         super().__init__()
-        self.signal = signal
         self.instrument = instrument
         self.price = price
         self.units = trade_units
@@ -45,10 +44,10 @@ class Order ():
         self.comment = comment
 
     def __str__(self):
-        return f"Order: instrument: {self.instrument}, units: {self.units}, price: {self.price}, stopp loss: {self.sl}, take profit: {self.tp}"
+        return f"Order: instrument: {self.instrument}, units: {self.units}, price: {self.price}, stopp loss: {self.sl}, take profit: {self.tp}, comment: {self.comment}"
 
     def __repr__(self):
-        return f"Order: instrument: {self.instrument}, units: {self.units}, price: {self.price}, stopp loss: {self.sl}, take profit: {self.tp}"
+        return f"Order: instrument: {self.instrument}, units: {self.units}, price: {self.price}, stopp loss: {self.sl}, take profit: {self.tp}, comment: {self.comment}"
 
 class Strategy():
     def __init__(self, instrument, pairs_file):
@@ -94,7 +93,7 @@ class Strategy():
         self.bb_lower = round(df.Lower.iloc[-1], 4)
         self.bb_upper =  round(df.Upper.iloc[-1], 4)
         self.target = round(df.SMA.iloc[-1], 4)
-        self.rsi = round(df.RSI.iloc[-1], 0)
+        self.rsi = df.RSI.iloc[-1]
         # self.rsi_slope = round(df.rsi_slope.iloc[-1], 4)
         # self.rsi_reversed = True if (df.rsi_slope.iloc[-1] * df.prev_rsi_slope.iloc[-1] < 0) else False
 
@@ -109,7 +108,7 @@ class Strategy():
     def determine_action(self, bid, ask, units, units_to_trade) -> Trade_Action:
         pass
 
-    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units, units_to_trade) -> Order:
+    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
         pass
 
 class Trader(tpqoa.tpqoa):
@@ -223,20 +222,19 @@ class Trader(tpqoa.tpqoa):
 
         trade_action = self.strategy.determine_action(bid, ask, self.units, self.units_to_trade)
 
-        if trade_action and trade_action.signal != 0:
+        if trade_action is not None:
             logger.info(f"trade_action: {trade_action}")
-            order = self.strategy.create_order(trade_action, self.sl_perc, self.tp_perc, self.units, self.units_to_trade)
+            order = self.strategy.create_order(trade_action, self.sl_perc, self.tp_perc, self.units)
 
-            if order != None:
-                self.submit_order(order)
-                if self.print_trades:
-                    self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, trade_action.signal, order.units, order.price, self.units])
+            self.submit_order(order)
+            if self.print_trades:
+                self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, order.units, order.price, self.units])
 
         if self.ticks % 500 == 0:
             spread = ask - bid
             spread_prct = spread / ((ask + bid) / 2)
             logger.info(
-                f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(spread, 4)}, spread %: {round(spread_prct, 4)}, signal: {trade_action.signal}"
+                f"Heartbeat current tick {self.ticks} --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}, spread: {round(spread, 4)}, spread %: {round(spread_prct, 4)}"
             )
             if self.refresh_thread == None or not self.refresh_thread.is_alive():
                 raise Exception("Refresh Strategy Thread is not alive")
@@ -254,20 +252,19 @@ class Trader(tpqoa.tpqoa):
     def submit_order(self, order: Order):
 
         logger.info(f"Submitting Order: {order}")
-        if order != None:
-            if not self.unit_test:        
-                oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, suppress=True, ret=True, comment=order.comment)
-                self.report_trade(oanda_order, order.comment)
-                if not "rejectReason" in oanda_order:
-                    self.units = self.units + order.units
-                    logger.info(f"New # of {order.instrument} units: {self.units}")
-                else:
-                    error = f"Order was not filled: {oanda_order ['type']}, reason: {oanda_order['rejectReason']}"
-                    logger.error(error)
-                    raise Exception(error)
-            else:
+        if not self.unit_test:        
+            oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, suppress=True, ret=True, comment=order.comment)
+            self.report_trade(oanda_order, order.comment)
+            if not "rejectReason" in oanda_order:
                 self.units = self.units + order.units
                 logger.info(f"New # of {order.instrument} units: {self.units}")
+            else:
+                error = f"Order was not filled: {oanda_order ['type']}, reason: {oanda_order['rejectReason']}"
+                logger.error(error)
+                raise Exception(error)
+        else:
+            self.units = self.units + order.units
+            logger.info(f"New # of {order.instrument} units: {self.units}")
 
     def refresh_strategy(self, refresh_strategy_time):
 
@@ -334,7 +331,7 @@ class Trader(tpqoa.tpqoa):
         #         logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
 
         if self.print_trades and self.trades != None and len(self.trades) > 0:
-            df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "signal", "trade_units", "price", "have_units"])
+            df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "trade_units", "price", "have_units"])
             logger.info("\n" + df.to_string(header=True))
             logger.info("\n" + 100* "-")
         
