@@ -41,7 +41,7 @@ class BB_to_SMA_Strategy(Strategy):
             return None
         
         
-        if units == 0 or units <= 2 * units_to_trade:
+        if units == 0 or abs(units) <= 2 * units_to_trade:
             if price < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at price: {price}, rsi: {self.rsi}")
