@@ -59,7 +59,6 @@ def HHV(S, N):
 def LLV(S, N):
     return pd.Series(S).rolling(N).min().values
 
-
 def EMA(S, N):  #   alpha=2/(span+1)
     return pd.Series(S).ewm(span=N, adjust=False, ignore_na = True).mean().values
 

@@ -84,8 +84,10 @@ class Strategy():
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         df["RSI"] = df[self.instrument].rolling(15).apply(lambda x: MyTT.RSI(x.dropna().values, N=14))
-        df["rsi_slope"] = df["RSI"].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N = 5))
-        df['prev_rsi_slope'] = df.rsi_slope.shift(1)
+        self.rsi_max = df ['RSI'][-5:].max()
+        self.rsi_min = df ['RSI'][-5:].min()
+        # df["rsi_slope"] = df["RSI"].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N = 5))
+        # df['prev_rsi_slope'] = df.rsi_slope.shift(1)
 
         logger.debug (df.tail(10))
 
@@ -93,16 +95,18 @@ class Strategy():
         self.bb_upper =  round(df.Upper.iloc[-1], 4)
         self.target = round(df.SMA.iloc[-1], 4)
         self.rsi = round(df.RSI.iloc[-1], 0)
-        self.rsi_slope = round(df.rsi_slope.iloc[-1], 4)
-        self.rsi_reversed = True if (df.rsi_slope.iloc[-1] * df.prev_rsi_slope.iloc[-1] < 0) else False
+        # self.rsi_slope = round(df.rsi_slope.iloc[-1], 4)
+        # self.rsi_reversed = True if (df.rsi_slope.iloc[-1] * df.prev_rsi_slope.iloc[-1] < 0) else False
 
         logger.info ("new indicators:")
-        logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}, rsi_reversed: {self.rsi_reversed}")
+        # logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}, rsi_reversed: {self.rsi_reversed}")
+        logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_max: {self.rsi_max}, rsi_min: {self.rsi_min}")
+
 
         self.data = df.copy()
     
 
-    def determine_action(self, bid, ask, units) -> Trade_Action:
+    def determine_action(self, bid, ask, units, units_to_trade) -> Trade_Action:
         pass
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units, units_to_trade) -> Order:
@@ -217,9 +221,10 @@ class Trader(tpqoa.tpqoa):
 
         self.capture(time, bid, ask)
 
-        trade_action = self.strategy.determine_action(bid, ask, self.units)
+        trade_action = self.strategy.determine_action(bid, ask, self.units, self.units_to_trade)
 
         if trade_action and trade_action.signal != 0:
+            logger.info(f"trade_action: {trade_action}")
             order = self.strategy.create_order(trade_action, self.sl_perc, self.tp_perc, self.units, self.units_to_trade)
 
             if order != None:

@@ -11,48 +11,71 @@ class BB_to_SMA_Strategy(Strategy):
         super().__init__(instrument, pairs_file)
 
 
-    def determine_action(self, bid, ask, units) -> Trade_Action:
-        trade_action = None
-        signal = 0
+    def determine_action(self, bid, ask, units, units_to_trade) -> Trade_Action:
+        
         price = round((bid + ask) / 2, 4)
         spread = round(ask - bid, 4)
         target = round(self.target, 4)
         instrument = self.instrument
 
+        if units != 0:  # if already have positions
+            logger.debug(f"Have {units} positions, checking if need to close")
+            trade = self.check_if_need_close_trade(instrument, units, price, target, spread)
+            if trade is not None:
+                return trade
+
+        # check if need to open a new position
+        logger.debug(f"Have {units} positions, checking if need to open")
+        trade = self.check_if_need_open_trade(instrument, units, price, target, spread, units_to_trade)
+        if trade is not None:
+            return trade
+
+        return None
+
+    def check_if_need_open_trade(self, instrument, units, price, target, spread, units_to_trade):
+        
+        signal = 0
+
+        if spread >= (self.bb_upper - target):                            
+            logger.warning (f"Current spread: {spread} is too large for price: {price} and target: {target}")
+            return None
+        
+        
+        if units == 0 or units <= 2 * units_to_trade:
+            if price < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min: # if price is below lower BB, BUY
+                signal = 1
+                logger.info(f"Go Long - BUY at price: {price}, rsi: {self.rsi}")
+            elif price > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_max:  # if price is above upper BB, SELL
+                signal = -1
+                logger.info(f"Go Short - SELL at price: {price}, rsi: {self.rsi}")
+        
+        if signal != 0:
+            return Trade_Action(signal, instrument, price, target, spread)
+
+        return None
+
+
+    def check_if_need_close_trade(self, instrument, units, price, target, spread):
+
+        signal = 0
+
         if units > 0:  # if already have long positions
             logger.debug(f"Have {units} positions, checking if need to close")
-            if price > target and self.rsi_reversed:  # if price is above target SMA, SELL
+            if price > target and self.rsi < self.rsi_max:  # if price is above target SMA, SELL
                 signal = -1
-                logger.info(
-                    f"Close long position - Sell {units} units at price: {price}, sma: {self.target}, spread: {spread}"
-                )
+                logger.info(f"Close long position - Sell {units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
         elif units < 0:  # if alredy have short positions
-            if price < target and self.rsi_reversed:  # price is below target SMA, BUY
+            if price < target and self.rsi > self.rsi_min:  # price is below target SMA, BUY
                 signal = 1
-                logger.info(
-                    f"Close short position  - Buy {units} units at price: {price}, sma: {self.target}, spread: {spread}"
-                )
-        else:  # if no positions
-            logger.debug("Don't have any positions, checking if need to open")
-            if spread >= (self.bb_upper - target):
-                signal = 0                
-                logger.warning (f"Current spread: {spread} is too large for price: {price} and target: {target}")
-            else:
-                if price < self.bb_lower and self.rsi < 30 and self.rsi_reversed: # if price is below lower BB, BUY
-                    signal = 1
-                    logger.info(
-                        f"Go Long - BUY at price: {price}, bb_lower: {self.bb_lower}, spread: {spread}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}"
-                    )
-                elif price > self.bb_upper and self.rsi > 70 and self.rsi_reversed:  # if price is above upper BB, SELL
-                    signal = -1
-                    logger.info(
-                        f"Go Short - SELL at price: {price}, bb_upper: {self.bb_upper}, spread: {spread}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}"
-                    )
-          
-        trade_action = Trade_Action(signal, instrument, price, target, spread)
-        logger.debug(trade_action)
+                logger.info(f"Close short position  - Buy {units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
 
-        return trade_action
+        if signal != 0:
+            return Trade_Action(signal, instrument, price, target, spread)
+
+        return None
+
+
+
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units, units_to_trade) -> Order:
         

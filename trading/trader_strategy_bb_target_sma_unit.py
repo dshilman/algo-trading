@@ -76,8 +76,7 @@ if __name__ == "__main__":
         pairs_file="pairs.ini",
         instrument=pair
     )
-    trader.days = 1
-    trader.stop_after = 5
+    trader.stop_after = 1
     trader.refresh_strategy_time = 60
 
     trader.start_trading()
