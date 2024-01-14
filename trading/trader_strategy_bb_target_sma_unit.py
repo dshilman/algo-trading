@@ -18,15 +18,14 @@ class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
 
         logger.info("\n" + 100 * "-")
 
-        refresh_thread = None
         try:
             logger.info ("Started New Trading Session")
             logger.info (f"Getting  candles for: {self.instrument}")
             self.strategy.data = self.get_most_recent(self.instrument, self.days)
 
             logger.info ("Starting Refresh Strategy Thread")
-            refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time,))
-            refresh_thread.start()
+            self.refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time,))
+            self.refresh_thread.start()
 
             time.sleep(1)
 
@@ -37,7 +36,7 @@ class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
                 tick_time, bid, ask = self.get_tick()
                 self.on_success(tick_time, bid, ask)
 
-                time.sleep(float(1))
+                time.sleep(float(2))
 
             self.terminate_session("Finished Trading Session")
 
@@ -46,11 +45,12 @@ class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
             logger.exception("Exception occurred")
             self.terminate_session("Finished Trading Session with Errors")
         finally:
+            logger.info("Stopping Refresh Strategy Thread")
             self.stop_refresh = True
-
-            if refresh_thread is not None and refresh_thread.is_alive():
-                refresh_thread.join()    
-        
+            if self.refresh_thread is not None and self.refresh_thread.is_alive():
+                self.refresh_thread.join(timeout=self.refresh_strategy_time)
+                logger.info("Stopped Refresh Strategy Thread")
+    
         
     def get_tick(self):
 
@@ -76,8 +76,9 @@ if __name__ == "__main__":
         pairs_file="pairs.ini",
         instrument=pair
     )
-    trader.stop_after = 1
+    trader.stop_after = 50
     trader.refresh_strategy_time = 60
 
-    trader.start_trading()
+    # trader.start_trading()
+    trader.start_trading_random()
 

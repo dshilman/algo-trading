@@ -7,6 +7,7 @@ import threading
 import time
 from collections import deque
 from datetime import datetime, timedelta, timezone
+from random import randint
 
 import numpy as np
 import pandas as pd
@@ -90,9 +91,9 @@ class Strategy():
 
         logger.debug (df.tail(10))
 
-        self.bb_lower = round(df.Lower.iloc[-1], 4)
-        self.bb_upper =  round(df.Upper.iloc[-1], 4)
-        self.target = round(df.SMA.iloc[-1], 4)
+        self.bb_lower = round(df.Lower.iloc[-1], 6)
+        self.bb_upper =  round(df.Upper.iloc[-1], 6)
+        self.target = round(df.SMA.iloc[-1], 6)
         self.rsi = df.RSI.iloc[-1]
         # self.rsi_slope = round(df.rsi_slope.iloc[-1], 4)
         # self.rsi_reversed = True if (df.rsi_slope.iloc[-1] * df.prev_rsi_slope.iloc[-1] < 0) else False
@@ -226,9 +227,10 @@ class Trader(tpqoa.tpqoa):
             logger.info(f"trade_action: {trade_action}")
             order = self.strategy.create_order(trade_action, self.sl_perc, self.tp_perc, self.units)
 
-            self.submit_order(order)
-            if self.print_trades:
-                self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, order.units, order.price, self.units])
+            if order is not None:
+                self.submit_order(order)
+                if self.print_trades:
+                    self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, order.units, order.price, self.units])
 
         if self.ticks % 500 == 0:
             spread = ask - bid
@@ -333,6 +335,10 @@ class Trader(tpqoa.tpqoa):
         if self.print_trades and self.trades != None and len(self.trades) > 0:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "trade_units", "price", "have_units"])
             logger.info("\n" + df.to_string(header=True))
+            logger.info(f"Oustanding positions: {self.units}")
+            df['amount'] = df['price'] * df['trade_units']
+            p_and_l = df['amount'].sum()
+            logger.info(f"Session P&L: {round(p_and_l, 4)}")
             logger.info("\n" + 100* "-")
         
         self.trades = []

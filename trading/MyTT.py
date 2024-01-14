@@ -135,7 +135,7 @@ def KDJ(CLOSE, HIGH, LOW, N=9, M1=3, M2=3):
 
 def RSI(CLOSE, N = 14):
     DIF = CLOSE - REF(CLOSE, 1)
-    result =RD(100 - (100/(1 + (SMA(MAX(DIF, 0), N)[-1] / SMA(ABS(MIN(DIF, 0)), N)[-1]))), 4)
+    result =RD(100 - (100/(1 + (SMA(MAX(DIF, 0), N)[-1] / SMA(ABS(MIN(DIF, 0)), N)[-1]))), 6)
     return result
     
 

@@ -15,7 +15,7 @@ class BB_to_SMA_Strategy(Strategy):
         
         price = round((bid + ask) / 2, 4)
         spread = round(ask - bid, 4)
-        target = round(self.target, 4)
+        target = self.target
         instrument = self.instrument
 
         if units != 0:  # if already have positions
