@@ -67,7 +67,6 @@ class BB_to_SMA_Strategy(Strategy):
         signal = 0
 
         if have_units > 0:  # if already have long positions
-            logger.debug(f"Have {have_units} positions, checking if need to close")
             if price > target and self.rsi < self.rsi_max:  # if price is above target SMA, SELL
                 signal = -1
                 logger.info(f"Close long position - Sell {have_units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
