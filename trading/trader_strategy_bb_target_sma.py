@@ -11,28 +11,28 @@ class BB_to_SMA_Strategy(Strategy):
         super().__init__(instrument, pairs_file)
 
 
-    def determine_action(self, bid, ask, units, units_to_trade) -> Trade_Action:
+    def determine_action(self, bid, ask, have_units, units_to_trade) -> Trade_Action:
         
         price = round((bid + ask) / 2, 4)
         spread = round(ask - bid, 4)
         target = self.target
         instrument = self.instrument
 
-        if units != 0:  # if already have positions
-            logger.debug(f"Have {units} positions, checking if need to close")
-            trade = self.check_if_need_close_trade(instrument, units, price, target, spread)
+        if have_units != 0:  # if already have positions
+            logger.debug(f"Have {have_units} positions, checking if need to close")
+            trade = self.check_if_need_close_trade(instrument, have_units, price, target, spread)
             if trade is not None:
                 return trade
 
         # check if need to open a new position
-        logger.debug(f"Have {units} positions, checking if need to open")
-        trade = self.check_if_need_open_trade(instrument, units, price, target, spread, units_to_trade)
+        logger.debug(f"Have {have_units} positions, checking if need to open")
+        trade = self.check_if_need_open_trade(instrument, have_units, price, target, spread, units_to_trade)
         if trade is not None:
             return trade
 
         return None
 
-    def check_if_need_open_trade(self, instrument, units, price, target, spread, units_to_trade):
+    def check_if_need_open_trade(self, instrument, have_units, price, target, spread, units_to_trade):
         
         signal = 0
 
@@ -41,7 +41,7 @@ class BB_to_SMA_Strategy(Strategy):
             return None
         
         
-        if units == 0 or abs(units) <= 2 * units_to_trade:
+        if have_units == 0 or abs(have_units) <= 2 * units_to_trade:
             if price < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at price: {price}, rsi: {self.rsi}")
@@ -55,22 +55,22 @@ class BB_to_SMA_Strategy(Strategy):
         return None
 
 
-    def check_if_need_close_trade(self, instrument, units, price, target, spread):
+    def check_if_need_close_trade(self, instrument, have_units, price, target, spread):
 
         signal = 0
 
-        if units > 0:  # if already have long positions
-            logger.debug(f"Have {units} positions, checking if need to close")
+        if have_units > 0:  # if already have long positions
+            logger.debug(f"Have {have_units} positions, checking if need to close")
             if price > target and self.rsi < self.rsi_max:  # if price is above target SMA, SELL
                 signal = -1
-                logger.info(f"Close long position - Sell {units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
-        elif units < 0:  # if alredy have short positions
+                logger.info(f"Close long position - Sell {have_units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
+        elif have_units < 0:  # if alredy have short positions
             if price < target and self.rsi > self.rsi_min:  # price is below target SMA, BUY
                 signal = 1
-                logger.info(f"Close short position  - Buy {units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
+                logger.info(f"Close short position  - Buy {have_units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
 
         if signal != 0:
-            return Trade_Action(instrument, signal * units, price, target, spread)
+            return Trade_Action(instrument, -have_units, price, target, spread)
 
         return None
 
@@ -91,7 +91,7 @@ class BB_to_SMA_Strategy(Strategy):
             sl_dist = None
 
         if tp_perc:
-            tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, 2)
+            tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, 4)
         else:
             tp_price = None
 
