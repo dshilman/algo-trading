@@ -128,7 +128,7 @@ class Trader(tpqoa.tpqoa):
         self.days = int(config.get(self.instrument, 'days'))
         self.stop_after = int(config.get(self.instrument, 'stop_after'))
         self.print_trades = bool(config.get(self.instrument, 'print_trades'))
-        self.units_to_trade = float(config.get(self.instrument, 'units_to_trade'))
+        self.units_to_trade = int(config.get(self.instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
         self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
 

@@ -34,23 +34,30 @@ class BB_to_SMA_Strategy(Strategy):
 
     def check_if_need_open_trade(self, instrument, have_units, price, target, spread, units_to_trade):
         
-        signal = 0
-
         if spread >= (self.bb_upper - target):                            
             logger.warning (f"Current spread: {spread} is too large for price: {price} and target: {target}")
             return None
         
         
-        if have_units == 0 or abs(have_units) <= 2 * units_to_trade:
+        if abs(have_units) <= units_to_trade:
+            
+            signal = 0
+
             if price < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at price: {price}, rsi: {self.rsi}")
             elif price > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_max:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at price: {price}, rsi: {self.rsi}")
-        
-        if signal != 0:
-            return Trade_Action(instrument, signal * units_to_trade, price, target, spread)
+            
+            """
+            Trade 1: +1,000 EUR/USD +SL @ 1.05
+            Trade 2: +1,000 EUR/USD +SL @ 1.05
+            Trade 2 is cancelled because all trades with a SL, TP, or TS must have a unique size
+            """
+            if signal != 0:
+                return Trade_Action(instrument, signal * (units_to_trade + (0 if have_units == 0 else 1)), price, target, spread)
+                
 
         return None
 
@@ -69,6 +76,9 @@ class BB_to_SMA_Strategy(Strategy):
                 signal = 1
                 logger.info(f"Close short position  - Buy {have_units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
 
+        """
+        Negative sign if front of have_units "-have_units" means close the existing position
+        """
         if signal != 0:
             return Trade_Action(instrument, -have_units, price, target, spread)
 
