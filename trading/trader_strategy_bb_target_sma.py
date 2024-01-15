@@ -39,7 +39,8 @@ class BB_to_SMA_Strategy(Strategy):
             return None
         
         
-        if abs(have_units) <= units_to_trade:
+        # if abs(have_units) <= units_to_trade:
+        if have_units == 0:
             
             signal = 0
 
