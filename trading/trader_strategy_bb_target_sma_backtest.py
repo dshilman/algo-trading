@@ -19,9 +19,10 @@ logger = logging.getLogger("back_tester")
 
 class Trader_Back_Test():
     
-    def __init__(self, pairs_file, instrument):
+    def __init__(self, conf_file, pairs_file, instrument):
         
         self.strategy = BB_to_SMA_Strategy(instrument, pairs_file)
+        self.api = tpqoa.tpqoa(conf_file)
         config = configparser.ConfigParser()  
         config.read(pairs_file)
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
@@ -52,17 +53,26 @@ class Trader_Back_Test():
 
         return df
     
-    def get_hstrory(self):
+    def get_history(self):
         
+        delta = 3
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
-        past = now - timedelta(days = 40)
+        past = now - timedelta(days = delta)
+        
+        df: pd.DataFrame = pd.DataFrame()
+        for i in range(1, 30):           
 
-        instrument = self.strategy.instrument
+            instrument = self.strategy.instrument
 
-        df = tpqoa.tpqoa("oanda.cfg").get_history(instrument = instrument, start = past, end = now,
-                            granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
+            df_t = self.api.get_history(instrument = instrument, start = past, end = now,
+                                granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
+            df = pd.concat([df, df_t])
+            now = past
+            past = now - timedelta(days = delta)
 
+        df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
+        df.sort_values(by='time', ascending=True, inplace=True)
         df.rename(columns = {"c":instrument}, inplace = True)
 
         return df
@@ -72,9 +82,11 @@ class Trader_Back_Test():
 
         try:
 
-            df = self.get_hstrory()
+            df:pd.DataFrame = self.get_history()
             df = self.calculate_indicators(df)
             df = df.between_time('12:00', '16:00')
+
+            df.to_excel(f"backtest_{self.strategy.instrument}.xlsx")
 
             self.have_units = 0
             self.pl:float = 0
@@ -139,17 +151,16 @@ class Trader_Back_Test():
             logger.info("Stopping Backtesting")
     
     def print_metrics(self):
-        
+
+            logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {self.i}, have_units: {self.have_units}")
+            logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
+       
+            logger.info("\n" + 100 * "-")        
             if self.trades != None and len(self.trades) > 0:
                 df = pd.DataFrame(data=self.trades, columns=["datetime", "trade units", "price", "new # of units", "trade p&l", "total p&l"])
                 logger.info("\n" + df.to_string(header=True))
                 logger.info("\n" + 100 * "-")
 
-
-            logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {self.i}, have_units: {self.have_units}")
-            logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
-       
-            logger.info("\n" + 100 * "-")
 
 if __name__ == "__main__":
     # insert the file path of your config file below!
@@ -160,6 +171,7 @@ if __name__ == "__main__":
 
 
     trader = Trader_Back_Test(
+        conf_file="oanda.cfg",
         pairs_file="pairs.ini",
         instrument=pair
     )
