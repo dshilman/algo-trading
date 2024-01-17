@@ -50,6 +50,8 @@ class Trader_Back_Test():
         df.dropna(subset=['Lower', 'RSI'], inplace=True)
         df ['rsi_max'] = df ["RSI"].rolling(5).max()
         df ['rsi_min'] = df ["RSI"].rolling(5).min()
+        df ["price_max"] = df [instrument].rolling(5).max()
+        df ["price_min"] = df [instrument].rolling(5).min()
 
         return df
     
@@ -77,16 +79,28 @@ class Trader_Back_Test():
 
         return df
 
+    def set_strategy_parameters(self, row):
+            
+            self.strategy.rsi_max = row ['rsi_max']
+            self.strategy.rsi_min = row ['rsi_min']
+            self.strategy.bb_lower = row ['Lower']
+            self.strategy.bb_upper =  row ['Upper']
+            self.strategy.target = row ['SMA']
+            self.strategy.rsi = row ['RSI']
+            self.strategy.price_max = row ['price_max']
+            self.strategy.price_min = row ['price_min']
 
     def start_trading_backtest(self):
 
         try:
 
-            df:pd.DataFrame = self.get_history()
-            df = self.calculate_indicators(df)
-            df = df.between_time('12:00', '16:00')
+            df = pd.read_excel(f"../data/backtest_{self.strategy.instrument}.xlsx")
 
-            df.to_excel(f"backtest_{self.strategy.instrument}.xlsx")
+            # df:pd.DataFrame = self.get_history()
+            # df = self.calculate_indicators(df)
+            # df = df.between_time('12:00', '16:00')
+
+            # df.to_pickle(f"backtest_{self.strategy.instrument}.pcl")
 
             self.have_units = 0
             self.pl:float = 0
@@ -102,14 +116,10 @@ class Trader_Back_Test():
             self.i:int = 0
 
             for index, row in df.iterrows():
-                self.strategy.rsi_max = row ['rsi_max']
-                self.strategy.rsi_min = row ['rsi_min']
-                current_price = row [self.strategy.instrument]
-                self.strategy.bb_lower = row ['Lower']
-                self.strategy.bb_upper =  row ['Upper']
-                self.strategy.target = row ['SMA']
-                self.strategy.rsi = row ['RSI']
 
+                self.set_strategy_parameters(row)
+
+                current_price = row [self.strategy.instrument]
                 trade_action = self.strategy.determine_action(current_price, current_price, self.have_units, self.units_to_trade)
                 
         

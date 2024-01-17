@@ -86,6 +86,9 @@ class Strategy():
         df["RSI"] = df[self.instrument][-30:].rolling(15).apply(lambda x: MyTT.RSI(x.dropna().values, N=14))
         self.rsi_max = df ['RSI'][-5:].max()
         self.rsi_min = df ['RSI'][-5:].min()
+        self.price_max = df [self.instrument][-5:].max()
+        self.price_min = df [self.instrument][-5:].min()
+
         # df["rsi_slope"] = df["RSI"].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N = 5))
         # df['prev_rsi_slope'] = df.rsi_slope.shift(1)
 
@@ -101,7 +104,7 @@ class Strategy():
 
         logger.info ("new indicators:")
         # logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}, rsi_reversed: {self.rsi_reversed}")
-        logger.info (f"current price: {current_price}, bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_max: {self.rsi_max}, rsi_min: {self.rsi_min}")
+        logger.info (f"current price: {current_price}, bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_max: {self.rsi_max}, rsi_min: {self.rsi_min}, price_max: {self.price_max}, price_min: {self.price_min}")
 
 
         self.data = df.copy()
