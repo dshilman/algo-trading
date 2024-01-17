@@ -57,13 +57,13 @@ class Trader_Back_Test():
     
     def get_history(self):
         
-        delta = 3
+        delta = 5
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = delta)
         
         df: pd.DataFrame = pd.DataFrame()
-        for i in range(1, 30):           
+        for i in range(1, 20):           
 
             instrument = self.strategy.instrument
 
@@ -98,9 +98,10 @@ class Trader_Back_Test():
 
             # df:pd.DataFrame = self.get_history()
             # df = self.calculate_indicators(df)
-            # df = df.between_time('12:00', '16:00')
 
-            # df.to_pickle(f"backtest_{self.strategy.instrument}.pcl")
+            # df.to_pickle(f"../data/backtest_{self.strategy.instrument}.pcl")
+
+            df = df.between_time('12:00', '18:00')
 
             self.have_units = 0
             self.pl:float = 0

@@ -13,7 +13,7 @@ class BB_to_SMA_Strategy(Strategy):
 
     def determine_action(self, bid, ask, have_units, units_to_trade) -> Trade_Action:
         
-        price = (bid + ask)/2
+        price = round((bid + ask)/2, 6)
         spread = round(ask - bid, 4)
         target = self.target
         instrument = self.instrument
@@ -56,12 +56,12 @@ class BB_to_SMA_Strategy(Strategy):
                 logger.info(f"Go Short - SELL at price: {price}, rsi: {self.rsi}")
             
             """
-            Trade 1: +1,000 EUR/USD +SL @ 1.05
-            Trade 2: +1,000 EUR/USD +SL @ 1.05
-            Trade 2 is cancelled because all trades with a SL, TP, or TS must have a unique size
+                Trade 1: +1,000 EUR/USD +SL @ 1.05
+                Trade 2: +1,000 EUR/USD +SL @ 1.05
+                Trade 2 is cancelled because all trades with a SL, TP, or TS must have a unique size
             """
             if signal != 0:
-                return Trade_Action(instrument, signal * (units_to_trade + (0 if have_units == 0 else 1)), price, target, spread)
+                return Trade_Action(instrument, signal * (units_to_trade + (0 if have_units == 0 else 1)), price, target, spread, True)
                 
 
         return None
@@ -85,10 +85,10 @@ class BB_to_SMA_Strategy(Strategy):
                 logger.info(f"Close short position  - Buy {have_units} units at price: {price}, sma: {target}, rsi: {self.rsi}")
 
         """
-        Negative sign if front of have_units "-have_units" means close the existing position
+            Negative sign if front of have_units "-have_units" means close the existing position
         """
         if signal != 0:
-            return Trade_Action(instrument, -have_units, price, target, spread)
+            return Trade_Action(instrument, -have_units, price, target, spread, False)
 
         return None
 
@@ -99,24 +99,25 @@ class BB_to_SMA_Strategy(Strategy):
         
         order = None
 
-        if sl_perc:
-            if trade_action.spread / trade_action.price >= sl_perc:
-                logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
-                return None
-            """
-            Have been getting STOP_LOSS_ON_FILL_DISTANCE_PRECISION_EXCEEDED when trading GBP_JPY
-            I assume that the price is too high for 4 digit decimals, thus adding a rule
-            if the price is grater that $100, do not use decimals for stop loss
-            """
-            sl_dist = round(trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
+        if trade_action.open_trade:
+            if sl_perc:
+                if trade_action.spread / trade_action.price >= sl_perc:
+                    logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
+                    return None
+                """
+                    Have been getting STOP_LOSS_ON_FILL_DISTANCE_PRECISION_EXCEEDED when trading GBP_JPY
+                    I assume that the price is too high for 4 digit decimals, thus adding a rule
+                    if the price is grater that $100, do not use decimals for stop loss
+                """
+                sl_dist = round(trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
 
-        else:
-            sl_dist = None
+            else:
+                sl_dist = None
 
-        if tp_perc:
-            tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, 4)
-        else:
-            tp_price = None
+            if tp_perc:
+                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, 4)
+            else:
+                tp_price = None
 
         comment = None
         if have_units >= 0 and trade_action.units > 0:
@@ -162,4 +163,3 @@ if __name__ == "__main__":
         instrument=pair
     )
     trader.start_trading()
-

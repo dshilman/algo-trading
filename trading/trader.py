@@ -19,13 +19,14 @@ logger = logging.getLogger('trader_oanda')
 
 
 class Trade_Action():
-    def __init__(self, instrument, units, price, target, spread):
+    def __init__(self, instrument, units, price, target, spread, open_trade = False):
         super().__init__()
         self.instrument = instrument
         self.units = units
         self.price = price
         self.target = target
         self.spread = spread
+        self.open_trade = open_trade
 
 
     def __str__(self):
@@ -94,7 +95,7 @@ class Strategy():
 
         logger.debug (df.tail(10))
 
-        current_price = df[self.instrument].iloc[-1]
+        current_price = round(df[self.instrument].iloc[-1], 6)
         self.bb_lower = round(df.Lower.iloc[-1], 6)
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
         self.target = round(df.SMA.iloc[-1], 6)
@@ -327,14 +328,18 @@ class Trader(tpqoa.tpqoa):
 
         logger.info("\n" + 100* "-")
 
-        # if self.units != 0 and not self.unit_test:
-        #     close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True)
-        #     if not "rejectReason" in close_order:
-        #         self.report_trade(close_order, "GOING NEUTRAL")
-        #         self.units = 0
-        #         self.trades.append([close_order["fullPrice"]["bids"]["price"], close_order["fullPrice"]["asks"]["price"], self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units])
-        #     else:
-        #         logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
+        """
+            Close the open position, I have observed that trades open from one day to the next
+            have incurred a signifucant loss
+        """
+        if self.units != 0 and not self.unit_test:
+            close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True)
+            if not "rejectReason" in close_order:
+                self.report_trade(close_order, "Closing Long Position" if self.units > 0 else "Closing Short Position")
+                self.units = 0
+                self.trades.append([close_order["fullPrice"]["bids"]["price"], close_order["fullPrice"]["asks"]["price"], self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units])
+            else:
+                logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
 
         if self.print_trades and self.trades != None and len(self.trades) > 0:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "trade_units", "price", "have_units"])
