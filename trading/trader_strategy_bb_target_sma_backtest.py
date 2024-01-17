@@ -94,7 +94,7 @@ class Trader_Back_Test():
 
         try:
 
-            df = pd.read_excel(f"../data/backtest_{self.strategy.instrument}.xlsx")
+            df = pd.read_pickle(f"../data/backtest_{self.strategy.instrument}.pcl")
 
             # df:pd.DataFrame = self.get_history()
             # df = self.calculate_indicators(df)
