@@ -100,7 +100,7 @@ class BB_to_SMA_Strategy(Strategy):
         order = None
         sl_dist = None
         tp_price = None
-
+        comment = None
 
         if trade_action.open_trade:
             if sl_perc:
@@ -115,10 +115,9 @@ class BB_to_SMA_Strategy(Strategy):
                 sl_dist = round(trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
 
             
-            if tp_perc:
-                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0))
+        if tp_perc:
+            tp_price = str(round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0)))
 
-        comment = None
         if have_units >= 0 and trade_action.units > 0:
             comment = "Going Long"
         elif have_units <= 0 and trade_action.units < 0:
@@ -133,7 +132,7 @@ class BB_to_SMA_Strategy(Strategy):
             price = trade_action.price,
             trade_units = trade_action.units,
             sl_dist = sl_dist,
-            tp_price = str(tp_price),
+            tp_price = tp_price,
             comment = comment
         )
         logger.debug(order)

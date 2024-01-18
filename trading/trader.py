@@ -262,7 +262,7 @@ class Trader(tpqoa.tpqoa):
         if not self.unit_test:        
             oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price=order.tp, suppress=True, ret=True, comment=order.comment)
             self.report_trade(oanda_order, order.comment)
-            if not "rejectReason" in oanda_order:
+            if "rejectReason" not in oanda_order:
                 self.units = self.units + order.units
                 logger.info(f"New # of {order.instrument} units: {self.units}")
             else:
@@ -337,7 +337,8 @@ class Trader(tpqoa.tpqoa):
             if not "rejectReason" in close_order:
                 self.report_trade(close_order, "Closing Long Position" if self.units > 0 else "Closing Short Position")
                 self.units = 0
-                self.trades.append([close_order["fullPrice"]["bids"]["price"], close_order["fullPrice"]["asks"]["price"], self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units])
+                trade = [close_order["fullPrice"]["bids"][0]["price"], close_order["fullPrice"]["asks"][0]["price"], self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units]
+                self.trades.append(trade)
             else:
                 logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
 
