@@ -44,7 +44,7 @@ class BB_to_SMA_Back_Test():
     def calculate_indicators(self, df):
 
         instrument = self.strategy.instrument
-        SMA = self.strategy.SMA
+        SMA = self.strategy.sma_value
         dev = self.strategy.dev
         df["SMA"] = df[instrument].rolling(SMA).mean()
         
