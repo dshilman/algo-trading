@@ -115,7 +115,7 @@ class BB_to_SMA_Strategy(Strategy):
                 sl_dist = None
 
             if tp_perc:
-                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, 4)
+                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0))
             else:
                 tp_price = None
 

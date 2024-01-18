@@ -346,7 +346,7 @@ class Trader(tpqoa.tpqoa):
             logger.info("\n" + df.to_string(header=True))
             logger.info(f"Oustanding positions: {self.units}")
             df['amount'] = df['price'] * df['trade_units']
-            p_and_l = df['amount'].sum()
+            p_and_l = - df['amount'].sum()
             logger.info(f"Session P&L: {round(p_and_l, 4)}")
             logger.info("\n" + 100* "-")
         

@@ -26,6 +26,8 @@ class Trader_Back_Test():
         config = configparser.ConfigParser()  
         config.read(pairs_file)
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
+        self.start = config.get(instrument, 'start')
+        self.end = config.get(instrument, 'end')
         logger.setLevel(logging.INFO)
 
         log_file = os.path.join("logs", "backtester_" + instrument + ".log")
@@ -90,18 +92,20 @@ class Trader_Back_Test():
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
 
-    def start_trading_backtest(self):
+    def start_trading_backtest(self, refresh = False):
 
         try:
 
-            df = pd.read_pickle(f"../data/backtest_{self.strategy.instrument}.pcl")
+            if refresh:
+                
+                df:pd.DataFrame = self.get_history()
+                df = self.calculate_indicators(df)
+                df.to_pickle(f"../data/backtest_{self.strategy.instrument}.pcl")
+            else:
+                df = pd.read_pickle(f"../data/backtest_{self.strategy.instrument}.pcl")
 
-            # df:pd.DataFrame = self.get_history()
-            # df = self.calculate_indicators(df)
 
-            # df.to_pickle(f"../data/backtest_{self.strategy.instrument}.pcl")
-
-            df = df.between_time('12:00', '18:00')
+            df = df.between_time(self.start, self.end)
 
             self.have_units = 0
             self.pl:float = 0
@@ -177,8 +181,10 @@ if __name__ == "__main__":
     # insert the file path of your config file below!
 
     args = sys.argv[1:]
-
+    refresh = False
     pair = args[0]
+    if len(args) > 1:
+        refresh = bool(args[1])
 
 
     trader = Trader_Back_Test(
@@ -186,5 +192,5 @@ if __name__ == "__main__":
         pairs_file="pairs.ini",
         instrument=pair
     )
-    trader.start_trading_backtest()
+    trader.start_trading_backtest(refresh)
 
