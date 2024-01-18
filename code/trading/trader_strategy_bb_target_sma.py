@@ -86,3 +86,5 @@ if __name__ == "__main__":
         instrument=pair
     )
     trader.start_trading()
+
+    # python trader_strategy_bb_target_sma.py EUR_USD

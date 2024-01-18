@@ -168,7 +168,7 @@ class Strategy():
 
         # check if need to open a new position
         if spread >= abs(self.bb_upper - self.sma):                            
-            logger.warning (f"Current spread: {spread} is too large to trade for possible gain: {abs(self.bb_upper - self.sma)}")
+            logger.warning (f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
             return None
                 
         logger.debug(f"Have {have_units} positions, checking if need to open")

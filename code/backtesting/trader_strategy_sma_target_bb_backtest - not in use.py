@@ -19,7 +19,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.trader import Trader
-from trading.trader_strategy_sma_target_bb import SMA_to_BB_Strategy
+# from trading.trader_strategy_sma_target_bb import SMA_to_BB_Strategy
 from trading.MyTT import RSI
 
 
@@ -29,7 +29,8 @@ class SMA_to_BB_Back_Test():
     
     def __init__(self, conf_file, pairs_file, instrument):
         
-        self.strategy = SMA_to_BB_Strategy(instrument, pairs_file)
+        # self.strategy = SMA_to_BB_Strategy(instrument, pairs_file)
+        self.strategy = None
         self.api = tpqoa.tpqoa(conf_file)
         config = configparser.ConfigParser()  
         config.read(pairs_file)

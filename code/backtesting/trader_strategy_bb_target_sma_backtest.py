@@ -5,22 +5,20 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytz
 import tpqoa
 
-import sys
-from pathlib import Path # if you haven't already done so
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
+from trading.MyTT import RSI
 from trading.trader import Trader
 from trading.trader_strategy_bb_target_sma import BB_to_SMA_Strategy
-from trading.MyTT import RSI
-
 
 logger = logging.getLogger("back_tester_bb_2_sma")
 
@@ -54,7 +52,7 @@ class BB_to_SMA_Back_Test():
         
         df["Lower"] = df["SMA"] - target
         df["Upper"] = df["SMA"] + target
-        df["RSI"] = df [instrument].rolling(15).apply(lambda x: MyTT.RSI(x.values, N=14))
+        df["RSI"] = df [instrument].rolling(15).apply(lambda x: RSI(x.values, N=14))
            
         df.dropna(subset=['Lower', 'RSI'], inplace=True)
         df ['rsi_max'] = df ["RSI"].rolling(5).max()
@@ -163,7 +161,7 @@ class BB_to_SMA_Back_Test():
 
                     self.have_units = self.have_units + trade_action.units
                     self.i = self.i + 1
-                    self.trades.append([index, trade_action.units, trade_action.price, self.have_units, '${:,.2f}'.format(self.outstanding), '${:,.2f}'.format(self.pl)])
+                    self.trades.append([index, trade_action.units, trade_action.price, self.strategy.rsi, self.have_units, '${:,.2f}'.format(self.outstanding), '${:,.2f}'.format(self.pl)])
             
             self.print_metrics()
 
@@ -179,7 +177,7 @@ class BB_to_SMA_Back_Test():
        
             logger.info("\n" + 100 * "-")        
             if self.trades != None and len(self.trades) > 0:
-                df = pd.DataFrame(data=self.trades, columns=["datetime", "trade units", "price", "new # of units", "trade p&l", "total p&l"])
+                df = pd.DataFrame(data=self.trades, columns=["datetime", "trade units", "price", "rsi", "new # of units", "trade p&l", "total p&l"])
                 logger.info("\n" + df.to_string(header=True))
                 logger.info("\n" + 100 * "-")
 
@@ -201,3 +199,4 @@ if __name__ == "__main__":
     )
     trader.start_trading_backtest(refresh)
 
+# python trader_strategy_bb_target_sma_backtest.py EUR_USD

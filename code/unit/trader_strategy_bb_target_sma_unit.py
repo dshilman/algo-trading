@@ -89,5 +89,6 @@ if __name__ == "__main__":
     trader.refresh_strategy_time = 60
 
     # trader.start_trading()
-    trader.start_trading()
+    trader.start_trading_random()
 
+    # python trader_strategy_bb_target_sma_unit.py EUR_USD
