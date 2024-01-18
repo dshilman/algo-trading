@@ -4,7 +4,16 @@ import logging
 import sys
 import time
 from datetime import datetime, timedelta, timezone
-from trader_strategy_bb_target_sma import BB_Strategy_SMA_Target_Trader
+
+
+import sys
+from pathlib import Path # if you haven't already done so
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
+
+from trading.trader import Trader
+from trading.trader_strategy_bb_target_sma import BB_Strategy_SMA_Target_Trader
 
 logger = logging.getLogger("trader_oanda")
 
@@ -72,13 +81,13 @@ if __name__ == "__main__":
 
 
     trader = Trader_Unit_Test(
-        conf_file="oanda.cfg",
-        pairs_file="pairs.ini",
+        conf_file="../trading/oanda.cfg",
+        pairs_file="../trading/pairs.ini",
         instrument=pair
     )
     trader.stop_after = 5
     trader.refresh_strategy_time = 60
 
     # trader.start_trading()
-    trader.start_trading_random()
+    trader.start_trading()
 

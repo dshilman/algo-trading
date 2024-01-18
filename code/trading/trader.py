@@ -13,27 +13,26 @@ import numpy as np
 import pandas as pd
 import tpqoa
 
-import MyTT
+from trading import MyTT
 
 logger = logging.getLogger('trader_oanda')
 
 
 class Trade_Action():
-    def __init__(self, instrument, units, price, target, spread, open_trade = False):
+    def __init__(self, instrument, units, price, spread, open_trade = False):
         super().__init__()
         self.instrument = instrument
         self.units = units
         self.price = price
-        self.target = target
         self.spread = spread
         self.open_trade = open_trade
 
 
     def __str__(self):
-        return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}, target: {self.target}, spread: {self.spread}" 
+        return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}, spread: {self.spread}" 
 
     def __repr__(self):
-        return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}, target: {self.target}, spread: {self.spread}"       
+        return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}, spread: {self.spread}"       
 
 class Order ():
     def __init__(self, instrument, price, trade_units, sl_dist, tp_price, comment):
@@ -59,13 +58,14 @@ class Strategy():
         
         config = configparser.ConfigParser()  
         config.read(pairs_file)
-        self.SMA = int(config.get(instrument, 'SMA'))
+        self.sma_value = int(config.get(instrument, 'SMA'))
         self.dev = float(config.get(instrument, 'dev'))
 
         self.data = None
         # Caculated attributes
         self.bb_upper =  None
-        self.target = None
+        self.bb_lower =  None
+        self.sma = None
         self.rsi = None
 
     def define_strategy(self, resampled_tick_data: pd.DataFrame = None): # "strategy-specific"
@@ -75,12 +75,12 @@ class Strategy():
         if resampled_tick_data is not None and resampled_tick_data.size > 0:
             df = pd.concat([df, resampled_tick_data])
       
-        df = df.tail(self.SMA * 2)
+        df = df.tail(self.sma_value * 2)
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
 
         # ******************** define your strategy here ************************
-        df["SMA"] = df[self.instrument].rolling(self.SMA).mean()
-        std = df[self.instrument].rolling(self.SMA).std() * self.dev
+        df["SMA"] = df[self.instrument].rolling(self.sma_value).mean()
+        std = df[self.instrument].rolling(self.sma_value).std() * self.dev
         
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
@@ -98,24 +98,85 @@ class Strategy():
         current_price = round(df[self.instrument].iloc[-1], 6)
         self.bb_lower = round(df.Lower.iloc[-1], 6)
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
-        self.target = round(df.SMA.iloc[-1], 6)
+        self.sma = round(df.SMA.iloc[-1], 6)
         self.rsi = df.RSI.iloc[-1]
         # self.rsi_slope = round(df.rsi_slope.iloc[-1], 4)
         # self.rsi_reversed = True if (df.rsi_slope.iloc[-1] * df.prev_rsi_slope.iloc[-1] < 0) else False
 
         logger.info ("new indicators:")
         # logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}, rsi_reversed: {self.rsi_reversed}")
-        logger.info (f"current price: {current_price}, bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_max: {self.rsi_max}, rsi_min: {self.rsi_min}, price_max: {self.price_max}, price_min: {self.price_min}")
+        logger.info (f"current price: {current_price}, bb_lower: {self.bb_lower}, SMA: {self.sma}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_max: {self.rsi_max}, rsi_min: {self.rsi_min}, price_max: {self.price_max}, price_min: {self.price_min}")
 
 
         self.data = df.copy()
-    
-
-    def determine_action(self, bid, ask, units, units_to_trade) -> Trade_Action:
-        pass
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
-        pass
+        
+        order = None
+        sl_dist = None
+        tp_price = None
+        comment = None
+
+        # if trade_action.open_trade:
+        if sl_perc:
+            if trade_action.spread / trade_action.price >= sl_perc:
+                logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
+                return None
+            """
+                Have been getting STOP_LOSS_ON_FILL_DISTANCE_PRECISION_EXCEEDED when trading GBP_JPY
+                I assume that the price is too high for 4 digit decimals, thus adding a rule
+                if the price is grater that $100, do not use decimals for stop loss
+            """
+            sl_dist = round(trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
+
+            
+        if tp_perc:
+            tp_price = str(round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0)))
+
+        if have_units >= 0 and trade_action.units > 0:
+            comment = "Going Long"
+        elif have_units <= 0 and trade_action.units < 0:
+            comment = "Going Short"
+        elif have_units > 0 and trade_action.units < 0:
+            comment = "Closing Long"
+        elif have_units < 0 and trade_action.units > 0:
+            comment = "Closing Short"
+
+        order = Order(
+            instrument = trade_action.instrument,
+            price = trade_action.price,
+            trade_units = trade_action.units,
+            sl_dist = sl_dist,
+            tp_price = tp_price,
+            comment = comment
+        )
+        logger.debug(order)
+
+        return order    
+
+    def determine_action(self, bid, ask, have_units, units_to_trade) -> Trade_Action:
+        
+        price = round((bid + ask)/2, 6)
+        spread = round(ask - bid, 4)
+        instrument = self.instrument
+
+        if have_units != 0:  # if already have positions
+            logger.debug(f"Have {have_units} positions, checking if need to close")
+            trade = self.check_if_need_close_trade(instrument, have_units, price, spread)
+            if trade is not None:
+                return trade
+
+        # check if need to open a new position
+        if spread >= abs(self.bb_upper - self.sma):                            
+            logger.warning (f"Current spread: {spread} is too large to trade for possible gain: {abs(self.bb_upper - self.sma)}")
+            return None
+                
+        logger.debug(f"Have {have_units} positions, checking if need to open")
+        trade = self.check_if_need_open_trade(instrument, have_units, price, spread, units_to_trade)
+        if trade is not None:
+            return trade
+
+        return None
 
 class Trader(tpqoa.tpqoa):
     def __init__(self, conf_file, pair_file, strategy, unit_test = False):
@@ -235,7 +296,7 @@ class Trader(tpqoa.tpqoa):
             if order is not None:
                 self.submit_order(order)
                 if self.print_trades:
-                    self.trades.append([bid, ask, self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, order.units, order.price, self.units])
+                    self.trades.append([bid, ask, self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, order.units, order.price, self.units])
 
         if self.ticks % 500 == 0:
             spread = ask - bid
@@ -337,7 +398,7 @@ class Trader(tpqoa.tpqoa):
             if not "rejectReason" in close_order:
                 self.report_trade(close_order, "Closing Long Position" if self.units > 0 else "Closing Short Position")
                 self.units = 0
-                trade = [close_order["fullPrice"]["bids"][0]["price"], close_order["fullPrice"]["asks"][0]["price"], self.strategy.target, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units]
+                trade = [close_order["fullPrice"]["bids"][0]["price"], close_order["fullPrice"]["asks"][0]["price"], self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units]
                 self.trades.append(trade)
             else:
                 logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")

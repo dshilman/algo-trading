@@ -10,14 +10,21 @@ import numpy as np
 import pandas as pd
 import pytz
 import tpqoa
-import MyTT
 
-from trader import Trade_Action
-from trader_strategy_bb_target_sma import BB_to_SMA_Strategy
+import sys
+from pathlib import Path # if you haven't already done so
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
 
-logger = logging.getLogger("back_tester")
+from trading.trader import Trader
+from trading.trader_strategy_bb_target_sma import BB_to_SMA_Strategy
+from trading.MyTT import RSI
 
-class Trader_Back_Test():
+
+logger = logging.getLogger("back_tester_bb_2_sma")
+
+class BB_to_SMA_Back_Test():
     
     def __init__(self, conf_file, pairs_file, instrument):
         
@@ -87,7 +94,7 @@ class Trader_Back_Test():
             self.strategy.rsi_min = row ['rsi_min']
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
-            self.strategy.target = row ['SMA']
+            self.strategy.sma = row ['SMA']
             self.strategy.rsi = row ['RSI']
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
@@ -100,9 +107,9 @@ class Trader_Back_Test():
                 
                 df:pd.DataFrame = self.get_history()
                 df = self.calculate_indicators(df)
-                df.to_pickle(f"../data/backtest_{self.strategy.instrument}.pcl")
+                df.to_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
             else:
-                df = pd.read_pickle(f"../data/backtest_{self.strategy.instrument}.pcl")
+                df = pd.read_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
 
 
             df = df.between_time(self.start, self.end)
@@ -187,9 +194,9 @@ if __name__ == "__main__":
         refresh = bool(args[1])
 
 
-    trader = Trader_Back_Test(
-        conf_file="oanda.cfg",
-        pairs_file="pairs.ini",
+    trader = BB_to_SMA_Back_Test(
+        conf_file="../trading/oanda.cfg",
+        pairs_file="../trading/pairs.ini",
         instrument=pair
     )
     trader.start_trading_backtest(refresh)
