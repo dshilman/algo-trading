@@ -98,6 +98,9 @@ class BB_to_SMA_Strategy(Strategy):
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
         
         order = None
+        sl_dist = None
+        tp_price = None
+
 
         if trade_action.open_trade:
             if sl_perc:
@@ -111,13 +114,9 @@ class BB_to_SMA_Strategy(Strategy):
                 """
                 sl_dist = round(trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
 
-            else:
-                sl_dist = None
-
+            
             if tp_perc:
                 tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0))
-            else:
-                tp_price = None
 
         comment = None
         if have_units >= 0 and trade_action.units > 0:
