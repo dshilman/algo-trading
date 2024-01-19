@@ -398,7 +398,7 @@ class Trader(tpqoa.tpqoa):
             if not "rejectReason" in close_order:
                 self.report_trade(close_order, "Closing Long Position" if self.units > 0 else "Closing Short Position")
                 self.units = 0
-                trade = [close_order["fullPrice"]["bids"][0]["price"], close_order["fullPrice"]["asks"][0]["price"], self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, 1 if close_order.get("units") > 0 else -1, close_order.get("units"), close_order["price"], self.units]
+                trade = [close_order["fullPrice"]["bids"][0]["price"], close_order["fullPrice"]["asks"][0]["price"], self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, (1 if float(close_order.get("units")) > 0 else -1), float(close_order.get("units")), float(close_order["price"]), self.units]
                 self.trades.append(trade)
             else:
                 logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
