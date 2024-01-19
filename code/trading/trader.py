@@ -87,8 +87,8 @@ class Strategy():
         df["RSI"] = df[self.instrument][-30:].rolling(15).apply(lambda x: MyTT.RSI(x.dropna().values, N=14))
         self.rsi_max = df ['RSI'][-5:].max()
         self.rsi_min = df ['RSI'][-5:].min()
-        self.price_max = df [self.instrument][-5:].max()
-        self.price_min = df [self.instrument][-5:].min()
+        self.price_max = round(df [self.instrument][-5:].max(), 6)
+        self.price_min = round(df [self.instrument][-5:].min(), 6)
 
         # df["rsi_slope"] = df["RSI"].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N = 5))
         # df['prev_rsi_slope'] = df.rsi_slope.shift(1)
