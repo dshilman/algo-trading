@@ -1,13 +1,12 @@
-import threading
-import random
 import logging
+import os
+import random
 import sys
+import threading
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path  # if you haven't already done so
 
-
-import sys
-from pathlib import Path # if you haven't already done so
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
@@ -79,9 +78,10 @@ if __name__ == "__main__":
 
     pair = args[0]
 
+    config_file = os.environ.get("oanda_config")
 
     trader = Trader_Unit_Test(
-        conf_file="../trading/oanda.cfg",
+        conf_file=config_file,
         pairs_file="../trading/pairs.ini",
         instrument=pair
     )

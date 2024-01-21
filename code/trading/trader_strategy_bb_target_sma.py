@@ -1,9 +1,9 @@
 import configparser
 import logging
+import os
 import sys
+from pathlib import Path  # if you haven't already done so
 
-import sys
-from pathlib import Path # if you haven't already done so
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
@@ -78,10 +78,10 @@ if __name__ == "__main__":
     args = sys.argv[1:]
 
     pair = args[0]
-
+    config_file = os.environ.get("oanda_config")
     
     trader = BB_Strategy_SMA_Target_Trader(
-        conf_file="oanda.cfg",
+        conf_file=config_file,
         pairs_file="pairs.ini",
         instrument=pair
     )

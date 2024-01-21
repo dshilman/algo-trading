@@ -16,9 +16,9 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.MyTT import RSI
+from trading.MyTT import RSI, SLOPE
 from trading.trader import Trader
-from trading.trader_strategy_bb_target_sma import BB_to_SMA_Strategy
+from backtesting_strategy import Backtesting_Strategy
 
 logger = logging.getLogger("back_tester_bb_2_sma")
 
@@ -26,7 +26,7 @@ class BB_to_SMA_Back_Test():
     
     def __init__(self, conf_file, pairs_file, instrument):
         
-        self.strategy = BB_to_SMA_Strategy(instrument, pairs_file)
+        self.strategy = Backtesting_Strategy(instrument, pairs_file)
         self.api = tpqoa.tpqoa(conf_file)
         config = configparser.ConfigParser()  
         config.read(pairs_file)
@@ -47,14 +47,16 @@ class BB_to_SMA_Back_Test():
         SMA = self.strategy.sma_value
         dev = self.strategy.dev
         df["SMA"] = df[instrument].rolling(SMA).mean()
+        df["SMA_160"] = df[instrument].rolling(160).mean()
         
         target = df[instrument].rolling(SMA).std() * dev
         
         df["Lower"] = df["SMA"] - target
         df["Upper"] = df["SMA"] + target
         df["RSI"] = df [instrument].rolling(15).apply(lambda x: RSI(x.values, N=14))
-           
-        df.dropna(subset=['Lower', 'RSI'], inplace=True)
+        # df["rsi_slope"] = df ["RSI"].rolling(5).apply(lambda x: SLOPE(x.values, N=5))
+        df["rsi_slope"] = df ["RSI"].rolling(5).apply(lambda x: np.polyfit(range(5), x, 1)[0])
+        df.dropna(subset=['Lower', 'RSI', 'rsi_slope'], inplace=True)
         df ['rsi_max'] = df ["RSI"].rolling(5).max()
         df ['rsi_min'] = df ["RSI"].rolling(5).min()
         df ["price_max"] = df [instrument].rolling(5).max()
@@ -62,27 +64,40 @@ class BB_to_SMA_Back_Test():
 
         return df
     
-    def get_history(self):
+    def get_history_with_all_prices(self):
         
-        delta = 5
+        ask_prices: pd.DataFrame = self.get_history(price = "A")
+        ask_prices.rename(columns = {"c":"ask"}, inplace = True)
+
+        bid_prices: pd.DataFrame = self.get_history(price = "B")
+        bid_prices.rename(columns = {"c":"bid"}, inplace = True)
+
+        df: pd.DataFrame = pd.concat([ask_prices, bid_prices], axis=1)
+
+        df [self.strategy.instrument] = df[['ask', 'bid']].mean(axis=1)
+
+        return df
+
+    def get_history(self, price = "M"):
+        
+        delta = 10
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = delta)
+        instrument = self.strategy.instrument
         
         df: pd.DataFrame = pd.DataFrame()
-        for i in range(1, 20):           
-
-            instrument = self.strategy.instrument
+        for i in range(1, 10):           
 
             df_t = self.api.get_history(instrument = instrument, start = past, end = now,
-                                granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
+                                granularity = "M1", price = price, localize = True).c.dropna().to_frame()
             df = pd.concat([df, df_t])
             now = past
             past = now - timedelta(days = delta)
-
+            
+            
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
         df.sort_values(by='time', ascending=True, inplace=True)
-        df.rename(columns = {"c":instrument}, inplace = True)
 
         return df
 
@@ -93,23 +108,22 @@ class BB_to_SMA_Back_Test():
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
             self.strategy.sma = row ['SMA']
+            self.strategy.sma_160 = row ['SMA_160']
             self.strategy.rsi = row ['RSI']
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
-
+  
     def start_trading_backtest(self, refresh = False):
 
         try:
 
-            if refresh:
-                
-                df:pd.DataFrame = self.get_history()
-                df = self.calculate_indicators(df)
+            if refresh:                
+                df:pd.DataFrame = self.get_history_with_all_prices()
                 df.to_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
             else:
                 df = pd.read_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
 
-
+            df = self.calculate_indicators(df)
             df = df.between_time(self.start, self.end)
 
             self.have_units = 0
@@ -130,7 +144,10 @@ class BB_to_SMA_Back_Test():
                 self.set_strategy_parameters(row)
 
                 current_price = row [self.strategy.instrument]
-                trade_action = self.strategy.determine_action(current_price, current_price, self.have_units, self.units_to_trade)
+                ask = row ["ask"]
+                bid = row ["bid"]
+                rsi_slope = row ["rsi_slope"]
+                trade_action = self.strategy.determine_action(bid, ask, self.have_units, self.units_to_trade)
                 
         
                 if trade_action != None:
@@ -161,7 +178,7 @@ class BB_to_SMA_Back_Test():
 
                     self.have_units = self.have_units + trade_action.units
                     self.i = self.i + 1
-                    self.trades.append([index, trade_action.units, trade_action.price, self.strategy.rsi, self.have_units, '${:,.2f}'.format(self.outstanding), '${:,.2f}'.format(self.pl)])
+                    self.trades.append([index, trade_action.units, trade_action.price, self.strategy.rsi, rsi_slope, self.have_units, '${:,.2f}'.format(self.outstanding), '${:,.2f}'.format(self.pl)])
             
             self.print_metrics()
 
@@ -177,7 +194,7 @@ class BB_to_SMA_Back_Test():
        
             logger.info("\n" + 100 * "-")        
             if self.trades != None and len(self.trades) > 0:
-                df = pd.DataFrame(data=self.trades, columns=["datetime", "trade units", "price", "rsi", "new # of units", "trade p&l", "total p&l"])
+                df = pd.DataFrame(data=self.trades, columns=["datetime", "trade units", "price", "rsi", "rsi slope", "new # of units", "trade p&l", "total p&l"])
                 logger.info("\n" + df.to_string(header=True))
                 logger.info("\n" + 100 * "-")
 
@@ -191,9 +208,10 @@ if __name__ == "__main__":
     if len(args) > 1:
         refresh = bool(args[1])
 
+    config_file = os.environ.get("oanda_config")
 
     trader = BB_to_SMA_Back_Test(
-        conf_file="../trading/oanda.cfg",
+        conf_file=config_file,
         pairs_file="../trading/pairs.ini",
         instrument=pair
     )
