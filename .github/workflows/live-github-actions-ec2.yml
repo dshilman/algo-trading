@@ -19,6 +19,6 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_HOST: ${{ env.LIVE_REMOTE_HOST }}
-          TARGET: ${{ env.TARGET }}
+          REMOTE_HOST: ${{ vars.LIVE_REMOTE_HOST }}
+          TARGET: ${{ vars.TARGET }}
 
