@@ -20,5 +20,5 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           REMOTE_HOST: ${{ vars.LIVE_REMOTE_HOST }}
-          TARGET: ${{ env.TARGET }}
+          TARGET: ${{ vars.TARGET }}
 
