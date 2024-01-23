@@ -1,9 +1,9 @@
-name: Push-to-DEMO-EC2
+name: Push-to-LIVE-EC2
 
 on:
   push:
     branches:
-      - demo
+      - live
 
 jobs:
   deploy:
@@ -19,6 +19,6 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_HOST: ${{ env.DEMO_REMOTE_HOST }}
+          REMOTE_HOST: ${{ env.LIVE_REMOTE_HOST }}
           TARGET: ${{ env.TARGET }}
 

@@ -7,6 +7,7 @@ import threading
 import time
 from collections import deque
 from datetime import datetime, timedelta, timezone
+
 from random import randint
 
 import numpy as np
@@ -197,6 +198,9 @@ class Trader(tpqoa.tpqoa):
         self.units_to_trade = int(config.get(self.instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
         self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
+        self.start = config.get(self.instrument, 'start')
+        self.end = config.get(self.instrument, 'end')
+
 
         self.tick_data = []
         self.trades = []
@@ -226,6 +230,11 @@ class Trader(tpqoa.tpqoa):
 
         logger.info("\n" + 100 * "-")
 
+        trading_time = self.is_trading_time(self.start, self.end)
+        if not trading_time:
+            logger.info("Not Trading Time")
+            return
+
         for i in range(1, max_attempts + 1):
             try:
                 success = True
@@ -236,7 +245,7 @@ class Trader(tpqoa.tpqoa):
 
                 logger.info ("Starting Refresh Strategy Thread")
                 self.stop_refresh = False
-                self.refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time,))
+                self.refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time, self.start, self.end,))
                 self.refresh_thread.start()
                 
                 time.sleep(1)
@@ -334,12 +343,31 @@ class Trader(tpqoa.tpqoa):
             self.units = self.units + order.units
             logger.info(f"New # of {order.instrument} units: {self.units}")
 
-    def refresh_strategy(self, refresh_strategy_time):
+    def is_trading_time(self, from_date, to_date):
+
+        now = datetime.now()
+        today = now.date()
+
+        from_dt = datetime.combine(today, datetime.strptime(from_date, '%H:%M:%S').time())
+        to_dt = datetime.combine(today, datetime.strptime(to_date, '%H:%M:%S').time())
+
+        if to_dt < from_dt:
+            to_dt = to_dt + timedelta(days=1)
+
+        return from_dt < now < to_dt
+
+
+    def refresh_strategy(self, refresh_strategy_time, start, end):
 
         i: int = 0
         refresh_check_positions_count = 6
 
         while not self.stop_refresh:
+
+            trading_time = self.is_trading_time(start, end)
+            if not trading_time:
+                self.stop_refresh = True
+                continue
 
             logger.debug ("Refreshing Strategy")
 
@@ -398,7 +426,7 @@ class Trader(tpqoa.tpqoa):
             if not "rejectReason" in close_order:
                 self.report_trade(close_order, "Closing Long Position" if self.units > 0 else "Closing Short Position")
                 self.units = 0
-                trade = [close_order["fullPrice"]["bids"][0]["price"], close_order["fullPrice"]["asks"][0]["price"], self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, (1 if float(close_order.get("units")) > 0 else -1), float(close_order.get("units")), float(close_order["price"]), self.units]
+                trade = [close_order["fullPrice"]["bids"][0]["price"], close_order["fullPrice"]["asks"][0]["price"], self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, float(close_order.get("units")), float(close_order["price"]), self.units]
                 self.trades.append(trade)
             else:
                 logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
