@@ -1,7 +1,7 @@
 name: Push-to-LIVE-EC2
 
 on:
-  push:
+  pull_request:
     branches:
       - live
 
@@ -20,5 +20,5 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           REMOTE_HOST: ${{ vars.LIVE_REMOTE_HOST }}
-          TARGET: ${{ vars.TARGET }}
+          TARGET: ${{ env.TARGET }}
 
