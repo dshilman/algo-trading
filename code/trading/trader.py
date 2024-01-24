@@ -183,7 +183,7 @@ class Trader(tpqoa.tpqoa):
     def __init__(self, conf_file, pair_file, strategy, unit_test = False):
         super().__init__(conf_file)
 
-        self.refresh_strategy_time = 1 * 60 # 2 minutes
+        self.refresh_strategy_time = 60 # 1 minute
 
         self.strategy: Strategy = strategy
         self.instrument = self.strategy.instrument
@@ -208,6 +208,7 @@ class Trader(tpqoa.tpqoa):
         self.units = 0
         
         self.stop_refresh = False
+        self.is_trading_time = self.is_trading_time(self.start, self.end)
         self.unit_test = unit_test
 
         ## Here we define our formatter
@@ -229,15 +230,18 @@ class Trader(tpqoa.tpqoa):
     def start_trading(self, max_attempts = 3):
 
         logger.info("\n" + 100 * "-")
-
-        trading_time = self.is_trading_time(self.start, self.end)
-        if not trading_time:
+        if not self.is_trading_time:
             logger.info("Not Trading Time")
             return
 
         for i in range(1, max_attempts + 1):
             try:
+
                 success = True
+
+                if not self.is_trading_time:
+                    logger.info("Not Trading Time")
+                    continue
 
                 logger.info ("Started New Trading Session")
                 logger.info (f"Getting  candles for: {self.instrument}")
@@ -245,7 +249,7 @@ class Trader(tpqoa.tpqoa):
 
                 logger.info ("Starting Refresh Strategy Thread")
                 self.stop_refresh = False
-                self.refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time, self.start, self.end,))
+                self.refresh_thread = threading.Thread(target=self.refresh_strategy, args=(self.refresh_strategy_time,))
                 self.refresh_thread.start()
                 
                 time.sleep(1)
@@ -307,6 +311,12 @@ class Trader(tpqoa.tpqoa):
                 if self.print_trades:
                     self.trades.append([bid, ask, self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, order.units, order.price, self.units])
 
+        if self.ticks % 100 == 0:
+            self.is_trading_time = self.is_trading_time(self.start, self.end)
+            if not self.is_trading_time:
+                raise Exception("Stop Trading - No longer in trading time")
+                
+            
         if self.ticks % 500 == 0:
             spread = ask - bid
             spread_prct = spread / ((ask + bid) / 2)
@@ -315,6 +325,7 @@ class Trader(tpqoa.tpqoa):
             )
             if self.refresh_thread == None or not self.refresh_thread.is_alive():
                 raise Exception("Refresh Strategy Thread is not alive")
+
 
 
     def capture(self, time, bid, ask):
@@ -361,17 +372,12 @@ class Trader(tpqoa.tpqoa):
             return True
 
 
-    def refresh_strategy(self, refresh_strategy_time, start, end):
+    def refresh_strategy(self, refresh_strategy_time=60):
 
         i: int = 0
         refresh_check_positions_count = 6
 
         while not self.stop_refresh:
-
-            trading_time = self.is_trading_time(start, end)
-            if not trading_time:
-                self.stop_refresh = True
-                continue
 
             logger.debug ("Refreshing Strategy")
 

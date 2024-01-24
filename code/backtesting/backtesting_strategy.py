@@ -8,26 +8,25 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.trader import Trade_Action
-from trading.trader_strategy_bb_target_sma import BB_to_SMA_Strategy
+from trading.trader import Strategy
 
-logger = logging.getLogger("trader_oanda")
+logger = logging.getLogger()
 
-class Backtesting_Strategy(BB_to_SMA_Strategy):
+class Backtesting_Strategy(Strategy):
     def __init__(self, instrument, pairs_file):
         super().__init__(instrument, pairs_file)
-        self.sma_160 = None
 
     def check_if_need_open_trade(self, instrument, have_units, price, spread, units_to_trade):
-        
+
         # if abs(have_units) <= units_to_trade:
         if have_units == 0:
             
             signal = 0
 
-            if price < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min and price > self.price_min: # if price is below lower BB, BUY
+            if price < self.bb_lower and self.rsi < 30 and self.rsi >= self.rsi_min and price > self.price_min: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at price: {price}, rsi: {self.rsi}")
-            elif price > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_max and price < self.price_max:  # if price is above upper BB, SELL
+            elif price > self.bb_upper and self.rsi > 70 and self.rsi <= self.rsi_max and price < self.price_max:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at price: {price}, rsi: {self.rsi}")
             
@@ -44,15 +43,15 @@ class Backtesting_Strategy(BB_to_SMA_Strategy):
 
 
     def check_if_need_close_trade(self, instrument, have_units, price, spread):
-
+        
         signal = 0
 
         if have_units > 0:  # if already have long positions
-            if price > self.sma and self.rsi < self.rsi_max and price < self.price_max:
+            if price > self.sma and self.rsi <= self.rsi_max and price < self.price_max:
                 signal = -1
                 logger.info(f"Close long position - Sell {have_units} units at price: {price}, sma: {self.sma}, rsi: {self.rsi}")
         elif have_units < 0:  # if alredy have short positions
-            if price < self.sma and self.rsi > self.rsi_min and price > self.price_min:  # price is below target SMA, BUY
+            if price < self.sma and self.rsi >= self.rsi_min and price > self.price_min:  # price is below target SMA, BUY
                 signal = 1
                 logger.info(f"Close short position  - Buy {have_units} units at price: {price}, sma: {self.sma}, rsi: {self.rsi}")
 
@@ -63,3 +62,4 @@ class Backtesting_Strategy(BB_to_SMA_Strategy):
             return Trade_Action(instrument, -have_units, price, spread, False)
 
         return None
+
