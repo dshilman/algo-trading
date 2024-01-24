@@ -354,7 +354,11 @@ class Trader(tpqoa.tpqoa):
         if to_dt < from_dt:
             to_dt = to_dt + timedelta(days=1)
 
-        return from_dt < now < to_dt
+        if not from_dt <= now <= to_dt:
+            logger.info(f"Now: {now}, Trading Time: {from_dt} - {to_dt}")
+            return False
+        else:
+            return True
 
 
     def refresh_strategy(self, refresh_strategy_time, start, end):

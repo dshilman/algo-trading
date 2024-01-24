@@ -3,4 +3,3 @@ numpy
 git+https://github.com/yhilpisch/tpqoa
 boto3
 botocore
-```
