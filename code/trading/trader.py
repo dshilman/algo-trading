@@ -296,7 +296,7 @@ class Trader(tpqoa.tpqoa):
         trade_action = self.strategy.determine_action(bid, ask, self.units, self.units_to_trade)
 
         if trade_action is not None:
-            logger.info(f"trade_action: {trade_action}")
+            # logger.info(f"trade_action: {trade_action}")
             order = self.strategy.create_order(trade_action, self.sl_perc, self.tp_perc, self.units)
 
             if order is not None:
