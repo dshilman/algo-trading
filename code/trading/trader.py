@@ -176,7 +176,7 @@ class Trader(tpqoa.tpqoa):
     def __init__(self, conf_file, pair_file, strategy, unit_test = False):
         super().__init__(conf_file)
 
-        self.refresh_strategy_time = 60 # 1 minute
+        self.refresh_strategy_time = 30 # 30 seconds
 
         self.strategy: Strategy = strategy
         self.instrument = self.strategy.instrument
