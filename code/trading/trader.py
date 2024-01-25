@@ -85,11 +85,11 @@ class Strategy():
         
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
-        df["RSI"] = df[self.instrument][-30:].rolling(30).apply(lambda x: MyTT.RSI(x.dropna().values, N=29))
-        self.rsi_max = df ['RSI'][-5:].max()
-        self.rsi_min = df ['RSI'][-5:].min()
-        self.price_max = round(df [self.instrument][-5:].max(), 6)
-        self.price_min = round(df [self.instrument][-5:].min(), 6)
+        df["RSI"] = df[self.instrument].rolling(30).apply(lambda x: MyTT.RSI(x.dropna().values, N=29))
+        self.rsi_max = df ['RSI'][-10:].max()
+        self.rsi_min = df ['RSI'][-10:].min()
+        self.price_max = round(df [self.instrument][-10:].max(), 6)
+        self.price_min = round(df [self.instrument][-10:].min(), 6)
 
         logger.debug (df)
 
@@ -368,7 +368,7 @@ class Trader(tpqoa.tpqoa):
     def refresh_strategy(self, refresh_strategy_time=60):
 
         i: int = 0
-        refresh_check_positions_count = 6
+        refresh_check_positions_count = 11
 
         while not self.stop_refresh:
 
@@ -376,7 +376,7 @@ class Trader(tpqoa.tpqoa):
 
             try:
 
-                if refresh_check_positions_count >= 5:
+                if refresh_check_positions_count >= 11:
                     self.check_positions()
                     refresh_check_positions_count = 0
 

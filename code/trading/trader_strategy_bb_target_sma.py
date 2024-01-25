@@ -1,3 +1,4 @@
+import argparse
 import configparser
 import logging
 import os
@@ -75,15 +76,19 @@ class BB_Strategy_SMA_Target_Trader(Trader):
 
 if __name__ == "__main__":
 
-    args = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('pair', type=str, help='pair')
+    args = parser.parse_args()
 
-    pair = args[0]
-    config_file = os.environ.get("oanda_config")
+    config_file = os.path.abspath(os.environ.get("oanda_config", "../../config/oanda_demo.cfg"))
+    if os.path.exists(config_file) == False:
+        logger.error(f"Config file does not exist: {config_file}")
+        exit(1) 
     
     trader = BB_Strategy_SMA_Target_Trader(
         conf_file=config_file,
         pairs_file="pairs.ini",
-        instrument=pair
+        instrument=args.pair
     )
     trader.start_trading()
 
