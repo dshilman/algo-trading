@@ -85,28 +85,21 @@ class Strategy():
         
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
-        df["RSI"] = df[self.instrument][-30:].rolling(15).apply(lambda x: MyTT.RSI(x.dropna().values, N=14))
+        df["RSI"] = df[self.instrument][-30:].rolling(30).apply(lambda x: MyTT.RSI(x.dropna().values, N=29))
         self.rsi_max = df ['RSI'][-5:].max()
         self.rsi_min = df ['RSI'][-5:].min()
         self.price_max = round(df [self.instrument][-5:].max(), 6)
         self.price_min = round(df [self.instrument][-5:].min(), 6)
 
-        # df["rsi_slope"] = df["RSI"].rolling(5).apply(lambda x: MyTT.SLOPE(x.dropna().values, N = 5))
-        # df['prev_rsi_slope'] = df.rsi_slope.shift(1)
-
-        logger.debug (df.tail(10))
+        logger.debug (df)
 
         current_price = round(df[self.instrument].iloc[-1], 6)
         self.bb_lower = round(df.Lower.iloc[-1], 6)
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
         self.sma = round(df.SMA.iloc[-1], 6)
         self.rsi = df.RSI.iloc[-1]
-        # self.rsi_slope = round(df.rsi_slope.iloc[-1], 4)
-        # self.rsi_reversed = True if (df.rsi_slope.iloc[-1] * df.prev_rsi_slope.iloc[-1] < 0) else False
 
-        logger.info ("new indicators:")
-        # logger.info (f"bb_lower: {self.bb_lower}, SMA: {self.target}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_slope: {self.rsi_slope}, rsi_reversed: {self.rsi_reversed}")
-        logger.info (f"current price: {current_price}, bb_lower: {self.bb_lower}, SMA: {self.sma}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_max: {self.rsi_max}, rsi_min: {self.rsi_min}, price_max: {self.price_max}, price_min: {self.price_min}")
+        logger.info (f"new indicators -- price: {current_price}, bb_lower: {self.bb_lower}, SMA: {self.sma}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_max: {self.rsi_max}, rsi_min: {self.rsi_min}, price_max: {self.price_max}, price_min: {self.price_min}")
 
 
         self.data = df.copy()
@@ -208,7 +201,7 @@ class Trader(tpqoa.tpqoa):
         self.units = 0
         
         self.stop_refresh = False
-        self.is_trading_time = self.is_trading_time(self.start, self.end)
+        self.is_trading_time: bool = self.check_trading_time(self.start, self.end)
         self.unit_test = unit_test
 
         ## Here we define our formatter
@@ -312,12 +305,12 @@ class Trader(tpqoa.tpqoa):
                     self.trades.append([bid, ask, self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, order.units, order.price, self.units])
 
         if self.ticks % 100 == 0:
-            self.is_trading_time = self.is_trading_time(self.start, self.end)
+            self.is_trading_time = self.check_trading_time(self.start, self.end)
             if not self.is_trading_time:
                 raise Exception("Stop Trading - No longer in trading time")
                 
             
-        if self.ticks % 500 == 0:
+        if self.ticks % 250 == 0:
             spread = ask - bid
             spread_prct = spread / ((ask + bid) / 2)
             logger.info(
@@ -354,7 +347,7 @@ class Trader(tpqoa.tpqoa):
             self.units = self.units + order.units
             logger.info(f"New # of {order.instrument} units: {self.units}")
 
-    def is_trading_time(self, from_date, to_date):
+    def check_trading_time(self, from_date, to_date):
 
         now = datetime.now()
         today = now.date()
@@ -400,7 +393,8 @@ class Trader(tpqoa.tpqoa):
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    df = df.resample("1Min").last()
+                    df = df.resample("30s").last()
+                    # df = df.resample("1Min").last()
 
                 self.strategy.define_strategy(df)
 
@@ -443,7 +437,7 @@ class Trader(tpqoa.tpqoa):
 
         if self.print_trades and self.trades != None and len(self.trades) > 0:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "trade_units", "price", "have_units"])
-            logger.info("\n" + df.to_string(header=True))
+            logger.info("\n" + df)
             logger.info(f"Oustanding positions: {self.units}")
             df['amount'] = df['price'] * df['trade_units']
             p_and_l = - df['amount'].sum()

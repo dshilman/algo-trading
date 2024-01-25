@@ -225,7 +225,6 @@ if __name__ == "__main__":
     parser.add_argument('--strategy', choices=['Old', 'New', 'old', 'new'], default='New', help='Which strategy to use')
     args = parser.parse_args()
 
-    config_file = os.environ.get("oanda_config", default="../../config/oanda_demo.cfg")
     config_file = os.path.abspath("../../config/oanda_demo.cfg")
 
     if os.path.exists(config_file) == False:

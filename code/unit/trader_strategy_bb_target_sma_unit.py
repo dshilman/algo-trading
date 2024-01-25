@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import random
@@ -72,23 +73,28 @@ class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
         return time, bid, ask
 
 if __name__ == "__main__":
-    # insert the file path of your config file below!
 
-    args = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('pair', type=str, help='pair')
+    args = parser.parse_args()
 
-    pair = args[0]
+    config_file = os.path.abspath("../../config/oanda_demo.cfg")
 
-    config_file = os.environ.get("oanda_config")
-
+    if os.path.exists(config_file) == False:
+        logger.error(f"Config file does not exist: {config_file}")
+        exit(1) 
+ 
+    
     trader = Trader_Unit_Test(
         conf_file=config_file,
         pairs_file="../trading/pairs.ini",
-        instrument=pair
+        instrument=args.pair
     )
-    trader.stop_after = 5
-    trader.refresh_strategy_time = 60
+
+    trader.stop_after = 200
+    trader.refresh_strategy_time = 30
 
     # trader.start_trading()
-    trader.start_trading_random()
+    trader.start_trading()
 
     # python trader_strategy_bb_target_sma_unit.py EUR_USD
