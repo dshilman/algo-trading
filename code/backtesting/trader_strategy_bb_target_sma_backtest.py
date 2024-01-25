@@ -67,14 +67,14 @@ class BB_to_SMA_Back_Test():
 
     def get_history(self, price = "M"):
         
-        delta = 3
+        delta = 2
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = delta)
         instrument = self.strategy.instrument
         
         df: pd.DataFrame = pd.DataFrame()
-        for i in range(1, 25):           
+        for i in range(1, 3):           
 
             df_t = self.api.get_history(instrument = instrument, start = past, end = now,
                                 granularity = "S5", price = price, localize = True).c.dropna().to_frame()
@@ -101,12 +101,15 @@ class BB_to_SMA_Back_Test():
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         
-        df["RSI"] = df[instrument].rolling(15).apply(lambda x: RSI(x.values, N=14))
-        df["rsi_max"] = df ['RSI'].rolling(5).max()
-        df["rsi_min"] = df ['RSI'].rolling(5).min()
+        df["RSI"] = df[instrument].rolling(30).apply(lambda x: RSI(x.values, N=29))
+        df["rsi_max"] = df ['RSI'].rolling(10).max()
+        df["rsi_min"] = df ['RSI'].rolling(10).min()
+        df["rsi_mean"] = df ['RSI'].rolling(10).mean()
         
-        df["price_max"] = df [instrument].rolling(5).max()
-        df["price_min"] = df [instrument].rolling(5).min()
+        df["price_max"] = df [instrument].rolling(10).max()
+        df["price_min"] = df [instrument].rolling(10).min()
+        df["price_mean"] = df [instrument].rolling(10).mean()
+
 
         df.dropna(subset=["RSI", "SMA"], inplace = True)
 
@@ -118,12 +121,14 @@ class BB_to_SMA_Back_Test():
             
             self.strategy.rsi_max = row ['rsi_max']
             self.strategy.rsi_min = row ['rsi_min']
+            self.strategy.rsi_mean = row ['rsi_mean']
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
             self.strategy.sma = row ['SMA']
             self.strategy.rsi = row ['RSI']
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
+            self.strategy.price_mean = row ['price_mean']
   
     def get_data(self, refresh = False):
 
@@ -241,4 +246,4 @@ if __name__ == "__main__":
     trader.start_trading_backtest(refresh=(args.refresh in ['True', 'true']))
 
 
-# python trader_strategy_bb_target_sma_backtest.py EUR_USD
+# python trader_strategy_bb_target_sma_backtest.py EUR_USD --refresh True --strategy New

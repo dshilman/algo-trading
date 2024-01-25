@@ -88,8 +88,11 @@ class Strategy():
         df["RSI"] = df[self.instrument].rolling(30).apply(lambda x: MyTT.RSI(x.dropna().values, N=29))
         self.rsi_max = df ['RSI'][-10:].max()
         self.rsi_min = df ['RSI'][-10:].min()
+        self.rsi_mean = df ['RSI'][-10:].mean()
+        
         self.price_max = round(df [self.instrument][-10:].max(), 6)
         self.price_min = round(df [self.instrument][-10:].min(), 6)
+        self.price_mean = round(df [self.instrument][-10:].mean(), 6)
 
         logger.debug (df)
 
@@ -368,7 +371,7 @@ class Trader(tpqoa.tpqoa):
     def refresh_strategy(self, refresh_strategy_time=60):
 
         i: int = 0
-        refresh_check_positions_count = 11
+        refresh_check_positions_count = 10
 
         while not self.stop_refresh:
 
@@ -376,7 +379,7 @@ class Trader(tpqoa.tpqoa):
 
             try:
 
-                if refresh_check_positions_count >= 11:
+                if refresh_check_positions_count >= 10:
                     self.check_positions()
                     refresh_check_positions_count = 0
 
@@ -437,7 +440,7 @@ class Trader(tpqoa.tpqoa):
 
         if self.print_trades and self.trades != None and len(self.trades) > 0:
             df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "trade_units", "price", "have_units"])
-            logger.info("\n" + df)
+            logger.info("\n" + df.to_string(header=True))
             logger.info(f"Oustanding positions: {self.units}")
             df['amount'] = df['price'] * df['trade_units']
             p_and_l = - df['amount'].sum()
