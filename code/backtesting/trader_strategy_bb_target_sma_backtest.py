@@ -67,14 +67,14 @@ class BB_to_SMA_Back_Test():
 
     def get_history(self, price = "M"):
         
-        delta = 2
+        delta = 4
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = delta)
         instrument = self.strategy.instrument
         
         df: pd.DataFrame = pd.DataFrame()
-        for i in range(1, 3):           
+        for i in range(1, 20):           
 
             df_t = self.api.get_history(instrument = instrument, start = past, end = now,
                                 granularity = "S5", price = price, localize = True).c.dropna().to_frame()

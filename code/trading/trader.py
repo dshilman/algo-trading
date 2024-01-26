@@ -102,10 +102,16 @@ class Strategy():
         self.sma = round(df.SMA.iloc[-1], 6)
         self.rsi = df.RSI.iloc[-1]
 
-        logger.info (f"new indicators -- price: {current_price}, bb_lower: {self.bb_lower}, SMA: {self.sma}, bb_upper: {self.bb_upper}, rsi: {self.rsi}, rsi_max: {self.rsi_max}, rsi_min: {self.rsi_min}, price_max: {self.price_max}, price_min: {self.price_min}")
-
-
+        self.print_indicators(current_price)
+    
         self.data = df.copy()
+
+    def print_indicators(self, price):
+
+        indicators = [[price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max]]
+        df = pd.DataFrame(data=indicators, columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX"])
+        logger.info("\n" + df.to_string(header=True))
+
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
         
@@ -249,6 +255,9 @@ class Trader(tpqoa.tpqoa):
                 self.refresh_thread.start()
                 
                 time.sleep(1)
+
+                if self.refresh_thread == None or not self.refresh_thread.is_alive():
+                    raise Exception("Refresh Strategy Thread is not alive")
 
                 logger.info (f"Starting to stream for: {self.instrument}")
                 self.stream_data(self.instrument, stop= self.stop_after)
