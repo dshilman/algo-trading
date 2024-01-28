@@ -230,8 +230,9 @@ if __name__ == "__main__":
     parser.add_argument('--strategy', choices=['Old', 'New', 'old', 'new'], default='New', help='Which strategy to use')
     args = parser.parse_args()
 
-    config_file = os.path.abspath("../../config/oanda_demo.cfg")
-
+    
+    config_file = os.path.abspath(os.environ.get("oanda_config", "../../config/oanda_demo.cfg"))
+    print (f"oanda config file: {config_file}")
     if os.path.exists(config_file) == False:
         logger.error(f"Config file does not exist: {config_file}")
         exit(1) 
