@@ -292,7 +292,7 @@ class Trader(tpqoa.tpqoa):
         logger.debug (f"Getting candles for {instrument}, from {past} to {now}")
         
         df = self.get_history(instrument = instrument, start = past, end = now,
-                                granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
+                                granularity = "S5", price = "M", localize = True).c.dropna().to_frame()
         df.rename(columns = {"c":instrument}, inplace = True)
 
         logger.info (f"history data_frame: {df.shape}")
