@@ -45,7 +45,7 @@ class Trader_Unit_Test(BB_Strategy_SMA_Target_Trader):
                 tick_time, bid, ask = self.get_tick()
                 self.on_success(tick_time, bid, ask)
 
-                time.sleep(float(2))
+                time.sleep(2)
 
             self.terminate_session("Finished Trading Session")
 

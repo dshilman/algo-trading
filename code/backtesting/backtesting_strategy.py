@@ -44,15 +44,16 @@ class Backtesting_Strategy(Strategy):
 
     def check_if_need_open_trade(self, instrument, have_units, bid, ask, spread, units_to_trade):
         
+        price = (bid + ask)/2
         # if abs(have_units) <= units_to_trade:
         if have_units == 0:
             
             signal = 0
 
-            if ask < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min and ask > self.price_min: # if price is below lower BB, BUY
+            if price < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min and self.slope * self.slope_prev < 0: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at price: {ask}, rsi: {self.rsi}")
-            elif bid > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_max and bid < self.price_max:  # if price is above upper BB, SELL
+            elif price > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_max and self.slope * self.slope_prev < 0:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at price: {bid}, rsi: {self.rsi}")
             
@@ -71,13 +72,14 @@ class Backtesting_Strategy(Strategy):
     def check_if_need_close_trade(self, instrument, have_units, bid, ask, spread):
 
         signal = 0
+        price = (bid + ask)/2
 
         if have_units > 0:  # if already have long positions
-            if bid > self.sma and self.rsi < self.rsi_max and bid < self.price_max:
+            if price > self.sma and self.rsi < self.rsi_max and self.slope * self.slope_prev < 0:
                 signal = -1
                 logger.info(f"Close long position - Sell {have_units} units at price: {bid}, sma: {self.sma}, rsi: {self.rsi}")
         elif have_units < 0:  # if alredy have short positions
-            if ask < self.sma and self.rsi > self.rsi_min and ask > self.price_min:  # price is below target SMA, BUY
+            if price < self.sma and self.rsi > self.rsi_min and self.slope * self.slope_prev < 0:  # price is below target SMA, BUY
                 signal = 1
                 logger.info(f"Close short position  - Buy {have_units} units at price: {ask}, sma: {self.sma}, rsi: {self.rsi}")
 

@@ -17,7 +17,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.MyTT import RSI
+from trading.MyTT import RSI, SLOPE
 from trading.trader import Trader
 from trading.trader_strategy_bb_target_sma import BB_to_SMA_Strategy
 
@@ -105,13 +105,16 @@ class BB_to_SMA_Back_Test():
         df["rsi_max"] = df ['RSI'].rolling(10).max()
         df["rsi_min"] = df ['RSI'].rolling(10).min()
         df["rsi_mean"] = df ['RSI'].rolling(10).mean()
+
+        df["slope"] = df[instrument].rolling(5).apply(lambda x: SLOPE(x.dropna().values, N=5))
+        df["slope_prev"] = df["slope"].shift(1)
         
         df["price_max"] = df [instrument].rolling(10).max()
         df["price_min"] = df [instrument].rolling(10).min()
         df["price_mean"] = df [instrument].rolling(10).mean()
 
 
-        df.dropna(subset=["RSI", "SMA"], inplace = True)
+        df.dropna(subset=["RSI", "SMA", "slope", "slope_prev"], inplace = True)
 
         # logger.info(df)
 
@@ -129,6 +132,8 @@ class BB_to_SMA_Back_Test():
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
             self.strategy.price_mean = row ['price_mean']
+            self.strategy.slope = row ['slope']
+            self.strategy.slope_prev = row ['slope_prev']
   
     def get_data(self, refresh = False):
 
