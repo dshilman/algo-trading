@@ -105,16 +105,23 @@ class BB_to_SMA_Back_Test():
         df["rsi_max"] = df ['RSI'].rolling(10).max()
         df["rsi_min"] = df ['RSI'].rolling(10).min()
         df["rsi_mean"] = df ['RSI'].rolling(10).mean()
+        df["RSI_EMA"] = df.RSI.ewm(span=10, adjust=False, ignore_na = True).mean()
+        df["rsi_ema_max"] = df ['RSI_EMA'].rolling(10).max()
+        df["rsi_ema_min"] = df ['RSI_EMA'].rolling(10).min()
 
-        df["slope"] = df[instrument].rolling(5).apply(lambda x: SLOPE(x.dropna().values, N=5))
-        df["slope_prev"] = df["slope"].shift(1)
+
+        df["ema"] = df[instrument].ewm(span=10, adjust=False, ignore_na = True).mean()
+
+
+        # df["slope"] = df[instrument].rolling(5).apply(lambda x: SLOPE(x.dropna().values, N=5))
+        # df["slope_prev"] = df["slope"].shift(1)
         
         df["price_max"] = df [instrument].rolling(10).max()
         df["price_min"] = df [instrument].rolling(10).min()
         df["price_mean"] = df [instrument].rolling(10).mean()
 
 
-        df.dropna(subset=["RSI", "SMA", "slope", "slope_prev"], inplace = True)
+        df.dropna(subset=["RSI", "SMA"], inplace = True)
 
         # logger.info(df)
 
@@ -132,9 +139,12 @@ class BB_to_SMA_Back_Test():
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
             self.strategy.price_mean = row ['price_mean']
-            self.strategy.slope = row ['slope']
-            self.strategy.slope_prev = row ['slope_prev']
-  
+            # self.strategy.slope = row ['slope']
+            # self.strategy.slope_prev = row ['slope_prev']
+            self.strategy.rsi_ema = row ['RSI_EMA']
+            self.strategy.rsi_ema_max = row ['rsi_ema_max']
+            self.strategy.rsi_ema_min = row ['rsi_ema_min']
+    
     def get_data(self, refresh = False):
 
         if refresh:                

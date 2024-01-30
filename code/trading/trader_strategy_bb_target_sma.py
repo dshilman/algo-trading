@@ -20,6 +20,7 @@ class BB_to_SMA_Strategy(Strategy):
 
     def check_if_need_open_trade(self, instrument, have_units, bid, ask, units_to_trade):
         
+        price = (ask + bid) / 2
         spread = round(ask - bid, 4)
         # check if need to open a new position
         if spread >= abs(self.bb_upper - self.sma):                            
@@ -31,10 +32,10 @@ class BB_to_SMA_Strategy(Strategy):
             
             signal = 0
 
-            if ask < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min and ask > self.price_min: # if price is below lower BB, BUY
+            if ask < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min and price > self.price_min: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at ask price: {ask}, rsi: {self.rsi}")
-            elif bid > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_max and bid < self.price_max:  # if price is above upper BB, SELL
+            elif bid > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_max and price < self.price_max:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at bid price: {bid}, rsi: {self.rsi}")
             
@@ -53,14 +54,15 @@ class BB_to_SMA_Strategy(Strategy):
     def check_if_need_close_trade(self, instrument, have_units, bid, ask):
 
         signal = 0
+        price = (ask + bid) / 2
         spread = round(ask - bid, 4)
 
         if have_units > 0:  # if already have long positions
-            if bid > self.sma and self.rsi < self.rsi_max and bid < self.price_max:
+            if bid > self.sma and self.rsi < self.rsi_max and price < self.price_max:
                 signal = -1
                 logger.info(f"Close long position - Sell {have_units} units at bid price: {bid}, sma: {self.sma}, rsi: {self.rsi}")
         elif have_units < 0:  # if alredy have short positions
-            if ask < self.sma and self.rsi > self.rsi_min and ask > self.price_min:  # price is below target SMA, BUY
+            if ask < self.sma and self.rsi > self.rsi_min and price > self.price_min:  # price is below target SMA, BUY
                 signal = 1
                 logger.info(f"Close short position  - Buy {have_units} units at ask price: {ask}, sma: {self.sma}, rsi: {self.rsi}")
 
