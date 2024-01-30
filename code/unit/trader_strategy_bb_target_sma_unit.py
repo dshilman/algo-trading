@@ -97,4 +97,3 @@ if __name__ == "__main__":
     # trader.start_trading()
     trader.start_trading()
 
-    # python trader_strategy_bb_target_sma_unit.py EUR_USD

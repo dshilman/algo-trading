@@ -86,8 +86,8 @@ class Strategy():
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         df["RSI"] = df[self.instrument][-self.sma_value:].rolling(29).apply(lambda x: MyTT.RSI(x.dropna().values, N=28))
-        df["slope"] = df[self.instrument][-self.sma_value:].rolling(10).apply(lambda x: MyTT.SLOPE(x.dropna().values, N=10))
-        df["slope_prev"] = df["slope"].shift(1)
+        df["ema"] = df[self.instrument][-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
+ 
         self.rsi_max = df ['RSI'][-10:].max()
         self.rsi_min = df ['RSI'][-10:].min()
         self.rsi_mean = df ['RSI'][-10:].mean()
@@ -103,17 +103,16 @@ class Strategy():
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
         self.sma = round(df.SMA.iloc[-1], 6)
         self.rsi = df.RSI.iloc[-1]
-        self.slope = df.slope.iloc[-1]
-        self.slope_prev = df.slope_prev.iloc[-1]
-
+        self.ema = round(df.ema.iloc[-1], 6)
+ 
         self.print_indicators(current_price)
-    
+
         self.data = df.copy()
 
     def print_indicators(self, price):
 
-        indicators = [[price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, self.rsi_mean, self.slope]]
-        df = pd.DataFrame(data=indicators, columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "RSI MEAN", "PRICE SLOPE"])
+        indicators = [[price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, self.rsi_mean, self.ema]]
+        df = pd.DataFrame(data=indicators, columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "RSI MEAN", "EMA"])
         logger.info("\n" + df.to_string(header=True))
 
 
