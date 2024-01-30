@@ -161,24 +161,17 @@ class Strategy():
         return order    
 
     def determine_action(self, bid, ask, have_units, units_to_trade) -> Trade_Action:
-        
-        price = round((bid + ask)/2, 6)
-        spread = round(ask - bid, 4)
+
         instrument = self.instrument
 
         if have_units != 0:  # if already have positions
             logger.debug(f"Have {have_units} positions, checking if need to close")
-            trade = self.check_if_need_close_trade(instrument, have_units, price, spread)
+            trade = self.check_if_need_close_trade(instrument, have_units, bid, ask)
             if trade is not None:
                 return trade
-
-        # check if need to open a new position
-        if spread >= abs(self.bb_upper - self.sma):                            
-            logger.warning (f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
-            return None
                 
         logger.debug(f"Have {have_units} positions, checking if need to open")
-        trade = self.check_if_need_open_trade(instrument, have_units, price, spread, units_to_trade)
+        trade = self.check_if_need_open_trade(instrument, have_units, bid, ask, units_to_trade)
         if trade is not None:
             return trade
 
@@ -232,7 +225,7 @@ class Trader(tpqoa.tpqoa):
 
  
 
-    def start_trading(self, max_attempts = 3):
+    def start_trading(self, max_attempts = 5):
 
         logger.info("\n" + 100 * "-")
         if not self.is_trading_time:
@@ -408,7 +401,7 @@ class Trader(tpqoa.tpqoa):
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    df = df.resample("30s").last()
+                    df = df.resample("30s").mean()
                     # df = df.resample("1Min").last()
 
                 self.strategy.define_strategy(df)
