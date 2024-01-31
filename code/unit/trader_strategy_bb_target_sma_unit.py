@@ -95,6 +95,6 @@ if __name__ == "__main__":
     trader.refresh_strategy_time = 30
 
     # trader.start_trading()
-    trader.start_trading()
+    trader.start_trading(max_attempts=1)
 
     # python trader_strategy_bb_target_sma_unit.py EUR_USD

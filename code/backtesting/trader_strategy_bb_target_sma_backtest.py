@@ -67,7 +67,7 @@ class BB_to_SMA_Back_Test():
 
     def get_history(self, price = "M"):
         
-        delta = 1
+        delta = 2
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = delta)
@@ -77,7 +77,7 @@ class BB_to_SMA_Back_Test():
         for i in range(1, 2):           
 
             df_t = self.api.get_history(instrument = instrument, start = past, end = now,
-                                granularity = "S5", price = price, localize = True).c.dropna().to_frame()
+                                granularity = "S30", price = price, localize = True).c.dropna().to_frame()
             df = pd.concat([df, df_t])
             now = past
             past = now - timedelta(days = delta)
@@ -101,7 +101,7 @@ class BB_to_SMA_Back_Test():
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         
-        df["RSI"] = df[instrument].rolling(30).apply(lambda x: RSI(x.values, N=29))
+        df["RSI"] = df[instrument].rolling(29).apply(lambda x: RSI(x.values, N=28))
         df["rsi_max"] = df ['RSI'].rolling(10).max()
         df["rsi_min"] = df ['RSI'].rolling(10).min()
         # df["rsi_mean"] = df ['RSI'].rolling(10).mean()
@@ -118,7 +118,7 @@ class BB_to_SMA_Back_Test():
         
         df["price_max"] = df [instrument].rolling(10).max()
         df["price_min"] = df [instrument].rolling(10).min()
-        df["price_mean"] = df [instrument].rolling(10).mean()
+        # df["price_mean"] = df [instrument].rolling(60).mean()
 
 
         df.dropna(subset=["RSI", "SMA"], inplace = True)
@@ -154,14 +154,15 @@ class BB_to_SMA_Back_Test():
         if refresh:                
             df = self.get_history_with_all_prices()
             df.to_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
-            df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
+            # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         else:
             df = pd.read_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
 
         df = self.calculate_indicators(df)
+        df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         # df.to_excel(f"../../data/backtest_{self.strategy.instrument}_with_indicators.xlsx")
 
-        # df = df.between_time(self.start, self.end)
+        df = df.between_time(self.start, self.end)
         return df
 
     def start_trading_backtest(self, refresh = False):
@@ -171,17 +172,6 @@ class BB_to_SMA_Back_Test():
             df:pd.DataFrame = self.get_data(refresh)
 
             self.have_units = 0
-            self.pl:float = 0
-
-            self.go_short = 0
-            self.go_long = 0
-            self.close_short = 0
-            self.close_long = 0
-            self.outstanding = 0
-
-            self.trades = []
-
-            self.i:int = 0
 
             for index, row in df.iterrows():
                 self.set_strategy_parameters(row)
@@ -192,52 +182,14 @@ class BB_to_SMA_Back_Test():
                 # logger.info(f"Time: {index}, bid: {bid}, ask: {ask}, action: {trade_action}")
 
                 if trade_action != None:
-                    if self.have_units == 0 and trade_action.units > 0:
-                        # pl = pl - trade_action.units * trade_action.price
-                        self.outstanding = -trade_action.units * trade_action.price
-                        self.go_long = self.go_long + 1
-                        # logger.info(f"Go Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
-                    elif self.have_units == 0 and trade_action.units < 0:
-                        # pl = pl - trade_action.units * trade_action.price
-                        self.outstanding = -trade_action.units * trade_action.price
-                        self.go_short = self.go_short + 1
-                        # logger.info(f"Go Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
-                    elif self.have_units > 0 and trade_action.units < 0:
-                        # pl = pl - trade_action.units * trade_action.price
-                        self.outstanding = self.outstanding - trade_action.units * trade_action.price
-                        self.pl = self.pl + self.outstanding
-                        self.close_long = self.close_long + 1
-                        # logger.info(f"Close Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
-                    elif self.have_units < 0 and trade_action.units > 0:
-                        # pl = pl - trade_action.units * trade_action.price
-                        self.outstanding = self.outstanding - trade_action.units * trade_action.price
-                        self.pl = self.pl + self.outstanding
-                        self.close_short = self.close_short + 1
-                        # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
-                    else:
-                        logger.error(f"Error in calculating P&L - have_units: {self.have_units}, trade_action.units: {trade_action.units}, trade_action.price: {trade_action.price}")
-
-                    self.have_units = self.have_units + trade_action.units
-                    self.i = self.i + 1
-                    self.trades.append([index, trade_action.units, trade_action.price, self.strategy.rsi, self.have_units, '${:,.2f}'.format(self.outstanding), '${:,.2f}'.format(self.pl)])
+                    self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index)
             
-            self.print_metrics()
+            self.strategy.trading_session.print_trades()
 
         except Exception as e:
             logger.exception("Exception occurred")
         finally:
             logger.info("Stopping Backtesting")
-    
-    def print_metrics(self):
-
-            logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {self.i}, have_units: {self.have_units}")
-            logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
-       
-            logger.info("\n" + 100 * "-")        
-            if self.trades != None and len(self.trades) > 0:
-                df = pd.DataFrame(data=self.trades, columns=["datetime", "trade units", "price", "rsi", "new # of units", "trade p&l", "total p&l"])
-                logger.info("\n" + df.to_string(header=True))
-                logger.info("\n" + 100 * "-")
 
 
 if __name__ == "__main__":
@@ -246,7 +198,7 @@ if __name__ == "__main__":
     parser.add_argument('pair', type=str, help='pair')
 
     parser.add_argument('--refresh', choices=['True', 'False', 'true', 'false'], default="False", type = str, help='Refresh data')
-    parser.add_argument('--strategy', choices=['Old', 'New', 'old', 'new'], default='New', help='Which strategy to use')
+    parser.add_argument('--strategy', choices=['Old', 'New', 'old', 'new'], default='old', help='Which strategy to use')
     args = parser.parse_args()
 
     

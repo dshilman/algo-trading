@@ -7,16 +7,21 @@ import threading
 import time
 from collections import deque
 from datetime import datetime, timedelta, timezone
-
 from random import randint
 
 import numpy as np
 import pandas as pd
 import tpqoa
+from tabulate import tabulate
 
 from trading import MyTT
 
 logger = logging.getLogger('trader_oanda')
+
+
+class StopTradingException(Exception):
+   def __init__(self, message):
+       super().__init__(message)
 
 
 class Trade_Action():
@@ -54,6 +59,8 @@ class Order ():
 class Strategy():
     def __init__(self, instrument, pairs_file):
         super().__init__()
+
+        self.trading_session = Trading_Session()
 
         self.instrument = instrument
         
@@ -124,10 +131,8 @@ class Strategy():
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
         
-        order = None
         sl_dist = None
         tp_price = None
-        comment = None
 
         # if trade_action.open_trade:
         if sl_perc:
@@ -145,22 +150,14 @@ class Strategy():
         if tp_perc:
             tp_price = str(round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0)))
 
-        if have_units >= 0 and trade_action.units > 0:
-            comment = "Going Long"
-        elif have_units <= 0 and trade_action.units < 0:
-            comment = "Going Short"
-        elif have_units > 0 and trade_action.units < 0:
-            comment = "Closing Long"
-        elif have_units < 0 and trade_action.units > 0:
-            comment = "Closing Short"
+        self.trading_session.add_trade(trade_action, have_units)
 
         order = Order(
             instrument = trade_action.instrument,
             price = trade_action.price,
             trade_units = trade_action.units,
             sl_dist = sl_dist,
-            tp_price = tp_price,
-            comment = comment
+            tp_price = tp_price
         )
         logger.debug(order)
 
@@ -183,6 +180,68 @@ class Strategy():
 
         return None
 
+
+class Trading_Session():
+
+    def __init__(self):
+        
+        self.trades = []
+        self.pl:float = 0
+        self.go_short = 0
+        self.go_long = 0
+        self.close_short = 0
+        self.close_long = 0
+        self.outstanding = 0
+        self.trade_cost = 0
+        self.trade_pl = 0
+        self.have_units = 0
+
+    def add_trade(self, trade_action: Trade_Action, have_units: int, date_time=None):
+
+        if date_time is None:
+            date_time = datetime.utcnow()
+
+        if have_units == 0 and trade_action.units > 0:
+            self.trade_cost = abs(trade_action.units) * trade_action.price
+            self.outstanding = self.trade_cost
+            self.trade_pl = 0
+            self.go_long = self.go_long + 1
+            # logger.info(f"Go Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
+        elif have_units == 0 and trade_action.units < 0:
+            self.trade_cost = abs(trade_action.units) * trade_action.price
+            self.outstanding = self.trade_cost
+            self.trade_pl = 0
+            self.go_short = self.go_short + 1
+            # logger.info(f"Go Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
+        elif have_units > 0 and trade_action.units < 0:
+            self.trade_cost = abs(trade_action.units) * trade_action.price
+            self.trade_pl = self.trade_cost - self.outstanding
+            self.pl = self.pl + self.trade_pl
+            self.close_long = self.close_long + 1
+            # logger.info(f"Close Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
+        elif have_units < 0 and trade_action.units > 0:
+            self.trade_cost = abs(trade_action.units) * trade_action.price
+            self.trade_pl = self.outstanding - self.trade_cost
+            self.pl = self.pl + self.trade_pl
+            self.close_short = self.close_short + 1
+            # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
+        
+        self.have_units = self.have_units + trade_action.units
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.units, trade_action.price, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
+
+        return self.have_units
+
+    def print_trades(self):
+
+        logger.info("\n" + 100* "-")
+        logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
+        logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
+
+
+        columns = ["datetime", "trade units", "price", "trade cost", "trade p&l", "have units", "total p&l"]
+        logger.info("\n" + tabulate(self.trades, headers = columns))
+        logger.info("\n" + 100* "-")
+
 class Trader(tpqoa.tpqoa):
     def __init__(self, conf_file, pair_file, strategy, unit_test = False):
         super().__init__(conf_file)
@@ -198,7 +257,6 @@ class Trader(tpqoa.tpqoa):
         config.read(pair_file)
         self.days = int(config.get(self.instrument, 'days'))
         self.stop_after = int(config.get(self.instrument, 'stop_after'))
-        self.print_trades = bool(config.get(self.instrument, 'print_trades'))
         self.units_to_trade = int(config.get(self.instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
         self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
@@ -207,8 +265,6 @@ class Trader(tpqoa.tpqoa):
 
 
         self.tick_data = []
-        self.trades = []
-
         self.units = 0
         
         self.stop_refresh = False
@@ -231,7 +287,7 @@ class Trader(tpqoa.tpqoa):
 
  
 
-    def start_trading(self, max_attempts = 5):
+    def start_trading(self, max_attempts = 20):
 
         logger.info("\n" + 100 * "-")
         if not self.is_trading_time:
@@ -242,10 +298,6 @@ class Trader(tpqoa.tpqoa):
             try:
 
                 success = True
-
-                if not self.is_trading_time:
-                    logger.info("Not Trading Time")
-                    continue
 
                 logger.info ("Started New Trading Session")
                 logger.info (f"Getting  candles for: {self.instrument}")
@@ -266,6 +318,10 @@ class Trader(tpqoa.tpqoa):
                          
                 break
 
+            except StopTradingException as e:
+                success = True
+                logger.exception(e)
+                break
             except Exception as e:
                 success = False
                 logger.exception(e)
@@ -315,13 +371,11 @@ class Trader(tpqoa.tpqoa):
 
             if order is not None:
                 self.submit_order(order)
-                if self.print_trades:
-                    self.trades.append([bid, ask, self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, order.units, order.price, self.units])
 
         if self.ticks % 100 == 0:
             self.is_trading_time = self.check_trading_time(self.start, self.end)
             if not self.is_trading_time:
-                raise Exception("Stop Trading - No longer in trading time")
+                raise StopTradingException("Stop Trading - No longer in trading time")
                 
             
         if self.ticks % 250 == 0:
@@ -348,8 +402,8 @@ class Trader(tpqoa.tpqoa):
 
         logger.info(f"Submitting Order: {order}")
         if not self.unit_test:        
-            oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price=order.tp, suppress=True, ret=True, comment=order.comment)
-            self.report_trade(oanda_order, order.comment)
+            oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price=order.tp, suppress=True, ret=True)
+            self.report_trade(oanda_order)
             if "rejectReason" not in oanda_order:
                 self.units = self.units + order.units
                 logger.info(f"New # of {order.instrument} units: {self.units}")
@@ -422,7 +476,7 @@ class Trader(tpqoa.tpqoa):
                     self.stop_refresh = True
 
     
-    def report_trade(self, order, comment):
+    def report_trade(self, order):
 
         logger.info("\n" + 100* "-" + "\n")
         logger.info(json.dumps(order, indent = 2))
@@ -433,12 +487,16 @@ class Trader(tpqoa.tpqoa):
         # self.stop_stream = True
         logger.info (cause)
 
+        self.strategy.trading_session.print_trades()
+
         logger.info("\n" + 100* "-")
 
         """
             Close the open position, I have observed that trades open from one day to the next
             have incurred a signifucant loss
         """
+
+        """""
         if self.units != 0 and not self.unit_test:
             close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True)
             if not "rejectReason" in close_order:
@@ -449,16 +507,8 @@ class Trader(tpqoa.tpqoa):
             else:
                 logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
 
-        if self.print_trades and self.trades != None and len(self.trades) > 0:
-            df = pd.DataFrame(data=self.trades, columns=["bid", "ask", "sma", "bb_lower", "bb_upper", "trade_units", "price", "have_units"])
-            logger.info("\n" + df.to_string(header=True))
-            logger.info(f"Oustanding positions: {self.units}")
-            df['amount'] = df['price'] * df['trade_units']
-            p_and_l = - df['amount'].sum()
-            logger.info(f"Session P&L: {round(p_and_l, 4)}")
-            logger.info("\n" + 100* "-")
-        
-        self.trades = []
+        """
+    
 
     
     def check_positions(self): 
