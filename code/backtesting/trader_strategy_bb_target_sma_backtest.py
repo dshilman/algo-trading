@@ -67,14 +67,14 @@ class BB_to_SMA_Back_Test():
 
     def get_history(self, price = "M"):
         
-        delta = 4
+        delta = 1
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = delta)
         instrument = self.strategy.instrument
         
         df: pd.DataFrame = pd.DataFrame()
-        for i in range(1, 20):           
+        for i in range(1, 2):           
 
             df_t = self.api.get_history(instrument = instrument, start = past, end = now,
                                 granularity = "S5", price = price, localize = True).c.dropna().to_frame()
@@ -104,13 +104,13 @@ class BB_to_SMA_Back_Test():
         df["RSI"] = df[instrument].rolling(30).apply(lambda x: RSI(x.values, N=29))
         df["rsi_max"] = df ['RSI'].rolling(10).max()
         df["rsi_min"] = df ['RSI'].rolling(10).min()
-        df["rsi_mean"] = df ['RSI'].rolling(10).mean()
-        df["RSI_EMA"] = df.RSI.ewm(span=10, adjust=False, ignore_na = True).mean()
-        df["rsi_ema_max"] = df ['RSI_EMA'].rolling(10).max()
-        df["rsi_ema_min"] = df ['RSI_EMA'].rolling(10).min()
+        # df["rsi_mean"] = df ['RSI'].rolling(10).mean()
+        # df["RSI_EMA"] = df.RSI.ewm(span=10, adjust=False, ignore_na = True).mean()
+        # df["rsi_ema_max"] = df ['RSI_EMA'].rolling(10).max()
+        # df["rsi_ema_min"] = df ['RSI_EMA'].rolling(10).min()
 
 
-        df["ema"] = df[instrument].ewm(span=10, adjust=False, ignore_na = True).mean()
+        # df["ema"] = df[instrument].ewm(span=10, adjust=False, ignore_na = True).mean()
 
 
         # df["slope"] = df[instrument].rolling(5).apply(lambda x: SLOPE(x.dropna().values, N=5))
@@ -128,36 +128,40 @@ class BB_to_SMA_Back_Test():
         return df
     
     def set_strategy_parameters(self, row):
-            
-            self.strategy.rsi_max = row ['rsi_max']
-            self.strategy.rsi_min = row ['rsi_min']
-            self.strategy.rsi_mean = row ['rsi_mean']
+
+            self.strategy.sma = row ['SMA']
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
-            self.strategy.sma = row ['SMA']
+            
+       
             self.strategy.rsi = row ['RSI']
+            self.strategy.rsi_max = row ['rsi_max']
+            self.strategy.rsi_min = row ['rsi_min']
+            # self.strategy.rsi_mean = row ['rsi_mean']
+            
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
-            self.strategy.price_mean = row ['price_mean']
+            # self.strategy.price_mean = row ['price_mean']
             # self.strategy.slope = row ['slope']
             # self.strategy.slope_prev = row ['slope_prev']
-            self.strategy.rsi_ema = row ['RSI_EMA']
-            self.strategy.rsi_ema_max = row ['rsi_ema_max']
-            self.strategy.rsi_ema_min = row ['rsi_ema_min']
+       
+            # self.strategy.rsi_ema = row ['RSI_EMA']
+            # self.strategy.rsi_ema_max = row ['rsi_ema_max']
+            # self.strategy.rsi_ema_min = row ['rsi_ema_min']
     
     def get_data(self, refresh = False):
 
         if refresh:                
             df = self.get_history_with_all_prices()
             df.to_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
-            # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
+            df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         else:
             df = pd.read_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
 
         df = self.calculate_indicators(df)
         # df.to_excel(f"../../data/backtest_{self.strategy.instrument}_with_indicators.xlsx")
 
-        df = df.between_time(self.start, self.end)
+        # df = df.between_time(self.start, self.end)
         return df
 
     def start_trading_backtest(self, refresh = False):

@@ -86,19 +86,21 @@ class Strategy():
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         df["RSI"] = df[self.instrument][-self.sma_value:].rolling(29).apply(lambda x: MyTT.RSI(x.dropna().values, N=28))
-        df["RSI_EMA"] = df.RSI[-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
-        df["ema"] = df[self.instrument][-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
+        # df["RSI_EMA"] = df.RSI[-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
+        # df["rsi_ema_slope"] = df["RSI_EMA"][-self.sma_value:].rolling(10).apply(lambda x: MyTT.SLOPE(x.dropna().values, 10))
+        # df["ema"] = df[self.instrument][-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
  
         self.rsi_max = df ['RSI'][-10:].max()
         self.rsi_min = df ['RSI'][-10:].min()
-        self.rsi_mean = df ['RSI'][-10:].mean()
-        self.rsi_ema = df ['RSI_EMA'].iloc[-1]
-        self.rsi_ema_max = df ['RSI_EMA'][-10:].max()
-        self.rsi_ema_min = df ['RSI_EMA'][-10:].min()
+        # self.rsi_mean = df ['RSI'][-10:].mean()
+        # self.rsi_ema = df ['RSI_EMA'].iloc[-1]
+        # self.rsi_ema_max = df ['RSI_EMA'][-10:].max()
+        # self.rsi_ema_min = df ['RSI_EMA'][-10:].min()
+        # self.rsi_ema_slope = df ['rsi_ema_slope'].iloc[-1]
         
         self.price_max = round(df [self.instrument][-10:].max(), 6)
         self.price_min = round(df [self.instrument][-10:].min(), 6)
-        self.price_mean = round(df [self.instrument][-10:].mean(), 6)
+        # self.price_mean = round(df [self.instrument][-10:].mean(), 6)
 
         logger.debug (df)
 
@@ -107,7 +109,7 @@ class Strategy():
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
         self.sma = round(df.SMA.iloc[-1], 6)
         self.rsi = df.RSI.iloc[-1]
-        self.ema = round(df.ema.iloc[-1], 6)
+        # self.ema = round(df.ema.iloc[-1], 6)
  
         self.print_indicators(current_price)
 
@@ -115,8 +117,8 @@ class Strategy():
 
     def print_indicators(self, price):
 
-        indicators = [[price, self.price_min, self.price_max, self.sma, self.ema, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, self.rsi_mean, self.rsi_ema, self.rsi_ema_min, self.rsi_ema_max]]
-        df = pd.DataFrame(data=indicators, columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "EMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "RSI MEAN", "RSI EMA", "RSI EMA MIN", "RSI EMA MAX"])
+        indicators = [[price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max]]
+        df = pd.DataFrame(data=indicators, columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX"])
         logger.info("\n" + df.to_string(header=True))
 
 
