@@ -125,8 +125,8 @@ class Strategy():
     def print_indicators(self, price):
 
         indicators = [[price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max]]
-        df = pd.DataFrame(data=indicators, columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX"])
-        logger.info("\n" + df.to_string(header=True))
+        columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX"]
+        logger.info("\n" + tabulate(indicators, headers = columns))
 
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
