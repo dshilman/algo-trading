@@ -466,7 +466,7 @@ class Trader(tpqoa.tpqoa):
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    df = df.resample("1M").mean()
+                    df = df.resample("30s").mean()
                     # df = df.resample("1Min").last()
 
                 self.strategy.define_strategy(df)
