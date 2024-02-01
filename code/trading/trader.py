@@ -41,7 +41,7 @@ class Trade_Action():
         return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}, spread: {self.spread}"       
 
 class Order ():
-    def __init__(self, instrument, price, trade_units, sl_dist, tp_price, comment):
+    def __init__(self, instrument, price, trade_units, sl_dist, tp_price, comment = None):
         super().__init__()
         self.instrument = instrument
         self.price = price
