@@ -196,38 +196,44 @@ class Trading_Session():
         self.trade_pl = 0
         self.have_units = 0
 
+
     def add_trade(self, trade_action: Trade_Action, have_units: int, date_time=None):
 
         if date_time is None:
             date_time = datetime.utcnow()
 
+        transaction = None
         if have_units == 0 and trade_action.units > 0:
             self.trade_cost = abs(trade_action.units) * trade_action.price
             self.outstanding = self.trade_cost
             self.trade_pl = 0
             self.go_long = self.go_long + 1
+            transaction = "Go Long"
             # logger.info(f"Go Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         elif have_units == 0 and trade_action.units < 0:
             self.trade_cost = abs(trade_action.units) * trade_action.price
             self.outstanding = self.trade_cost
             self.trade_pl = 0
             self.go_short = self.go_short + 1
+            transaction = "Go Short"
             # logger.info(f"Go Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         elif have_units > 0 and trade_action.units < 0:
             self.trade_cost = abs(trade_action.units) * trade_action.price
             self.trade_pl = self.trade_cost - self.outstanding
             self.pl = self.pl + self.trade_pl
             self.close_long = self.close_long + 1
+            transaction = "Close Long"
             # logger.info(f"Close Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         elif have_units < 0 and trade_action.units > 0:
             self.trade_cost = abs(trade_action.units) * trade_action.price
             self.trade_pl = self.outstanding - self.trade_cost
             self.pl = self.pl + self.trade_pl
             self.close_short = self.close_short + 1
+            transaction = "Close Short"
             # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         
         self.have_units = self.have_units + trade_action.units
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.units, trade_action.price, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), transaction, trade_action.units, trade_action.price, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
 
         return self.have_units
 
@@ -238,7 +244,7 @@ class Trading_Session():
         logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
 
 
-        columns = ["datetime", "trade units", "price", "trade cost", "trade p&l", "have units", "total p&l"]
+        columns = ["datetime", "transaction", "trade units", "price", "trade cost", "trade p&l", "have units", "total p&l"]
         logger.info("\n" + tabulate(self.trades, headers = columns))
         logger.info("\n" + 100* "-")
 
@@ -279,7 +285,7 @@ class Trader(tpqoa.tpqoa):
         else:
             logger.setLevel(logging.INFO)
 
-        log_file = os.path.join("logs", __name__ + "_" + self.instrument + ".log")
+        log_file = os.path.join("logs", __name__ + f"_{self.instrument}_{datetime.utcnow().strftime('%m-%d')}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
@@ -319,8 +325,7 @@ class Trader(tpqoa.tpqoa):
                 break
 
             except StopTradingException as e:
-                success = True
-                logger.exception(e)
+                logger.error(e)
                 break
             except Exception as e:
                 success = False
@@ -350,7 +355,7 @@ class Trader(tpqoa.tpqoa):
         logger.debug (f"Getting candles for {instrument}, from {past} to {now}")
         
         df = self.get_history(instrument = instrument, start = past, end = now,
-                                granularity = "M1", price = "M", localize = True).c.dropna().to_frame()
+                                granularity = "S30", price = "M", localize = True).c.dropna().to_frame()
         df.rename(columns = {"c":instrument}, inplace = True)
 
         logger.info (f"history data_frame: {df.shape}")
@@ -461,7 +466,7 @@ class Trader(tpqoa.tpqoa):
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    df = df.resample("30s").mean()
+                    df = df.resample("1M").mean()
                     # df = df.resample("1Min").last()
 
                 self.strategy.define_strategy(df)

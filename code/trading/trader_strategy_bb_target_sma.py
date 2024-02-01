@@ -32,10 +32,10 @@ class BB_to_SMA_Strategy(Strategy):
             
             signal = 0
 
-            if ask < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_min and price > self.price_min: # if price is below lower BB, BUY
+            if ask < self.bb_lower and self.rsi < 29 and self.rsi > self.rsi_min and price > self.price_min and self.rsi_max >= 25: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at ask price: {ask}, rsi: {self.rsi}")
-            elif bid > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_max and price < self.price_max:  # if price is above upper BB, SELL
+            elif bid > self.bb_upper and self.rsi > 71 and self.rsi < self.rsi_max and price < self.price_max and self.rsi_min <= 75:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at bid price: {bid}, rsi: {self.rsi}")
             
