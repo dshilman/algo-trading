@@ -7,7 +7,6 @@ import threading
 import time
 from collections import deque
 from datetime import datetime, timedelta, timezone
-from random import randint
 
 import numpy as np
 import pandas as pd
@@ -16,8 +15,8 @@ from tabulate import tabulate
 
 from trading import MyTT
 
-logger = logging.getLogger('trader_oanda')
-
+logger = logging.getLogger("app")
+trade_logger = logging.getLogger("trading")
 
 class StopTradingException(Exception):
    def __init__(self, message):
@@ -237,16 +236,16 @@ class Trading_Session():
 
         return self.have_units
 
-    def print_trades(self):
+    def print_trades(self, log: logging.Logger):
 
-        logger.info("\n" + 100* "-")
-        logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
-        logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
+        log.info("\n" + 100* "-")
+        log.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
+        log.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
 
 
         columns = ["datetime", "transaction", "trade units", "price", "trade cost", "trade p&l", "have units", "total p&l"]
-        logger.info("\n" + tabulate(self.trades, headers = columns))
-        logger.info("\n" + 100* "-")
+        log.info("\n" + tabulate(self.trades, headers = columns))
+        log.info("\n" + 100* "-")
 
 class Trader(tpqoa.tpqoa):
     def __init__(self, conf_file, pair_file, strategy, unit_test = False):
@@ -285,12 +284,19 @@ class Trader(tpqoa.tpqoa):
         else:
             logger.setLevel(logging.INFO)
 
-        log_file = os.path.join("logs", __name__ + f"_{self.instrument}_{datetime.utcnow().strftime('%m-%d')}.log")
-        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        logHandler.setFormatter(formatter)
-        logger.addHandler(logHandler)
 
+
+        log_file = os.path.join("logs", f"{self.instrument}_{datetime.utcnow().strftime('%m-%d')}_app.log")
+        log_handler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
+        log_handler.setFormatter(formatter)
+        logger.addHandler(log_handler)
+
+        trade_log_file = os.path.join("logs", f"{self.instrument}_{datetime.utcnow().strftime('%m-%d')}_trades.log")
+        trade_log_handler = handlers.RotatingFileHandler(trade_log_file, maxBytes=1024*1024, backupCount=5)
+        trade_log_handler.setFormatter(formatter)
+        trade_logger.addHandler(trade_log_handler)
+        trade_logger.setLevel(logging.INFO)
  
 
     def start_trading(self, max_attempts = 20):
@@ -483,18 +489,20 @@ class Trader(tpqoa.tpqoa):
     
     def report_trade(self, order):
 
-        logger.info("\n" + 100* "-" + "\n")
-        logger.info(json.dumps(order, indent = 2))
-        logger.info("\n" + 100 * "-" + "\n")
+        trade_logger.info("\n" + 100* "-" + "\n")
+        trade_logger.info()
+        trade_logger.info("\n" + self.strategy.data[-10:].to_string(header=True))
+        trade_logger.info()
+        trade_logger.info(json.dumps(order, indent = 2))
+        trade_logger.info("\n" + 100 * "-" + "\n")
 
         
     def terminate_session(self, cause):
         # self.stop_stream = True
         logger.info (cause)
 
-        self.strategy.trading_session.print_trades()
-
-        logger.info("\n" + 100* "-")
+        self.strategy.trading_session.print_trades(logger)
+        self.strategy.trading_session.print_trades(trade_logger)
 
         """
             Close the open position, I have observed that trades open from one day to the next

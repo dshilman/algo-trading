@@ -44,7 +44,7 @@ class BB_to_SMA_Back_Test():
         self.end = config.get(instrument, 'end')
         logger.setLevel(logging.INFO)
 
-        log_file = os.path.join("logs", "backtester_" + instrument + ("_new" if new else "_old") +".log")
+        log_file = os.path.join("logs", f"{instrument}_{('new' if new else 'old')}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
@@ -184,7 +184,7 @@ class BB_to_SMA_Back_Test():
                 if trade_action != None:
                     self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index)
             
-            self.strategy.trading_session.print_trades()
+            self.strategy.trading_session.print_trades(logger)
 
         except Exception as e:
             logger.exception("Exception occurred")
