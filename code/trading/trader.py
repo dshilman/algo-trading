@@ -74,11 +74,38 @@ class Strategy():
         self.bb_lower =  None
         self.sma = None
         self.rsi = None
+        self.rsi_hist = None
+        self.rsi_near_min = None
+        self.rsi_near_max = None
 
         self.momentum = None
         self.momentum_min = None
         self.momentum_max = None
         self.momentum_mean = None
+        self.momentum_hist = None
+        self.momentum_near_min = None
+
+
+    def is_rsi_low(self):
+        
+        for x in self.rsi_hist:
+            if x == self.rsi_min:
+                return True        
+        return False
+    
+    def is_rsi_high(self):
+        
+        for x in self.rsi_hist:
+            if x == self.rsi_max:
+                return True        
+        return False
+    
+    def is_momentum_dying(self):
+
+        for x in self.momentum_hist:
+            if x == self.momentum_min:
+                return True
+        return False
 
 
     def define_strategy(self, resampled_tick_data: pd.DataFrame = None): # "strategy-specific"
@@ -104,6 +131,7 @@ class Strategy():
  
         self.rsi_max = df ['RSI'][-10:].max()
         self.rsi_min = df ['RSI'][-10:].min()
+        self.rsi_hist = df ['RSI'][-4:].values
         # self.rsi_mean = df ['RSI'][-10:].mean()
         # self.rsi_ema = df ['RSI_EMA'].iloc[-1]
         # self.rsi_ema_max = df ['RSI_EMA'][-10:].max()
@@ -115,6 +143,7 @@ class Strategy():
         
         self.price_max = round(df [self.instrument][-10:].max(), 6)
         self.price_min = round(df [self.instrument][-10:].min(), 6)
+        self.momentum_hist = df ["momentum"][-4:].values
         # self.price_mean = round(df [self.instrument][-10:].mean(), 6)
 
         logger.debug (df)
@@ -129,7 +158,7 @@ class Strategy():
         # self.ema = round(df.ema.iloc[-1], 6)
  
         self.print_indicators(current_price, logger)
-
+        
         self.data = df.copy()
 
     def print_indicators(self, price, log: logging.Logger):
