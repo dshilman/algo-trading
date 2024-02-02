@@ -128,15 +128,15 @@ class Strategy():
         self.momentum_min = df.momentum_min.iloc[-1]
         # self.ema = round(df.ema.iloc[-1], 6)
  
-        self.print_indicators(current_price)
+        self.print_indicators(current_price, logger)
 
         self.data = df.copy()
 
-    def print_indicators(self, price):
+    def print_indicators(self, price, log: logging.Logger):
 
         indicators = [[price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, self.momentum, self.momentum_min]]
         columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "MOMENTUM", "MOMENTUM MIN"]
-        logger.info("\n" + tabulate(indicators, headers = columns))
+        log.info("\n" + tabulate(indicators, headers = columns))
 
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
@@ -503,6 +503,8 @@ class Trader(tpqoa.tpqoa):
         trade_logger.info("\n" + 100 * "-" + "\n")
         trade_logger.info()
         trade_logger.info("\n" + self.strategy.data[-10:].to_string(header=True))
+        trade_logger.info()
+        self.strategy.print_indicators(order.get("price"), trade_logger)
         trade_logger.info()
         trade_logger.info(json.dumps(order, indent = 2))
         trade_logger.info("\n" + 100 * "-" + "\n")
