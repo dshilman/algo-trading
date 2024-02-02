@@ -67,14 +67,14 @@ class BB_to_SMA_Back_Test():
 
     def get_history(self, price = "M"):
         
-        delta = 2
+        delta = 10
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = delta)
         instrument = self.strategy.instrument
         
         df: pd.DataFrame = pd.DataFrame()
-        for i in range(1, 2):           
+        for i in range(1, 10):           
 
             df_t = self.api.get_history(instrument = instrument, start = past, end = now,
                                 granularity = "S30", price = price, localize = True).c.dropna().to_frame()
@@ -118,6 +118,12 @@ class BB_to_SMA_Back_Test():
         
         df["price_max"] = df [instrument].rolling(10).max()
         df["price_min"] = df [instrument].rolling(10).min()
+
+        df ["momentum"] = df[instrument].rolling(12).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
+        df ["momentum_min"] = df["momentum"].rolling(10).min()
+        df ["momentum_max"] = df["momentum"].rolling(10).max()
+        df ["momentum_mean"] = df["momentum"].rolling(10).mean()
+
         # df["price_mean"] = df [instrument].rolling(60).mean()
 
 
@@ -141,6 +147,9 @@ class BB_to_SMA_Back_Test():
             
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
+            self.strategy.momentum = row ['momentum']
+            self.strategy.momentum_mean = row ['momentum_mean']
+            self.strategy.momentum_min = row ['momentum_min']
             # self.strategy.price_mean = row ['price_mean']
             # self.strategy.slope = row ['slope']
             # self.strategy.slope_prev = row ['slope_prev']
@@ -159,7 +168,7 @@ class BB_to_SMA_Back_Test():
             df = pd.read_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
 
         df = self.calculate_indicators(df)
-        df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
+        # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         # df.to_excel(f"../../data/backtest_{self.strategy.instrument}_with_indicators.xlsx")
 
         df = df.between_time(self.start, self.end)

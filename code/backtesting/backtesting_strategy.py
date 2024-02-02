@@ -16,46 +16,26 @@ class Backtesting_Strategy(Strategy):
     def __init__(self, instrument, pairs_file):
         super().__init__(instrument, pairs_file)
 
-
-    def determine_action(self, bid, ask, have_units, units_to_trade) -> Trade_Action:
+    def check_if_need_open_trade(self, instrument, have_units, bid, ask, units_to_trade):
         
-        price = round((bid + ask)/2, 6)
+        price = (ask + bid) / 2
         spread = round(ask - bid, 4)
-        instrument = self.instrument
-
-        if have_units != 0:  # if already have positions
-            logger.debug(f"Have {have_units} positions, checking if need to close")
-            trade = self.check_if_need_close_trade(instrument, have_units, bid, ask, spread)
-            if trade is not None:
-                return trade
-
         # check if need to open a new position
         if spread >= abs(self.bb_upper - self.sma):                            
             logger.warning (f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
             return None
-                
-        logger.debug(f"Have {have_units} positions, checking if need to open")
-        trade = self.check_if_need_open_trade(instrument, have_units, bid, ask, spread, units_to_trade)
-        if trade is not None:
-            return trade
 
-        return None
-
-
-    def check_if_need_open_trade(self, instrument, have_units, bid, ask, spread, units_to_trade):
-        
-        price = (bid + ask)/2
         # if abs(have_units) <= units_to_trade:
         if have_units == 0:
             
             signal = 0
 
-            if price < self.bb_lower and self.rsi < 30 and self.rsi > self.rsi_mean: # if price is below lower BB, BUY
+            if ask < self.bb_lower and self.rsi < 30 and price > self.price_min and self.momentum == self.momentum_min: # if price is below lower BB, BUY
                 signal = 1
-                logger.info(f"Go Long - BUY at price: {ask}, rsi: {self.rsi}")
-            elif price > self.bb_upper and self.rsi > 70 and self.rsi < self.rsi_mean:  # if price is above upper BB, SELL
+                logger.info(f"Go Long - BUY at ask price: {ask}, rsi: {self.rsi}")
+            elif bid > self.bb_upper and self.rsi > 70 and price < self.price_max and self.momentum == self.momentum_min:  # if price is above upper BB, SELL
                 signal = -1
-                logger.info(f"Go Short - SELL at price: {bid}, rsi: {self.rsi}")
+                logger.info(f"Go Short - SELL at bid price: {bid}, rsi: {self.rsi}")
             
             """
                 Trade 1: +1,000 EUR/USD +SL @ 1.05
@@ -63,30 +43,33 @@ class Backtesting_Strategy(Strategy):
                 Trade 2 is cancelled because all trades with a SL, TP, or TS must have a unique size
             """
             if signal != 0:
-                return Trade_Action(instrument, signal * (units_to_trade + (0 if have_units == 0 else 1)), (ask if signal == 1 else bid), spread, True)
+                return Trade_Action(instrument, signal * (units_to_trade + (0 if have_units == 0 else 1)), (ask if signal > 0 else bid), spread, True)
                 
 
         return None
 
 
-    def check_if_need_close_trade(self, instrument, have_units, bid, ask, spread):
+    def check_if_need_close_trade(self, instrument, have_units, bid, ask):
 
         signal = 0
-        price = (bid + ask)/2
+        price = (ask + bid) / 2
+        spread = round(ask - bid, 4)
 
         if have_units > 0:  # if already have long positions
-            if price > self.sma and self.rsi < self.rsi_mean:
+            if bid > self.sma and self.momentum == self.momentum_min and price < self.price_max:
                 signal = -1
-                logger.info(f"Close long position - Sell {have_units} units at price: {bid}, sma: {self.sma}, rsi: {self.rsi}")
+                logger.info(f"Close long position - Sell {have_units} units at bid price: {bid}, sma: {self.sma}, rsi: {self.rsi}")
         elif have_units < 0:  # if alredy have short positions
-            if price < self.sma and self.rsi > self.rsi_mean:  # price is below target SMA, BUY
+            if ask < self.sma and self.momentum == self.momentum_min and price > self.price_min:  # price is below target SMA, BUY
                 signal = 1
-                logger.info(f"Close short position  - Buy {have_units} units at price: {ask}, sma: {self.sma}, rsi: {self.rsi}")
+                logger.info(f"Close short position  - Buy {have_units} units at ask price: {ask}, sma: {self.sma}, rsi: {self.rsi}")
 
         """
             Negative sign if front of have_units "-have_units" means close the existing position
         """
         if signal != 0:
-            return Trade_Action(instrument, -have_units, (ask if signal == 1 else bid), spread, False)
+            return Trade_Action(instrument, -have_units, (ask if signal > 0 else bid), spread, False)
 
         return None
+
+

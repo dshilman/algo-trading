@@ -75,6 +75,12 @@ class Strategy():
         self.sma = None
         self.rsi = None
 
+        self.momentum = None
+        self.momentum_min = None
+        self.momentum_max = None
+        self.momentum_mean = None
+
+
     def define_strategy(self, resampled_tick_data: pd.DataFrame = None): # "strategy-specific"
         
         df = self.data.copy()
@@ -103,6 +109,9 @@ class Strategy():
         # self.rsi_ema_max = df ['RSI_EMA'][-10:].max()
         # self.rsi_ema_min = df ['RSI_EMA'][-10:].min()
         # self.rsi_ema_slope = df ['rsi_ema_slope'].iloc[-1]
+
+        df ["momentum"] = df[self.instrument][-self.sma_value:].rolling(10).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
+        df ["momentum_min"] = df["momentum"][-10:].min()
         
         self.price_max = round(df [self.instrument][-10:].max(), 6)
         self.price_min = round(df [self.instrument][-10:].min(), 6)
@@ -115,6 +124,8 @@ class Strategy():
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
         self.sma = round(df.SMA.iloc[-1], 6)
         self.rsi = df.RSI.iloc[-1]
+        self.momentum = df.momentum.iloc[-1]
+        self.momentum_min = df.momentum_min.iloc[-1]
         # self.ema = round(df.ema.iloc[-1], 6)
  
         self.print_indicators(current_price)
@@ -123,8 +134,8 @@ class Strategy():
 
     def print_indicators(self, price):
 
-        indicators = [[price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max]]
-        columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX"]
+        indicators = [[price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, self.momentum, self.momentum_min]]
+        columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "MOMENTUM", "MOMENTUM MIN"]
         logger.info("\n" + tabulate(indicators, headers = columns))
 
 
@@ -489,7 +500,7 @@ class Trader(tpqoa.tpqoa):
     
     def report_trade(self, order):
 
-        trade_logger.info("\n" + 100* "-" + "\n")
+        trade_logger.info("\n" + 100 * "-" + "\n")
         trade_logger.info()
         trade_logger.info("\n" + self.strategy.data[-10:].to_string(header=True))
         trade_logger.info()
