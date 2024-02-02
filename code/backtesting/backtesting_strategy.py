@@ -30,10 +30,10 @@ class Backtesting_Strategy(Strategy):
             
             signal = 0
 
-            if ask < self.bb_lower and self.rsi_min in self.rsi_hist and self.momentum == self.momentum_min: # if price is below lower BB, BUY
+            if ask < self.bb_lower and self.rsi_min in self.rsi_hist and self.momentum * self.momentum_prev < 0: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at ask price: {ask}, rsi: {self.rsi}")
-            elif bid > self.bb_upper and self.rsi_max is self.rsi_hist and self.momentum == self.momentum_min:  # if price is above upper BB, SELL
+            elif bid > self.bb_upper and self.rsi_max is self.rsi_hist and self.momentum * self.momentum_prev < 0:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at bid price: {bid}, rsi: {self.rsi}")
             
@@ -56,11 +56,11 @@ class Backtesting_Strategy(Strategy):
         spread = round(ask - bid, 4)
 
         if have_units > 0:  # if already have long positions
-            if bid > self.sma and self.momentum == self.momentum_min:  # price is above target SMA, SELL
+            if bid > self.sma and self.momentum * self.momentum_prev < 0:  # price is above target SMA, SELL
                 signal = -1
                 logger.info(f"Close long position - Sell {have_units} units at bid price: {bid}, sma: {self.sma}, rsi: {self.rsi}")
         elif have_units < 0:  # if alredy have short positions
-            if ask < self.sma and self.momentum == self.momentum_min:  # price is below target SMA, BUY
+            if ask < self.sma and self.momentum * self.momentum_prev < 0:  # price is below target SMA, BUY
                 signal = 1
                 logger.info(f"Close short position  - Buy {have_units} units at ask price: {ask}, sma: {self.sma}, rsi: {self.rsi}")
 

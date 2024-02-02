@@ -79,6 +79,7 @@ class Strategy():
         self.rsi_near_max = None
 
         self.momentum = None
+        self.momentum_prev = None
         self.momentum_min = None
         self.momentum_max = None
         self.momentum_mean = None
