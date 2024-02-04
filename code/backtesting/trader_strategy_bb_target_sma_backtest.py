@@ -121,6 +121,8 @@ class BB_to_SMA_Back_Test():
         df["price_min"] = df [instrument].rolling(10).min()
 
         df ["momentum"] = df[instrument].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
+        df ["momentum_long"] = df[instrument].rolling(80).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
+
         df ["momentum_min"] = df["momentum"].rolling(8).min()
         # df ["momentum_max"] = df["momentum"].rolling(10).max()
         # df ["momentum_mean"] = df["momentum"].rolling(10).mean()
@@ -149,17 +151,15 @@ class BB_to_SMA_Back_Test():
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
             self.strategy.momentum = row ['momentum']
+            self.strategy.momentum_long = row ['momentum_long']
+
             # self.strategy.momentum_mean = row ['momentum_mean']
             self.strategy.momentum_min = row ['momentum_min']
 
-            self.strategy.rsi_hist = df.RSI.iloc[-3:].values
-            self.strategy.rsi_near_min = self.strategy.rsi == self.strategy.rsi_min or self.strategy.rsi_min in self.strategy.rsi_hist
-            self.strategy.rsi_near_max = self.strategy.rsi == self.strategy.rsi_max or self.strategy.rsi_max in self.strategy.rsi_hist
-
+            self.strategy.rsi_hist = df.RSI.iloc[-8:].values
+            
             self.strategy.momentum_hist = df.momentum.iloc[-3:].values
             self.strategy.momentum_prev = df.momentum.iloc[-2] if len(df) > 2 else 0
-
-            self.strategy.momentum_near_min = self.strategy.momentum == self.strategy.momentum_min or self.strategy.momentum_min in self.strategy.momentum_hist
 
             # self.strategy.price_mean = row ['price_mean']
             # self.strategy.slope = row ['slope']

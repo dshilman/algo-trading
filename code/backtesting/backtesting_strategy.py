@@ -30,16 +30,16 @@ class Backtesting_Strategy(Strategy):
             
             signal = 0
 
-            if ask < self.bb_lower and self.rsi_min in self.rsi_hist and self.momentum * self.momentum_prev < 0: # if price is below lower BB, BUY
+            if ask < self.bb_lower and self.rsi_min in self.rsi_hist and self.momentum * self.momentum_prev <= 0: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at ask price: {ask}, rsi: {self.rsi}")
-            elif bid > self.bb_upper and self.rsi_max is self.rsi_hist and self.momentum * self.momentum_prev < 0:  # if price is above upper BB, SELL
+            elif bid > self.bb_upper and self.rsi_max is self.rsi_hist and self.momentum * self.momentum_prev <= 0:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at bid price: {bid}, rsi: {self.rsi}")
             
             """
                 Trade 1: +1,000 EUR/USD +SL @ 1.05
-                Trade 2: +1,000 EUR/USD +SL @ 1.05
+                Trade 2: +1,000 EUR/USD +SL @ 1.05 
                 Trade 2 is cancelled because all trades with a SL, TP, or TS must have a unique size
             """
             if signal != 0:
@@ -71,5 +71,3 @@ class Backtesting_Strategy(Strategy):
             return Trade_Action(instrument, -have_units, (ask if signal > 0 else bid), spread, False)
 
         return None
-
-

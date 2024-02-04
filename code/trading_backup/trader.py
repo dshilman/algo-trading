@@ -74,39 +74,12 @@ class Strategy():
         self.bb_lower =  None
         self.sma = None
         self.rsi = None
-        self.rsi_hist = None
-        self.rsi_near_min = None
-        self.rsi_near_max = None
-
         self.momentum = None
+        self.momentum_long = None
+
         self.momentum_prev = None
         self.momentum_min = None
-        self.momentum_max = None
-        self.momentum_mean = None
-        self.momentum_hist = None
-        self.momentum_near_min = None
 
-
-    def is_rsi_low(self):
-        
-        for x in self.rsi_hist:
-            if x == self.rsi_min:
-                return True        
-        return False
-    
-    def is_rsi_high(self):
-        
-        for x in self.rsi_hist:
-            if x == self.rsi_max:
-                return True        
-        return False
-    
-    def is_momentum_dying(self):
-
-        for x in self.momentum_hist:
-            if x == self.momentum_min:
-                return True
-        return False
 
 
     def define_strategy(self, resampled_tick_data: pd.DataFrame = None): # "strategy-specific"
@@ -425,7 +398,7 @@ class Trader(tpqoa.tpqoa):
                 self.submit_order(order)
 
         if self.ticks % 100 == 0:
-            self.is_trading_time = self.check_trading_time(self.start, self.end)
+            self.is_trading_time = self.check_trading_time(self.start, self.end) and self.units == 0
             if not self.is_trading_time:
                 raise StopTradingException("Stop Trading - No longer in trading time")
                 
