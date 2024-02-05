@@ -1,10 +1,9 @@
 import configparser
 import json
-import logging
 
 import pandas as pd
 from tabulate import tabulate
-from trading_copy.MyTT import RSI
+from MyTT import RSI
 
 from dom.base import BaseClass
 from dom.order import Order
@@ -46,9 +45,16 @@ class TradingStrategy(BaseClass):
     def execute_strategy(self, have_units, resampled_tick_data: pd.DataFrame = None):
 
         self.calc_indicators(resampled_tick_data)
-        new_units = self.check_for_trade(have_units)
 
-        return new_units
+        trade_action = self.determine_trade_action(have_units)
+        if trade_action is not None:
+            # self.log_info(f"trade_action: {trade_action}")
+            order = self.create_order(trade_action, self.sl_perc, self.tp_perc, self.units)
+
+            if order is not None:
+                have_units = self.submit_order(order, have_units)
+
+        return have_units
 
     def calc_indicators(self, resampled_tick_data: pd.DataFrame = None):
         
@@ -60,8 +66,7 @@ class TradingStrategy(BaseClass):
         df = df.tail(self.sma_value * 2)
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
 
-        
-        
+                
         # ******************** define your strategy here ************************
         df["SMA"] = df[self.instrument].rolling(self.sma_value).mean()
         std = df[self.instrument].rolling(self.sma_value).std() * self.dev
@@ -99,20 +104,7 @@ class TradingStrategy(BaseClass):
         
         self.data = df.copy()
 
-    def check_for_trade(self, have_units):
-
-        trade_action = self.determine_trade_action(have_units)
-
-        if trade_action is not None:
-            # self.log_info(f"trade_action: {trade_action}")
-            order = self.create_order(trade_action, self.sl_perc, self.tp_perc, self.units)
-
-            if order is not None:
-                have_units =self.submit_order(order, have_units)
-        
-        return have_units
-
-
+    
     def submit_order(self, order: Order, units: int):
 
         self.log_info(f"Submitting Order: {order}")

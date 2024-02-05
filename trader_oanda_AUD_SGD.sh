@@ -1,3 +1,3 @@
 #!/bin/sh
 cd /home/ec2-user/algo-trading/code/trading
-python3 trader_strategy_bb_target_sma.py AUD_SGD
+python3 trading_bot.py AUD_SGD

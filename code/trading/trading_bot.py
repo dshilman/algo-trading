@@ -1,6 +1,5 @@
 import argparse
 import configparser
-import json
 import logging
 import logging.handlers as handlers
 import os
@@ -13,7 +12,7 @@ import pandas as pd
 
 from api import OANDA_API
 from dom.base import BaseClass
-from dom.strategy import TradingStrategy
+from strategy import TradingStrategy
 
 class Trader(BaseClass):
     def __init__(self, conf_file, pair_file, instrument, unit_test = False):
@@ -40,8 +39,7 @@ class Trader(BaseClass):
 
     def init_logs(self, unit_test = False):
 
-        self.logger = logging.getLogger("app")
-        self.trade_logger = logging.getLogger("trading")
+        self.logger = logging.getLogger()
 
         if unit_test:
             self.logger.setLevel(logging.DEBUG)            
@@ -66,9 +64,9 @@ class Trader(BaseClass):
         self.strategy.data = self.api.get_history_with_all_prices(self.instrument, self.days)
 
         treads = []
-        treads.append(threading.Thread(target=self.check_trading_time, args=(30,)))
+        treads.append(threading.Thread(target=self.check_trading_time, args=(60,)))
         treads.append(threading.Thread(target=self.refresh_strategy, args=(30,)))
-        treads.append(threading.Thread(target=self.check_positions, args=(30,)))
+        treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
         for t in treads:
@@ -82,6 +80,8 @@ class Trader(BaseClass):
     
     def start_streaming(self, stop_after = None):
 
+        i: int = 0
+
         while not self.terminate:
 
             try:
@@ -93,6 +93,10 @@ class Trader(BaseClass):
             except Exception as e:
                 self.log_error(f"Error in start_streaming")
                 self.log_exception(e)
+                i = i + 1
+                if i > 20:
+                    self.terminate = True
+                    break
 
     def stop_streaming(self):
 
@@ -115,7 +119,7 @@ class Trader(BaseClass):
             if to_dt < from_dt:
                 to_dt = to_dt + timedelta(days=1)
 
-            if not from_dt <= now <= to_dt:
+            if not from_dt <= now <= to_dt and self.units == 0:
                 self.log_info(f"Now: {now}, Trading Time: {from_dt} - {to_dt}")
                 self.log_info("Not Trading Time - Terminating Trading")
                 self.terminate = True
@@ -127,13 +131,15 @@ class Trader(BaseClass):
 
     def refresh_strategy(self, refresh = 60):
 
+        i: int = 0
+
         while not self.terminate:
 
             self.log_debug("Refreshing Strategy")
 
             try:
 
-                temp_tick_data = self.tick_data
+                temp_tick_data = self.tick_data.copy()
                 self.tick_data = []
 
                 df = None
@@ -145,6 +151,8 @@ class Trader(BaseClass):
                     df.drop(columns=['index'], inplace=True)
 
                     df = df.resample("30s").last()
+                    self.log_debug(f"Resampled Data: {df}")
+
                     # df = df.resample("1Min").last()
 
                 self.units = self.strategy.execute_strategy(self.units, df)
@@ -154,11 +162,17 @@ class Trader(BaseClass):
             except Exception as e:
                 self.log_error("Exception occurred in refresh_strategy")
                 self.log_exception(e)
+                i = i + 1
+                if i > 20:
+                    self.terminate = True
+                    break
                 time.sleep(5)
 
 
 
     def check_positions(self, refresh = 300): 
+
+        i: int = 0
 
         while not self.terminate:
             try:
@@ -172,12 +186,16 @@ class Trader(BaseClass):
             except Exception as e:
                 self.log_error("Exception occurred in check_positions")
                 self.log_exception(e)
+                i = i + 1
+                if i > 20:
+                    self.terminate = True
+                    break
                 time.sleep(5)
         
  
     def new_price_tick(self, instrument, time, bid, ask):
 
-        # logger.debug(f"{self.ticks} ----- time: {time}  ---- ask: {ask} ----- bid: {bid}")
+        self.log_debug(f"{instrument} ----- time: {time}  ---- ask: {ask} ----- bid: {bid}")
          # 2023-12-19T13:28:35.194571445Z
         date_time = pd.to_datetime(time).replace(tzinfo=None)
         
@@ -235,7 +253,8 @@ if __name__ == "__main__":
         conf_file=config_file,
         pair_file="pairs.ini",
         instrument=args.pair,
-        unit_test=True
+        unit_test=False
     )
     trader.start_trading()
     
+# python trading_bot.py EUR_USD

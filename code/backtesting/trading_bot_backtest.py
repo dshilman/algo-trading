@@ -18,14 +18,14 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.MyTT import RSI, SLOPE
-from trading.trader import Trader
-from trading.trader_strategy_bb_target_sma import BB_to_SMA_Strategy
+from trading.strategy import TradingStrategy
+from trading.api import OANDA_API
 
 from backtesting_strategy import Backtesting_Strategy
 
 logger = logging.getLogger()
 
-class BB_to_SMA_Back_Test():
+class TradingBacktester():
     
     def __init__(self, conf_file, pairs_file, instrument, new = False):
         
@@ -34,9 +34,9 @@ class BB_to_SMA_Back_Test():
             self.strategy = Backtesting_Strategy(instrument, pairs_file)
         else:
             logger.info("Compare with BB_to_SMA_Strategy")
-            self.strategy = BB_to_SMA_Strategy(instrument, pairs_file)
+            self.strategy = TradingStrategy(instrument, pairs_file)
 
-        self.api = tpqoa.tpqoa(conf_file)
+        self.api = OANDA_API(conf_file, logger)
         config = configparser.ConfigParser()  
         config.read(pairs_file)
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
@@ -44,43 +44,27 @@ class BB_to_SMA_Back_Test():
         self.end = config.get(instrument, 'end')
         logger.setLevel(logging.INFO)
 
-        log_file = os.path.join("logs", f"{instrument}_{('new' if new else 'old')}.log")
+        log_file = os.path.join("../../logs/backtesting", f"{instrument}_{('new' if new else 'old')}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
 
     
-    def get_history_with_all_prices(self):
+    def get_history_with_all_prices(self, days = 10):
         
-        ask_prices: pd.DataFrame = self.get_history(price = "A")
-        ask_prices.rename(columns = {"c":"ask"}, inplace = True)
-
-        bid_prices: pd.DataFrame = self.get_history(price = "B")
-        bid_prices.rename(columns = {"c":"bid"}, inplace = True)
-
-        df: pd.DataFrame = pd.concat([ask_prices, bid_prices], axis=1)
-
-        df [self.strategy.instrument] = df[['ask', 'bid']].mean(axis=1)
-
-        return df
-
-    def get_history(self, price = "M"):
-        
-        delta = 10
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
-        past = now - timedelta(days = delta)
+        past = now - timedelta(days = days)
         instrument = self.strategy.instrument
         
         df: pd.DataFrame = pd.DataFrame()
         for i in range(1, 10):           
 
-            df_t = self.api.get_history(instrument = instrument, start = past, end = now,
-                                granularity = "S30", price = price, localize = True).c.dropna().to_frame()
+            df_t = self.api.get_history_with_all_prices(instrument = instrument, days=days).c.dropna().to_frame()
             df = pd.concat([df, df_t])
             now = past
-            past = now - timedelta(days = delta)
+            past = now - timedelta(days = days)
             
             
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
@@ -235,7 +219,7 @@ if __name__ == "__main__":
         exit(1) 
  
     
-    trader = BB_to_SMA_Back_Test(
+    trader = TradingBacktester(
         conf_file=config_file,
         pairs_file="../trading/pairs.ini",
         instrument=args.pair,

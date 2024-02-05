@@ -3,8 +3,7 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 import pandas as pd
 from tabulate import tabulate
-from trading_copy.dom.trade import Trade_Action
-
+from dom.trade import Trade_Action
 from dom.base import BaseClass
 
 
