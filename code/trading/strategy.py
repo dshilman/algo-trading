@@ -3,12 +3,12 @@ import json
 
 import pandas as pd
 from tabulate import tabulate
-from trading.MyTT import RSI
+from MyTT import RSI
 
-from trading.dom.base import BaseClass
-from trading.dom.order import Order
-from trading.dom.trade import Trade_Action
-from trading.dom.trading_session import Trading_Session
+from dom.base import BaseClass
+from dom.order import Order
+from dom.trade import Trade_Action
+from dom.trading_session import Trading_Session
 
 
 class TradingStrategy(BaseClass):

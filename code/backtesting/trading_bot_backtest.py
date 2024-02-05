@@ -52,7 +52,7 @@ class TradingBacktester():
 
 
     
-    def get_history_with_all_prices(self, days = 20):
+    def get_history_with_all_prices(self, days = 10):
         
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
@@ -60,7 +60,7 @@ class TradingBacktester():
         instrument = self.strategy.instrument
         
         df: pd.DataFrame = pd.DataFrame()
-        for i in range(1, 10):           
+        for i in range(1, 20):           
 
             df_t = self.api.get_history_with_all_prices(instrument = instrument, days=days)
             df = pd.concat([df, df_t])

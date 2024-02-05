@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from trading.api import OANDA_API
-from trading.dom.base import BaseClass
-from trading.strategy import TradingStrategy
+from api import OANDA_API
+from dom.base import BaseClass
+from strategy import TradingStrategy
 
 class Trader(BaseClass):
     def __init__(self, conf_file, pair_file, instrument, unit_test = False):
