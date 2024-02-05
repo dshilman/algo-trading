@@ -26,9 +26,11 @@ class OANDA_API(BaseClass):
         
         ask_prices: pd.DataFrame = self.get_history(instrument = instrument, price = "A", days = days)
         ask_prices.rename(columns = {"c":"ask"}, inplace = True)
+        ask_prices = ask_prices.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
 
         bid_prices: pd.DataFrame = self.get_history(instrument = instrument, price = "B", days = days)
         bid_prices.rename(columns = {"c":"bid"}, inplace = True)
+        bid_prices = bid_prices.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
 
         df: pd.DataFrame = pd.concat([ask_prices, bid_prices], axis=1)
 

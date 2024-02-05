@@ -3,12 +3,12 @@ import json
 
 import pandas as pd
 from tabulate import tabulate
-from MyTT import RSI
+from trading.MyTT import RSI
 
-from dom.base import BaseClass
-from dom.order import Order
-from dom.trade import Trade_Action
-from dom.trading_session import Trading_Session
+from trading.dom.base import BaseClass
+from trading.dom.order import Order
+from trading.dom.trade import Trade_Action
+from trading.dom.trading_session import Trading_Session
 
 
 class TradingStrategy(BaseClass):
@@ -155,9 +155,9 @@ class TradingStrategy(BaseClass):
         
         spread = round(self.ask - self.bid, 4)
         # check if need to open a new position
-        # if spread >= abs(self.bb_upper - self.sma):                            
-        #     logger.warning (f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
-        #     return None
+        if spread >= abs(self.bb_upper - self.sma):                            
+            self.log_info(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
+            return None
 
         # if abs(have_units) <= units_to_trade:
         if have_units == 0:

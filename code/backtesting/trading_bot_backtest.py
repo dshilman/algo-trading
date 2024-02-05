@@ -17,7 +17,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.MyTT import RSI, SLOPE
+from trading.MyTT import RSI
 from trading.strategy import TradingStrategy
 from trading.api import OANDA_API
 
@@ -29,13 +29,6 @@ class TradingBacktester():
     
     def __init__(self, conf_file, pairs_file, instrument, new = False):
         
-        if new:
-            logger.info("Running Backtesting_Strategy")
-            self.strategy = Backtesting_Strategy(instrument, pairs_file)
-        else:
-            logger.info("Compare with BB_to_SMA_Strategy")
-            self.strategy = TradingStrategy(instrument, pairs_file)
-
         self.api = OANDA_API(conf_file, logger)
         config = configparser.ConfigParser()  
         config.read(pairs_file)
@@ -44,14 +37,22 @@ class TradingBacktester():
         self.end = config.get(instrument, 'end')
         logger.setLevel(logging.INFO)
 
-        log_file = os.path.join("../../logs/backtesting", f"{instrument}_{('new' if new else 'old')}.log")
+        log_file = os.path.join("logs", f"{instrument}_{('new' if new else 'old')}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
 
+        if new:
+            logger.info("Running Backtesting_Strategy")
+            self.strategy = Backtesting_Strategy(instrument, pairs_file, logger)
+        else:
+            logger.info("Compare with BB_to_SMA_Strategy")
+            self.strategy = TradingStrategy(instrument, pairs_file, logger)
+
+
     
-    def get_history_with_all_prices(self, days = 10):
+    def get_history_with_all_prices(self, days = 20):
         
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
@@ -61,7 +62,7 @@ class TradingBacktester():
         df: pd.DataFrame = pd.DataFrame()
         for i in range(1, 10):           
 
-            df_t = self.api.get_history_with_all_prices(instrument = instrument, days=days).c.dropna().to_frame()
+            df_t = self.api.get_history_with_all_prices(instrument = instrument, days=days)
             df = pd.concat([df, df_t])
             now = past
             past = now - timedelta(days = days)
@@ -151,15 +152,13 @@ class TradingBacktester():
                 
                 trade_action = self.strategy.determine_trade_action(self.have_units)
                 
-                # logger.info(f"Time: {index}, bid: {bid}, ask: {ask}, action: {trade_action}")
-
                 if trade_action != None:
                     self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index)
 
                 i += 1
 
             
-            self.strategy.trading_session.print_trades(logger)
+            self.strategy.trading_session.print_trades()
 
         except Exception as e:
             logger.exception("Exception occurred")
@@ -193,4 +192,4 @@ if __name__ == "__main__":
     trader.start_trading_backtest(refresh=(args.refresh in ['True', 'true']))
 
 
-# python trader_strategy_bb_target_sma_backtest.py EUR_USD --refresh True --strategy New
+# python trading_bot_backtest.py EUR_USD --refresh True --strategy New
