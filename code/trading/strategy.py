@@ -9,16 +9,16 @@ from dom.base import BaseClass
 from dom.order import Order
 from dom.trade import Trade_Action
 from dom.trading_session import Trading_Session
-
+from api import OANDA_API
 
 class TradingStrategy(BaseClass):
-    def __init__(self, instrument, pair_file, logger = None, unit_test = False):
+    def __init__(self, instrument, pair_file, api: OANDA_API, logger = None, unit_test = False):
         super().__init__(logger)
 
         self.trading_session = Trading_Session(logger)
 
         self.instrument = instrument
-        
+        self.api = api
         self.unit_test = unit_test
         config = configparser.ConfigParser()  
         config.read(pair_file)
@@ -109,13 +109,13 @@ class TradingStrategy(BaseClass):
 
         self.log_info(f"Submitting Order: {order}")
         if not self.unit_test:        
-            oanda_order = self.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price=order.tp, suppress=True, ret=True)
-            self.report_trade(oanda_order)
-            if "rejectReason" not in oanda_order:
+            result = self.api.create_order(order=order)
+            self.report_trade(result)
+            if "rejectReason" not in result:
                 units = units + order.units
                 self.log_info(f"New # of {order.instrument} units: {units}")
             else:
-                error = f"Order was not filled: {oanda_order ['type']}, reason: {oanda_order['rejectReason']}"
+                error = f"Order was not filled: {result ['type']}, reason: {result['rejectReason']}"
                 self.log_error(error)
                 raise Exception(error)
         else:

@@ -32,7 +32,7 @@ class Trader(BaseClass):
         self.tick_data = []
         self.units = 0
             
-        self.strategy  = TradingStrategy(instrument=instrument, pair_file=pair_file, logger=self.logger, unit_test = unit_test)
+        self.strategy  = TradingStrategy(instrument=instrument, pair_file=pair_file, api = self.api, logger=self.logger, unit_test = unit_test)
 
         super().__init__(logger=self.logger)
 

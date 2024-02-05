@@ -38,6 +38,11 @@ class OANDA_API(BaseClass):
 
         return df
 
+    def create_order(self, order: Order):
+
+        return self.api.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price=order.tp, suppress=True, ret=True)
+
+
     def get_history(self, instrument, price = "M", days = 1):
         
         now = datetime.utcnow()
