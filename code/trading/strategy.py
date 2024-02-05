@@ -113,14 +113,14 @@ class TradingStrategy(BaseClass):
             self.report_trade(oanda_order)
             if "rejectReason" not in oanda_order:
                 units = units + order.units
-                self.log_info(f"New # of {order.instrument} units: {self.units}")
+                self.log_info(f"New # of {order.instrument} units: {units}")
             else:
                 error = f"Order was not filled: {oanda_order ['type']}, reason: {oanda_order['rejectReason']}"
                 self.log_error(error)
                 raise Exception(error)
         else:
             units = units + order.units
-            self.log_info(f"New # of {order.instrument} units: {self.units}")
+            self.log_info(f"New # of {order.instrument} units: {units}")
 
         return units
 
