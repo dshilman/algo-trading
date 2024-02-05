@@ -128,7 +128,7 @@ class TradingStrategy(BaseClass):
 
         self.log_info("\n" + 100 * "-" + "\n")
         self.log_info()
-        self.log_info("\n" + self.strategy.data[-10:].to_string(header=True))
+        self.log_info("\n" + self.data[-10:].to_string(header=True))
         self.log_info()
         self.print_indicators(order.get("price"))
         self.log_info()
