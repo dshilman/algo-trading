@@ -180,6 +180,8 @@ class Trader(BaseClass):
                 self.log_debug("Check Positions")
 
                 self.units = self.api.get_instrument_positions(instrument = self.instrument)
+                self.log_info(f"Instrument: {self.instrument}, Units: {self.units}")
+
 
                 time.sleep(refresh)
 

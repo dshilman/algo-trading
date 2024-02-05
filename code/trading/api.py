@@ -101,11 +101,11 @@ class OANDA_API(BaseClass):
         units = 0
         positions = self.api.get_positions()
         for position in positions:
-            instrument = position["instrument"]
+            pos_instrument = position["instrument"]
             long_units = position["long"]["units"]
             short_units = position["short"]["units"]
-            self.log_info (f"Currently have position: {instrument} | long_units: {long_units} | short_units: {short_units}")
-            if str(instrument).upper() == instrument:
+            self.log_info (f"Currently have position: {pos_instrument} | long_units: {long_units} | short_units: {short_units}")
+            if str(instrument).upper() == pos_instrument:
                 units = round(float(long_units) + float(short_units), 0)
 
         return units
