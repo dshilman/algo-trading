@@ -89,34 +89,13 @@ class TradingBacktester():
         df["rsi_max"] = df ['RSI'].rolling(10).max()
         df["rsi_min"] = df ['RSI'].rolling(10).min()
 
-        # df["rsi_mean"] = df ['RSI'].rolling(10).mean()
-        # df["RSI_EMA"] = df.RSI.ewm(span=10, adjust=False, ignore_na = True).mean()
-        # df["rsi_ema_max"] = df ['RSI_EMA'].rolling(10).max()
-        # df["rsi_ema_min"] = df ['RSI_EMA'].rolling(10).min()
-
-
-        # df["ema"] = df[instrument].ewm(span=10, adjust=False, ignore_na = True).mean()
-
-
-        # df["slope"] = df[instrument].rolling(5).apply(lambda x: SLOPE(x.dropna().values, N=5))
-        # df["slope_prev"] = df["slope"].shift(1)
-        
         df["price_max"] = df [instrument].rolling(10).max()
         df["price_min"] = df [instrument].rolling(10).min()
 
         df ["momentum"] = df[instrument].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
-        df ["momentum_long"] = df[instrument].rolling(80).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
-
-        df ["momentum_min"] = df["momentum"].rolling(8).min()
-        # df ["momentum_max"] = df["momentum"].rolling(10).max()
-        # df ["momentum_mean"] = df["momentum"].rolling(10).mean()
-
-        # df["price_mean"] = df [instrument].rolling(60).mean()
 
 
         df.dropna(subset=["RSI", "SMA"], inplace = True)
-
-        # logger.info(df)
 
         return df
     
@@ -130,29 +109,17 @@ class TradingBacktester():
             self.strategy.rsi = row ['RSI']
             self.strategy.rsi_max = row ['rsi_max']
             self.strategy.rsi_min = row ['rsi_min']
-            # self.strategy.rsi_mean = row ['rsi_mean']
+            self.strategy.rsi_hist = df.RSI.iloc[-8:].values
             
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
+            self.strategy.ask = row ["ask"]
+            self.strategy.bid = row ["bid"]
+
             self.strategy.momentum = row ['momentum']
-            self.strategy.momentum_long = row ['momentum_long']
-
-            # self.strategy.momentum_mean = row ['momentum_mean']
-            self.strategy.momentum_min = row ['momentum_min']
-
-            self.strategy.rsi_hist = df.RSI.iloc[-8:].values
-            
-            self.strategy.momentum_hist = df.momentum.iloc[-3:].values
             self.strategy.momentum_prev = df.momentum.iloc[-2] if len(df) > 2 else 0
 
-            # self.strategy.price_mean = row ['price_mean']
-            # self.strategy.slope = row ['slope']
-            # self.strategy.slope_prev = row ['slope_prev']
-       
-            # self.strategy.rsi_ema = row ['RSI_EMA']
-            # self.strategy.rsi_ema_max = row ['rsi_ema_max']
-            # self.strategy.rsi_ema_min = row ['rsi_ema_min']
-    
+
     def get_data(self, refresh = False):
 
         if refresh:                
@@ -181,10 +148,8 @@ class TradingBacktester():
 
             for index, row in df.iterrows():
                 self.set_strategy_parameters(row, df.iloc[: i])
-                ask = row ["ask"]
-                bid = row ["bid"]
                 
-                trade_action = self.strategy.determine_action(bid, ask, self.have_units, self.units_to_trade)
+                trade_action = self.strategy.determine_trade_action(self.have_units)
                 
                 # logger.info(f"Time: {index}, bid: {bid}, ask: {ask}, action: {trade_action}")
 

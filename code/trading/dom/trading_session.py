@@ -1,15 +1,17 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
 from tabulate import tabulate
-from dom.trade import Trade_Action
+
 from dom.base import BaseClass
+from dom.trade import Trade_Action
 
 
 class Trading_Session(BaseClass):
 
-    def __init__(self):
+    def __init__(self, logger: logging.Logger = None):
         
         self.trades = []
         self.pl:float = 0
@@ -21,6 +23,9 @@ class Trading_Session(BaseClass):
         self.trade_cost = 0
         self.trade_pl = 0
         self.have_units = 0
+
+        super().__init__(logger)
+
 
 
     def add_trade(self, trade_action: Trade_Action, have_units: int, date_time=None):
@@ -65,11 +70,11 @@ class Trading_Session(BaseClass):
 
     def print_trades(self):
 
-        self.log_info("\n" + 100* "-")
+        self.log_info("\n" + 100 * "-")
         self.log_info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
         self.log_info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
 
 
         columns = ["datetime", "transaction", "trade units", "price", "trade cost", "trade p&l", "have units", "total p&l"]
         self.log_info("\n" + tabulate(self.trades, headers = columns))
-        self.log_info("\n" + 100* "-")
+        self.log_info("\n" + 100 * "-")

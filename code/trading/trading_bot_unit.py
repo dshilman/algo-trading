@@ -1,17 +1,14 @@
 import argparse
 import logging
 import os
-import random
 import sys
-import threading
-import time
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from trading.trading_bot import Trader
 
-# file = Path(__file__).resolve()
-# parent, root = file.parent, file.parents[1]
-# sys.path.append(str(root))
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
+
+from trading_bot import Trader
 
 
 if __name__ == "__main__":
@@ -35,6 +32,6 @@ if __name__ == "__main__":
     )
 
       # trader.start_trading()
-    trader.start_trading(stop_after=200)
+    trader.start_trading(stop_after=20)
 
     # python trading_bot.py EUR_USD

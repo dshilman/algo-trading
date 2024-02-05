@@ -12,7 +12,7 @@ from trading.trader import Strategy
 
 logger = logging.getLogger()
 
-class Backtesting_Strategy(Strategy):
+class Backtesting_Strategy(TradingStrategy):
     def __init__(self, instrument, pairs_file):
         super().__init__(instrument, pairs_file)
 

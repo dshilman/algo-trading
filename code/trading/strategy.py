@@ -15,7 +15,7 @@ class TradingStrategy(BaseClass):
     def __init__(self, instrument, pair_file, logger = None, unit_test = False):
         super().__init__(logger)
 
-        self.trading_session = Trading_Session()
+        self.trading_session = Trading_Session(logger)
 
         self.instrument = instrument
         

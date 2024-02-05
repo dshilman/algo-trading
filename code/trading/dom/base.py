@@ -12,12 +12,14 @@ class BaseClass ():
         super().__init__()
         self.logger = logger
 
-        if not self.logger:
+        if self.logger == None:
             self.logger = logging.getLogger()
             self.logger.setLevel(logging.INFO)
 
+
     def log(self, message, level = logging.INFO):
-        if self.logger:
+        
+        if not self.logger == None:
             self.logger.log(level, message)
         else:
             print(message)
