@@ -49,7 +49,7 @@ class TradingStrategy(BaseClass):
         trade_action = self.determine_trade_action(have_units)
         if trade_action is not None:
             # self.log_info(f"trade_action: {trade_action}")
-            order = self.create_order(trade_action, self.sl_perc, self.tp_perc, self.units)
+            order = self.create_order(trade_action, self.sl_perc, self.tp_perc, have_units)
 
             if order is not None:
                 have_units = self.submit_order(order, have_units)
