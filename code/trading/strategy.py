@@ -164,10 +164,10 @@ class TradingStrategy(BaseClass):
             
             signal = 0
 
-            if self.ask < self.bb_lower and self.rsi_min in self.rsi_hist and self.momentum * self.momentum_prev <= 0: # if price is below lower BB, BUY
+            if self.ask < self.bb_lower and self.rsi_min < 30 and self.rsi_min in self.rsi_hist and self.momentum * self.momentum_prev <= 0: # if price is below lower BB, BUY
                 signal = 1
                 self.log_info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
-            elif self.bid > self.bb_upper and self.rsi_max is self.rsi_hist and self.momentum * self.momentum_prev <= 0:  # if price is above upper BB, SELL
+            elif self.bid > self.bb_upper and self.rsi_max > 70 and self.rsi_max is self.rsi_hist and self.momentum * self.momentum_prev <= 0:  # if price is above upper BB, SELL
                 signal = -1
                 self.log_info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
             

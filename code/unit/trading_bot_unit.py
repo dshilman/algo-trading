@@ -8,7 +8,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading_bot import Trader
+from trading.trading_bot import Trader
 
 
 if __name__ == "__main__":
@@ -34,4 +34,4 @@ if __name__ == "__main__":
       # trader.start_trading()
     trader.start_trading(stop_after=20)
 
-    # python trading_bot.py EUR_USD
+    # python trading_bot_unit.py EUR_USD
