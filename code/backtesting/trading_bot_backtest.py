@@ -50,7 +50,6 @@ class TradingBacktester():
             logger.info("Compare with BB_to_SMA_Strategy")
             self.strategy = TradingStrategy(instrument, pairs_file, logger)
 
-
     
     def get_history_with_all_prices(self, days = 10):
         
