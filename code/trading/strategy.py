@@ -130,7 +130,7 @@ class TradingStrategy(BaseClass):
         self.log_info()
         self.log_info("\n" + self.data[-10:].to_string(header=True))
         self.log_info()
-        self.print_indicators(order.get("price"))
+        self.print_indicators()
         self.log_info()
         self.log_info(json.dumps(order, indent = 2))
         self.log_info("\n" + 100 * "-" + "\n")
