@@ -262,13 +262,13 @@ class TradingStrategy():
 
         if have_units < 0:
             current_loss_perc = round((self.ask - transaction_price)/transaction_price, 4)
-            if current_loss_perc >= self.sl_perc  - .0001:
+            if current_loss_perc >= self.sl_perc  - .0005:
                 logger.info(f"Close short position, - Stop Loss Buy, short price {transaction_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
                 return Trade_Action(self.instrument, -traded_units, self.ask, (self.ask - self.bid), "Close Short - Stop Loss Buy", False, True)
 
         if have_units > 0:
             current_loss_perc = round((transaction_price - self.bid)/transaction_price, 4)
-            if current_loss_perc >= self.sl_perc - .0001:
+            if current_loss_perc >= self.sl_perc - .0005:
                 logger.info(f"Close long position, - Stop Loss Sell, long price {transaction_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
                 return Trade_Action(self.instrument, -traded_units, self.bid, (self.ask - self.bid), "Close Long - Stop Loss Sell", False, True)
         
@@ -296,7 +296,7 @@ class TradingStrategy():
                 I assume that the price is too high for 4 digit decimals, thus adding a rule
                 if the price is grater that $100, do not use decimals for stop loss
             """
-            sl_dist = round(trade_action.price * (sl_perc + .0001), (4 if trade_action.price < 100 else 0))
+            sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
 
             
         if tp_perc:
