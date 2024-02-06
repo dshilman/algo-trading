@@ -1,17 +1,6 @@
-import logging
-import os
-import sys
-from pathlib import Path
-
-file = Path(__file__).resolve()
-parent, root = file.parent, file.parents[1]
-sys.path.append(str(root))
-
-from dom.base import BaseClass
-
-class Order (BaseClass):
-    def __init__(self, instrument, price, trade_units, sl_dist, tp_price, logger = None):
-        super().__init__(logger)
+class Order ():
+    def __init__(self, instrument, price, trade_units, sl_dist, tp_price):
+        super().__init__()
         self.instrument = instrument
         self.price = price
         self.units = trade_units

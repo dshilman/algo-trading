@@ -44,10 +44,10 @@ class TradingBacktester():
         logger.addHandler(logHandler)
 
         if new:
-            logger.info("Running Backtesting_Strategy")
+            logger.info("Running new strategy")
             self.strategy = Backtesting_Strategy(instrument, pairs_file, logger)
         else:
-            logger.info("Compare with BB_to_SMA_Strategy")
+            logger.info("Running existing strategy")
             self.strategy = TradingStrategy(instrument, pairs_file, logger)
 
     
@@ -78,12 +78,11 @@ class TradingBacktester():
         df["Upper"] = df["SMA"] + std
         
         df["RSI"] = df[instrument].rolling(29).apply(lambda x: RSI(x.values, N=28))
-        df["rsi_max"] = df ['RSI'].rolling(10).max()
-        df["rsi_min"] = df ['RSI'].rolling(10).min()
+        df["rsi_max"] = df ['RSI'].rolling(8).max()
+        df["rsi_min"] = df ['RSI'].rolling(8).min()
 
         df["price_max"] = df [instrument].rolling(10).max()
         df["price_min"] = df [instrument].rolling(10).min()
-
         df ["momentum"] = df[instrument].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
 
 
@@ -115,7 +114,7 @@ class TradingBacktester():
     def get_data(self, refresh = False):
 
         if refresh:                
-            df = self.get_history_with_all_prices(100)
+            df = self.get_history_with_all_prices(150)
             df.to_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
             # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         else:
@@ -136,16 +135,19 @@ class TradingBacktester():
 
             self.have_units = 0
 
+            stop_loss_date = None
             i = 0
 
             for index, row in df.iterrows():
                 self.set_strategy_parameters(row, df.iloc[: i])
                 
-                trade_action = self.strategy.determine_trade_action(self.have_units)
-                
-                if trade_action != None:
-                    self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index)
-
+                if stop_loss_date == None or index > stop_loss_date:
+                    trade_action = self.strategy.determine_trade_action(self.have_units)
+                    
+                    if trade_action != None:
+                        self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index)
+                        if trade_action.sl_trade:
+                            stop_loss_date = index + timedelta(hours = 2)                        
                 i += 1
 
             

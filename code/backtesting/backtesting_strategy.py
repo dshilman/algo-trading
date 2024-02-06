@@ -14,11 +14,19 @@ logger = logging.getLogger()
 
 class Backtesting_Strategy(TradingStrategy):
     def __init__(self, instrument, pair_file, logger = None, unit_test = False):
-        super().__init__(instrument = instrument, pair_file = pair_file, api = None, logger = logger, unit_test = unit_test)
+        super().__init__(instrument = instrument, pair_file = pair_file, api = None, unit_test = unit_test)
 
 
-    # def check_if_need_close_trade(self, have_units):
-        
+    def determine_trade_action(self, have_units):
+
+        trade = super().determine_trade_action(have_units)
+        if trade != None:
+            return trade
+
+        trade = self.check_for_sl(have_units)
+        if trade != None:
+            return trade
+
     #     trade =  self.check_if_need_close_trade_new()
         
     #     if not trade == None:

@@ -1,17 +1,20 @@
 import logging
 from datetime import datetime, timedelta, timezone
-
-import numpy as np
-import pandas as pd
 from tabulate import tabulate
 
-from dom.base import BaseClass
+from pathlib import Path
+import sys
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
+
 from dom.trade import Trade_Action
 
 
-class Trading_Session(BaseClass):
+logger = logging.getLogger()
+class Trading_Session():
 
-    def __init__(self, logger: logging.Logger = None):
+    def __init__(self):
         
         self.trades = []
         self.pl:float = 0
@@ -24,7 +27,7 @@ class Trading_Session(BaseClass):
         self.trade_pl = 0
         self.have_units = 0
 
-        super().__init__(logger)
+        super().__init__()
 
 
 
@@ -64,17 +67,17 @@ class Trading_Session(BaseClass):
             # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         
         self.have_units = self.have_units + trade_action.units
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), transaction, trade_action.units, trade_action.price, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.units, trade_action.price, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
 
         return self.have_units
 
     def print_trades(self):
 
-        self.log_info("\n" + 100 * "-")
-        self.log_info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
-        self.log_info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
+        logger.info("\n" + 100 * "-")
+        logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
+        logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
 
 
         columns = ["datetime", "transaction", "trade units", "price", "trade cost", "trade p&l", "have units", "total p&l"]
-        self.log_info("\n" + tabulate(self.trades, headers = columns))
-        self.log_info("\n" + 100 * "-")
+        logger.info("\n" + tabulate(self.trades, headers = columns))
+        logger.info("\n" + 100 * "-")
