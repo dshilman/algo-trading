@@ -117,7 +117,7 @@ class Trader(BaseClass):
 
             self.log_debug("Check Trading Time")
 
-            now = datetime.now()
+            now = datetime.utcnow()
             today = now.date()
 
             from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
