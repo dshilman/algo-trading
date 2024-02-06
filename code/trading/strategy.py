@@ -3,16 +3,23 @@ import json
 
 import pandas as pd
 from tabulate import tabulate
-from MyTT import RSI
 
-from dom.base import BaseClass
-from dom.order import Order
-from dom.trade import Trade_Action
-from dom.trading_session import Trading_Session
-from api import OANDA_API
+from pathlib import Path
+import sys
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
+
+from trading.MyTT import RSI
+
+from trading.dom.base import BaseClass
+from trading.dom.order import Order
+from trading.dom.trade import Trade_Action
+from trading.dom.trading_session import Trading_Session
+from trading.api import OANDA_API
 
 class TradingStrategy(BaseClass):
-    def __init__(self, instrument, pair_file, api: OANDA_API, logger = None, unit_test = False):
+    def __init__(self, instrument, pair_file, api: OANDA_API = None, logger = None, unit_test = False):
         super().__init__(logger)
 
         self.trading_session = Trading_Session(logger)
@@ -139,14 +146,21 @@ class TradingStrategy(BaseClass):
 
         if have_units != 0:  # if already have positions
             self.log_debug(f"Have {have_units} positions, checking if need to close")
-            trade = self.check_if_need_close_trade(have_units)
+
+            if len (self.trading_session.trades) > 0:
+                trade = self.check_if_need_close_trade_from_hist()
+            else:
+                trade = self.check_if_need_close_trade(have_units)
+    
             if trade is not None:
                 return trade
-                
-        self.log_debug(f"Have {have_units} positions, checking if need to open")
-        trade = self.check_if_need_open_trade(have_units)
-        if trade is not None:
-            return trade
+
+        else:        
+            self.log_debug(f"Have {have_units} positions, checking if need to open")
+            
+            trade = self.check_if_need_open_trade(have_units)
+            if trade is not None:
+                return trade
 
         return None
 
@@ -156,7 +170,7 @@ class TradingStrategy(BaseClass):
         spread = round(self.ask - self.bid, 4)
         # check if need to open a new position
         if spread >= abs(self.bb_upper - self.sma):                            
-            self.log_info(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
+            self.log_debug(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
             return None
 
         # if abs(have_units) <= units_to_trade:
@@ -164,10 +178,10 @@ class TradingStrategy(BaseClass):
             
             signal = 0
 
-            if self.ask < self.bb_lower and self.rsi_min < 30 and self.rsi_min in self.rsi_hist and self.momentum * self.momentum_prev <= 0: # if price is below lower BB, BUY
+            if self.ask < self.bb_lower and self.rsi_min < 30 and self.rsi_min in self.rsi_hist and (round(self.momentum, 6) == 0 or self.momentum * self.momentum_prev <= 0): # if price is below lower BB, BUY
                 signal = 1
                 self.log_info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
-            elif self.bid > self.bb_upper and self.rsi_max > 70 and self.rsi_max is self.rsi_hist and self.momentum * self.momentum_prev <= 0:  # if price is above upper BB, SELL
+            elif self.bid > self.bb_upper and self.rsi_max > 70 and self.rsi_max is self.rsi_hist and (round(self.momentum, 6) == 0 or self.momentum * self.momentum_prev <= 0):  # if price is above upper BB, SELL
                 signal = -1
                 self.log_info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
             
@@ -182,18 +196,38 @@ class TradingStrategy(BaseClass):
 
         return None
 
+    def check_if_need_close_trade_from_hist(self):
 
+        if len (self.trading_session.trades) > 0:
+            transaction_price =  self.trading_session.trades[-1][3]
+            traded_units = self.trading_session.trades[-1][2]
+
+            if traded_units > 0:
+                target = max(transaction_price - 4 * abs(self.ask - self.bid), self.sma)
+                if self.bid > target and (round(self.momentum, 6) == 0 or self.momentum * self.momentum_prev <= 0):
+                    self.log_info(f"Close long position - Sell {-traded_units} units at bid price: {self.bid}, sma: {self.sma}, rsi: {self.rsi}")
+                    return Trade_Action(self.instrument, -traded_units, self.ask, (self.ask - self.bid), False)
+
+            if traded_units < 0:
+                target = min(transaction_price + 4 * abs(self.ask - self.bid), self.sma)
+                if self.ask < target and (round(self.momentum, 6) == 0 or self.momentum * self.momentum_prev <= 0):
+                    self.log_info(f"Close short position  - Buy {-traded_units} units at ask price: {self.ask}, sma: {self.sma}, rsi: {self.rsi}")
+                    return Trade_Action(self.instrument, -traded_units, self.bid, (self.ask - self.bid), False)
+        
+        return None
+
+    
     def check_if_need_close_trade(self, have_units):
 
         signal = 0
         spread = round(self.ask - self.bid, 4)
 
         if have_units > 0:  # if already have long positions
-            if self.bid > self.sma and self.momentum * self.momentum_prev <= 0:  # price is above target SMA, SELL
+            if self.bid > self.sma and (round(self.momentum, 6) == 0 or self.momentum * self.momentum_prev <= 0):  # price is above target SMA, SELL
                 signal = -1
                 self.log_info(f"Close long position - Sell {have_units} units at bid price: {self.bid}, sma: {self.sma}, rsi: {self.rsi}")
         elif have_units < 0:  # if alredy have short positions
-            if self.ask < self.sma and self.momentum * self.momentum_prev <= 0:  # price is below target SMA, BUY
+            if self.ask < self.sma and (round(self.momentum, 6) == 0 or self.momentum * self.momentum_prev <= 0):  # price is below target SMA, BUY
                 signal = 1
                 self.log_info(f"Close short position  - Buy {have_units} units at ask price: {self.ask}, sma: {self.sma}, rsi: {self.rsi}")
 
@@ -203,6 +237,26 @@ class TradingStrategy(BaseClass):
         if signal != 0:
             return Trade_Action(self.instrument, -have_units, (self.ask if signal > 0 else self.bid), spread, False)
 
+        return None
+
+    def check_for_sl(self):
+
+        if len (self.trading_session.trades) > 0:
+            transaction_price =  self.trading_session.trades[-1][3]
+            traded_units = self.trading_session.trades[-1][2]
+
+        if traded_units < 0:
+            current_loss_perc = (self.bid - transaction_price)/transaction_price
+            if current_loss_perc >= self.sl_perc:
+                self.log_info(f"Close short position, - Stop Loss Sell, short price {transaction_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
+                return Trade_Action(self.instrument, -traded_units, self.ask, (self.ask - self.bid), False)
+
+        if traded_units > 0:
+            current_loss_perc = (transaction_price - self.ask)/transaction_price
+            if current_loss_perc >= self.sl_perc:
+                self.log_info(f"Close long position, - Stop Loss Buy, long price {transaction_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
+                return Trade_Action(self.instrument, -traded_units, self.bid, (self.ask - self.bid), False)
+        
         return None
 
     def print_indicators(self):

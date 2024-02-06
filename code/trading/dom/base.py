@@ -19,7 +19,7 @@ class BaseClass ():
 
     def log(self, message = "", level = logging.INFO):
         
-        if not self.logger == None:
+        if self.logger != None:
             self.logger.log(level, message)
         else:
             print(message)

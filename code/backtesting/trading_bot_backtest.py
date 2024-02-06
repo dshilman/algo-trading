@@ -51,24 +51,16 @@ class TradingBacktester():
             self.strategy = TradingStrategy(instrument, pairs_file, logger)
 
     
-    def get_history_with_all_prices(self, days = 10):
+    def get_history_with_all_prices(self, days = 100):
         
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
         past = now - timedelta(days = days)
         instrument = self.strategy.instrument
-        
-        df: pd.DataFrame = pd.DataFrame()
-        for i in range(1, 20):           
 
-            df_t = self.api.get_history_with_all_prices(instrument = instrument, days=days)
-            df = pd.concat([df, df_t])
-            now = past
-            past = now - timedelta(days = days)
-            
-            
-        df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-        df.sort_values(by='time', ascending=True, inplace=True)
+        df: pd.DataFrame = self.api.get_history_with_all_prices_by_period(instrument, past, now)
+               
+        # df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
 
         return df
 
@@ -123,7 +115,7 @@ class TradingBacktester():
     def get_data(self, refresh = False):
 
         if refresh:                
-            df = self.get_history_with_all_prices()
+            df = self.get_history_with_all_prices(100)
             df.to_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
             # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         else:
