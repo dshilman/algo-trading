@@ -135,11 +135,11 @@ class TradingStrategy():
     def report_trade(self, order):
 
         logger.info("\n" + 100 * "-" + "\n")
-        logger.info()
+        logger.info("")
         logger.info("\n" + self.data[-10:].to_string(header=True))
-        logger.info()
+        logger.info("")
         self.print_indicators()
-        logger.info()
+        logger.info("")
         logger.info(json.dumps(order, indent = 2))
         logger.info("\n" + 100 * "-" + "\n")
 
