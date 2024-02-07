@@ -117,18 +117,6 @@ class OANDA_API():
         return self.api.create_order(instrument = order.instrument, units = order.units, sl_distance = order.sl, tp_price=order.tp, suppress=True, ret=True)
 
     
-    def report_trade(self, order):
-
-        logger.info("\n" + 100 * "-" + "\n")
-        logger.info()
-        logger.info("\n" + self.strategy.data[-10:].to_string(header=True))
-        logger.info()
-        self.strategy.print_indicators(order.get("price"))
-        logger.info()
-        logger.info(json.dumps(order, indent = 2))
-        logger.info("\n" + 100 * "-" + "\n")
-
-
     
     def get_instrument_positions(self, instrument): 
 
