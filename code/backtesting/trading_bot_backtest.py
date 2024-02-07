@@ -29,7 +29,7 @@ class TradingBacktester():
     
     def __init__(self, conf_file, pairs_file, instrument, new = False):
         
-        self.api = OANDA_API(conf_file, logger)
+        self.api = OANDA_API(conf_file)
         config = configparser.ConfigParser()  
         config.read(pairs_file)
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))

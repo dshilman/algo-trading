@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import logging
 
-logger = logging.getLogger("trader_oanda")
+logger = logging.getLogger()
 
 # ------------------ 0 level：core tools function --------------------------------------------
 def RD(N, D=4):

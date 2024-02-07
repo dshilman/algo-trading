@@ -18,7 +18,6 @@ sys.path.append(str(root))
 
 
 from trading.api import OANDA_API
-from trading.dom.base import BaseClass
 from trading.strategy import TradingStrategy
 
 logger = logging.getLogger()
