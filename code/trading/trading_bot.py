@@ -126,7 +126,7 @@ class Trader():
 
             now = datetime.utcnow()
             
-            if not (self.from_dt <= now <= self.to_dt and self.units == 0):
+            if self.from_dt <= now <= self.to_dt or self.units != 0:
                 logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
                 logger.info("Not Trading Time - Terminating Trading")
                 self.terminate = True
