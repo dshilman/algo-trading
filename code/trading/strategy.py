@@ -87,17 +87,17 @@ class TradingStrategy():
         # df["ema"] = df[self.instrument][-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
  
         self.rsi = df.RSI.iloc[-1]
-        self.rsi_max = df ['RSI'][-10:].max()
-        self.rsi_min = df ['RSI'][-10:].min()
+        self.rsi_max = df ['RSI'][-8:].max()
+        self.rsi_min = df ['RSI'][-8:].min()
         self.rsi_hist = df ['RSI'][-8:].values
        
         df ["momentum"] = df[self.instrument][-self.sma_value:].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
         self.momentum = df.momentum.iloc[-1]
         self.momentum_prev = df.momentum.iloc[-2]
 
-        self.price = round(df[self.instrument].iloc[-1], 6)
-        self.price_max = round(df [self.instrument][-10:].max(), 6)
-        self.price_min = round(df [self.instrument][-10:].min(), 6)
+        # self.price = round(df[self.instrument].iloc[-1], 6)
+        # self.price_max = round(df [self.instrument][-8:].max(), 6)
+        # self.price_min = round(df [self.instrument][-8:].min(), 6)
 
         self.ask = round(df.ask.iloc[-1], 6)
         self.bid = round(df.bid.iloc[-1], 6)
@@ -188,7 +188,7 @@ class TradingStrategy():
                 logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
                 return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.ask, spread, "Go Long - Buy", True, False)
 
-            elif self.bid > self.bb_upper and self.has_high_rsi and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:  # if price is above upper BB, SELL
+            elif self.bid > self.bb_upper and self.has_high_rsi() and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
                 return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.bid, spread, "Go Short - Sell", True, False)
@@ -218,14 +218,17 @@ class TradingStrategy():
             transaction_price =  self.trading_session.trades[-1][3]
             traded_units = self.trading_session.trades[-1][2]
 
-            if traded_units > 0:
-                target = max(transaction_price - 4 * abs(self.ask - self.bid), self.sma)
+            if traded_units > 0: # long position
+                # target price to close long position should be higher than the transaction price, whichever is lowest
+                # target = min(transaction_price + 3 * abs(self.ask - self.bid), self.sma)
+                target = min(transaction_price + 3 * abs(self.ask - self.bid), self.sma)
                 if self.bid > target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
                     logger.info(f"Close long position - Sell {-traded_units} units at bid price: {self.bid}, sma: {self.sma}, rsi: {self.rsi}")
                     return Trade_Action(self.instrument, -traded_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
-            if traded_units < 0:
-                target = min(transaction_price + 4 * abs(self.ask - self.bid), self.sma)
+            if traded_units < 0: # short position
+                 # target price to close short position should be lower than the transaction price, whichever is highest
+                target = max(transaction_price - 3 * abs(self.ask - self.bid), self.sma)
                 if self.ask < target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
                     logger.info(f"Close short position  - Buy {-traded_units} units at ask price: {self.ask}, sma: {self.sma}, rsi: {self.rsi}")
                     return Trade_Action(self.instrument, -traded_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)

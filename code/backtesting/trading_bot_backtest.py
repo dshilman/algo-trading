@@ -81,8 +81,8 @@ class TradingBacktester():
         df["rsi_max"] = df ['RSI'].rolling(8).max()
         df["rsi_min"] = df ['RSI'].rolling(8).min()
 
-        df["price_max"] = df [instrument].rolling(10).max()
-        df["price_min"] = df [instrument].rolling(10).min()
+        df["price_max"] = df [instrument].rolling(8).max()
+        df["price_min"] = df [instrument].rolling(8).min()
         df ["momentum"] = df[instrument].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
 
 
