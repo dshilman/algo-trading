@@ -108,7 +108,7 @@ class Trader():
                 logger.error(f"Error in start_streaming")
                 logger.exception(e)
                 i = i + 1
-                if i > 20:
+                if i > 30:
                     self.terminate = True
                     break
 
