@@ -79,13 +79,13 @@ class Trader():
 
         treads = []
         treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
-        time.sleep(1)
         treads.append(threading.Thread(target=self.check_trading_time, args=(60,)))
         treads.append(threading.Thread(target=self.refresh_strategy, args=(30,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
         for t in treads:
             t.start()
+            time.sleep(1)
         
         for t in treads:
             t.join()
