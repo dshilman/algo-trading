@@ -46,7 +46,7 @@ class Trader():
         self.from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
         self.to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
         if self.to_dt < self.from_dt:
-            to_dt = to_dt + timedelta(days=1)
+            self.to_dt = self.to_dt + timedelta(days=1)
 
 
         super().__init__()
