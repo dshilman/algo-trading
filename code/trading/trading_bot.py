@@ -79,6 +79,7 @@ class Trader():
 
         treads = []
         treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
+        time.sleep(1)
         treads.append(threading.Thread(target=self.check_trading_time, args=(60,)))
         treads.append(threading.Thread(target=self.refresh_strategy, args=(30,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
@@ -127,13 +128,14 @@ class Trader():
             now = datetime.utcnow()
             
             if self.from_dt <= now <= self.to_dt or self.units != 0:
+                time.sleep(refresh)
+            else:
                 logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
                 logger.info("Not Trading Time - Terminating Trading")
                 self.terminate = True
                 self.stop_streaming()
                 break
 
-            time.sleep(refresh)
 
 
     def refresh_strategy(self, refresh = 60):
