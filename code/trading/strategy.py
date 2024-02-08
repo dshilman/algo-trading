@@ -183,12 +183,12 @@ class TradingStrategy():
             
             signal = 0
 
-            if self.ask < self.bb_lower and self.has_low_rsi() and round(self.momentum, 6) * self.momentum_prev <= 0: # if price is below lower BB, BUY
+            if self.ask < self.bb_lower and self.has_low_rsi() and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
                 return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.ask, spread, "Go Long - Buy", True, False)
 
-            elif self.bid > self.bb_upper and self.has_high_rsi and round(self.momentum, 6) * self.momentum_prev <= 0:  # if price is above upper BB, SELL
+            elif self.bid > self.bb_upper and self.has_high_rsi and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:  # if price is above upper BB, SELL
                 signal = -1
                 logger.info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
                 return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.bid, spread, "Go Short - Sell", True, False)
@@ -220,13 +220,13 @@ class TradingStrategy():
 
             if traded_units > 0:
                 target = max(transaction_price - 4 * abs(self.ask - self.bid), self.sma)
-                if self.bid > target and round(self.momentum, 6) * self.momentum_prev <= 0:
+                if self.bid > target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
                     logger.info(f"Close long position - Sell {-traded_units} units at bid price: {self.bid}, sma: {self.sma}, rsi: {self.rsi}")
                     return Trade_Action(self.instrument, -traded_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
             if traded_units < 0:
                 target = min(transaction_price + 4 * abs(self.ask - self.bid), self.sma)
-                if self.ask < target and round(self.momentum, 6) * self.momentum_prev <= 0:
+                if self.ask < target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
                     logger.info(f"Close short position  - Buy {-traded_units} units at ask price: {self.ask}, sma: {self.sma}, rsi: {self.rsi}")
                     return Trade_Action(self.instrument, -traded_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
         
@@ -276,8 +276,8 @@ class TradingStrategy():
 
     def print_indicators(self):
 
-        indicators = [[self.price, self.price_min, self.price_max, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, self.momentum, self.momentum_prev]]
-        columns=["PRICE", "PRICE MIN", "PRICE MAX", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "MOMENTUM", "MOMENTUM PREV"]
+        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, self.momentum, self.momentum_prev]]
+        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "MOMENTUM", "MOMENTUM PREV"]
         logger.info("\n" + tabulate(indicators, headers = columns))
 
 

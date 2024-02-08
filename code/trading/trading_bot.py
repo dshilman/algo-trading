@@ -41,6 +41,14 @@ class Trader():
             
         self.strategy  = TradingStrategy(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
 
+        today = datetime.utcnow().date()
+
+        self.from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
+        self.to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
+        if self.to_dt < self.from_dt:
+            to_dt = to_dt + timedelta(days=1)
+
+
         super().__init__()
 
 
@@ -117,16 +125,9 @@ class Trader():
             logger.debug("Check Trading Time")
 
             now = datetime.utcnow()
-            today = now.date()
-
-            from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
-            to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
-
-            if to_dt < from_dt:
-                to_dt = to_dt + timedelta(days=1)
-
-            if not from_dt <= now <= to_dt and self.units == 0:
-                logger.info(f"Now: {now}, Trading Time: {from_dt} - {to_dt}")
+            
+            if not (self.from_dt <= now <= self.to_dt and self.units == 0):
+                logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
                 logger.info("Not Trading Time - Terminating Trading")
                 self.terminate = True
                 self.stop_streaming()
