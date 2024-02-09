@@ -196,18 +196,20 @@ class TradingStrategy():
         return None
 
     def has_high_rsi(self):
-        
-        for rsi in self.rsi_hist:
-            if rsi > 70:
-                return True
 
-        return False
+        return self.rsi_max > 72 and self.rsi > 70      
+        # for rsi in self.rsi_hist:
+        #     if rsi == self.rsi_max and self.rsi > 70:
+        #         return True
+
+        # return False
 
     def has_low_rsi(self):
         
-        for rsi in self.rsi_hist:
-            if rsi < 30:
-                return True
+        return self.rsi_min < 28 and self.rsi < 30
+        # for rsi in self.rsi_hist:
+        #     if rsi == self.rsi_min and self.rsi < 30:
+        #         return True
 
         return False
 
@@ -220,7 +222,6 @@ class TradingStrategy():
 
             if traded_units > 0: # long position
                 # target price to close long position should be higher than the transaction price, whichever is lowest
-                # target = min(transaction_price + 3 * abs(self.ask - self.bid), self.sma)
                 target = min(transaction_price + 3 * abs(self.ask - self.bid), self.sma)
                 if self.bid > target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
                     logger.info(f"Close long position - Sell {-traded_units} units at bid price: {self.bid}, sma: {self.sma}, rsi: {self.rsi}")
