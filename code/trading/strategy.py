@@ -222,16 +222,16 @@ class TradingStrategy():
 
             if traded_units > 0: # long position
                 # target price to close long position should be higher than the transaction price, whichever is lowest
-                target = min(transaction_price + 3 * abs(self.ask - self.bid), self.sma)
+                target = min(round(transaction_price + 3 * abs(self.ask - self.bid), 6), self.sma)
                 if self.bid > target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
-                    logger.info(f"Close long position - Sell {-traded_units} units at bid price: {self.bid}, sma: {self.sma}, rsi: {self.rsi}")
+                    logger.info(f"Close long position - Sell {-traded_units} units at bid price: {self.bid}, target: {target}, sma: {self.sma}")
                     return Trade_Action(self.instrument, -traded_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
             if traded_units < 0: # short position
                  # target price to close short position should be lower than the transaction price, whichever is highest
-                target = max(transaction_price - 3 * abs(self.ask - self.bid), self.sma)
+                target = max(round(transaction_price - 3 * abs(self.ask - self.bid), 6), self.sma)
                 if self.ask < target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
-                    logger.info(f"Close short position  - Buy {-traded_units} units at ask price: {self.ask}, sma: {self.sma}, rsi: {self.rsi}")
+                    logger.info(f"Close short position  - Buy {-traded_units} units at ask price: {self.ask}, target: {target}, sma: {self.sma}")
                     return Trade_Action(self.instrument, -traded_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
         
         return None
