@@ -73,11 +73,9 @@ class Trading_Session():
 
     def print_trades(self):
 
-        logger.info("\n" + 100 * "-")
-        logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
-        logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
-
-
+        logger.info("\n" + 100 * "-")        
         columns = ["datetime", "transaction", "trade units", "price", "trade cost", "trade p&l", "have units", "total p&l"]
         logger.info("\n" + tabulate(self.trades, headers = columns))
+        logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
+        logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
         logger.info("\n" + 100 * "-")

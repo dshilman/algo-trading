@@ -21,8 +21,6 @@ from trading.MyTT import RSI
 from trading.strategy import TradingStrategy
 from trading.api import OANDA_API
 
-from backtesting_strategy import Backtesting_Strategy
-
 logger = logging.getLogger()
 
 class TradingBacktester():
@@ -43,12 +41,10 @@ class TradingBacktester():
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
 
-        if new:
-            logger.info("Running new strategy")
-            self.strategy = Backtesting_Strategy(instrument, pairs_file, logger)
-        else:
-            logger.info("Running existing strategy")
-            self.strategy = TradingStrategy(instrument, pairs_file, logger)
+        module = __import__(f"trading.strategies.{instrument.lower()}_strategy", fromlist=[f"{instrument}_Strategy"])
+        class_ = getattr(module, f"{instrument}_Strategy")
+        logger.info(f"Running:{class_} strategy")
+        self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
 
     
     def get_history_with_all_prices(self, days = 100):
@@ -83,32 +79,33 @@ class TradingBacktester():
 
         df["price_max"] = df [instrument].rolling(8).max()
         df["price_min"] = df [instrument].rolling(8).min()
-        df ["momentum"] = df[instrument].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
 
+        df["momentum"] = df[instrument].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1])/ x.iloc[0])        
+        df["momentum_prev"] = df["momentum"].shift(1)
 
         df.dropna(subset=["RSI", "SMA"], inplace = True)
 
         return df
     
-    def set_strategy_parameters(self, row, df):
+    def set_strategy_parameters(self, row):
 
             self.strategy.sma = row ['SMA']
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
-            
-       
+                   
             self.strategy.rsi = row ['RSI']
             self.strategy.rsi_max = row ['rsi_max']
             self.strategy.rsi_min = row ['rsi_min']
-            self.strategy.rsi_hist = df.RSI.iloc[-8:].values
             
+            self.strategy.price = row [self.strategy.instrument]
             self.strategy.price_max = row ['price_max']
             self.strategy.price_min = row ['price_min']
+
             self.strategy.ask = row ["ask"]
             self.strategy.bid = row ["bid"]
 
             self.strategy.momentum = row ['momentum']
-            self.strategy.momentum_prev = df.momentum.iloc[-2] if len(df) > 2 else 0
+            self.strategy.momentum_prev = row ['momentum_prev']
 
 
     def get_data(self, refresh = False):
@@ -136,10 +133,9 @@ class TradingBacktester():
             self.have_units = 0
 
             stop_loss_date = None
-            i = 0
 
             for index, row in df.iterrows():
-                self.set_strategy_parameters(row, df.iloc[: i])
+                self.set_strategy_parameters(row)
                 
                 if stop_loss_date == None or index > stop_loss_date:
                     trade_action = self.strategy.determine_trade_action(self.have_units)
@@ -148,8 +144,6 @@ class TradingBacktester():
                         self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index)
                         if trade_action.sl_trade:
                             stop_loss_date = index + timedelta(hours = 2)                        
-                i += 1
-
             
             self.strategy.trading_session.print_trades()
 
@@ -185,4 +179,4 @@ if __name__ == "__main__":
     trader.start_trading_backtest(refresh=(args.refresh in ['True', 'true']))
 
 
-# python trading_bot_backtest.py EUR_USD --refresh True --strategy New
+# python trading_bot_backtest.py EUR_USD --refresh True

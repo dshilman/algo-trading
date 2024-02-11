@@ -3,6 +3,7 @@ import configparser
 import logging
 import logging.handlers as handlers
 import os
+import sys
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -10,17 +11,15 @@ from pathlib import Path
 
 import pandas as pd
 
-from pathlib import Path
-import sys
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
-
 
 from trading.api import OANDA_API
 from trading.strategy import TradingStrategy
 
 logger = logging.getLogger()
+
 class Trader():
     def __init__(self, conf_file, pair_file, instrument, unit_test = False):
 
@@ -38,8 +37,10 @@ class Trader():
 
         self.tick_data = []
         self.units = 0
-            
-        self.strategy  = TradingStrategy(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
+
+        module = __import__(f"trading.strategies.{instrument.lower()}_strategy", fromlist=[f"{instrument}_Strategy"])
+        class_ = getattr(module, f"{instrument}_Strategy")
+        self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
 
         today = datetime.utcnow().date()
 
