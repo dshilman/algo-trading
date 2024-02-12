@@ -34,8 +34,6 @@ class TradingStrategy():
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
         self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
-        self.target_distance = float(config.get(self.instrument, 'target_distance'))
-
 
         self.data = None
         # Caculated attributes
