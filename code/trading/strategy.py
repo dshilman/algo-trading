@@ -206,14 +206,16 @@ class TradingStrategy():
 
     def has_high_rsi(self):
 
-        return self.rsi > 70 and self.rsi < self.rsi_max
+        return self.rsi_max > 71 and self.rsi < self.rsi_max
+        # return self.rsi > 70 and self.rsi < self.rsi_max
         # return self.rsi_max > 72      
         
         # return False
 
     def has_low_rsi(self):
         
-        return self.rsi < 30 and self.rsi > self.rsi_min
+        return self.rsi_min < 28 and self.rsi > self.rsi_min
+        # return self.rsi < 30 and self.rsi > self.rsi_min
         # return self.rsi_min < 28
 
     def check_if_need_close_trade_from_hist(self):
