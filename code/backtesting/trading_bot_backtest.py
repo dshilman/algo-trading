@@ -25,7 +25,7 @@ logger = logging.getLogger()
 
 class TradingBacktester():
     
-    def __init__(self, conf_file, pairs_file, instrument, new = False):
+    def __init__(self, conf_file, pairs_file, instrument):
         
         self.api = OANDA_API(conf_file)
         config = configparser.ConfigParser()  
@@ -35,7 +35,7 @@ class TradingBacktester():
         self.end = config.get(instrument, 'end')
         logger.setLevel(logging.INFO)
 
-        log_file = os.path.join("logs", f"{instrument}_{('new' if new else 'old')}.log")
+        log_file = os.path.join("logs", f"{instrument}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
@@ -46,12 +46,14 @@ class TradingBacktester():
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
 
+        self.days = 100
+        self.refresh = False
     
-    def get_history_with_all_prices(self, days = 100):
+    def get_history_with_all_prices(self):
         
         now = datetime.utcnow()
         now = now - timedelta(microseconds = now.microsecond)
-        past = now - timedelta(days = days)
+        past = now - timedelta(days = self.days)
         instrument = self.strategy.instrument
 
         df: pd.DataFrame = self.api.get_history_with_all_prices_by_period(instrument, past, now)
@@ -108,10 +110,10 @@ class TradingBacktester():
             self.strategy.momentum_prev = row ['momentum_prev']
 
 
-    def get_data(self, refresh = False):
+    def get_data(self):
 
-        if refresh:                
-            df = self.get_history_with_all_prices(150)
+        if self.refresh:                
+            df = self.get_history_with_all_prices()
             df.to_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
             # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         else:
@@ -124,11 +126,11 @@ class TradingBacktester():
         df = df.between_time(self.start, self.end)
         return df
 
-    def start_trading_backtest(self, refresh = False):
+    def start_trading_backtest(self):
 
         try:
 
-            df:pd.DataFrame = self.get_data(refresh)
+            df:pd.DataFrame = self.get_data()
 
             self.have_units = 0
 
@@ -159,7 +161,7 @@ if __name__ == "__main__":
     parser.add_argument('pair', type=str, help='pair')
 
     parser.add_argument('--refresh', choices=['True', 'False', 'true', 'false'], default="False", type = str, help='Refresh data')
-    parser.add_argument('--strategy', choices=['Old', 'New', 'old', 'new'], default='old', help='Which strategy to use')
+    parser.add_argument('--days', type = int, default=0, help='Number of days, numeric only')
     args = parser.parse_args()
 
     
@@ -173,10 +175,11 @@ if __name__ == "__main__":
     trader = TradingBacktester(
         conf_file=config_file,
         pairs_file="../trading/pairs.ini",
-        instrument=args.pair,
-        new=(args.strategy  in ['New', 'new'])
-    )
-    trader.start_trading_backtest(refresh=(args.refresh in ['True', 'true']))
+        instrument=args.pair)
+
+    trader.days = 1
+    trader.refresh = (args.refresh in ['True', 'true'])
+    trader.start_trading_backtest()
 
 
 # python trading_bot_backtest.py EUR_USD --refresh True

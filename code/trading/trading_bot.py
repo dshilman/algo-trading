@@ -128,7 +128,7 @@ class Trader():
 
             now = datetime.utcnow()
             
-            if self.from_dt <= now <= self.to_dt or self.units != 0:
+            if self.from_dt <= now <= self.to_dt:
                 time.sleep(refresh)
             else:
                 logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
