@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if pgrep -f '/bin/sh ./trader_oanda_EUR_HKD.sh' >/dev/null
+if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_HKD.sh' >/dev/null
 then
     echo $(date) " EUR_HKD Trading bot is already running." 
     echo $(date) " EUR_HKD Trading bot is already running." >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
@@ -10,7 +10,7 @@ else
     ~/algo-trading/trader_oanda_EUR_HKD.sh &
 fi
 
-if pgrep -f '/bin/sh ./trader_oanda_USD_HKD.sh' >/dev/null
+if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_USD_HKD.sh' >/dev/null
 then
     echo $(date) " USD_HKD Trading bot is already running." 
     echo $(date) " USD_HKD Trading bot is already running." >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
@@ -20,7 +20,7 @@ else
     ~/algo-trading/trader_oanda_USD_HKD.sh &
 fi
 
-if pgrep -f '/bin/sh ./trader_oanda_EUR_USD.sh' >/dev/null
+if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD.sh' >/dev/null
 then
     echo $(date) " EUR_USD Trading bot is already running." 
     echo $(date) " EUR_USD Trading bot is already running." >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
