@@ -43,30 +43,6 @@ class EUR_USD_Strategy (TradingStrategy):
             
         return None
 
-    def check_if_need_close_trade(self, have_units):
-
-        spread = round(self.ask - self.bid, 4)
-
-        if have_units > 0: # long position
-                # target price to close long position should be higher than the transaction price, whichever is lowest
-                # target = min(round(transaction_price + 3 * abs(self.ask - self.bid), 6), self.sma + (self.ask - self.bid))
-                # target = round(transaction_price + 3 * abs(self.ask - self.bid), 6)
-                target = self.sma + 0 * spread
-                if self.bid >= target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
-                    logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {target}, target: {target}")
-                    return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
-
-        if have_units < 0: # short position
-                # target price to close short position should be lower than the transaction price, whichever is highest
-            # target = max(round(transaction_price - 3 * abs(self.ask - self.bid), 6), self.sma - (self.ask - self.bid))
-            target = self.sma - 0 * spread
-            # target = round(transaction_price - 3 * abs(self.ask - self.bid), 6)
-            if self.ask <= target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
-                logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {target}, target: {target}")
-                return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
-
-        return None
-
 
     def has_high_rsi(self):
 

@@ -160,7 +160,7 @@ class Trader():
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    df = df.resample("30s").mean()
+                    df = df.resample("30s").last()
                     logger.debug(f"Resampled Data: {df}")
 
                     # df = df.resample("1Min").last()

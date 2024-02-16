@@ -1,13 +1,31 @@
 #!/bin/bash
 
-# Check if trading bot scripts are running
-SERVICE="trading"
-if pgrep -x "$SERVICE" >/dev/null
+if pgrep -f '/bin/sh ./trader_oanda_EUR_HKD.sh' >/dev/null
 then
-    echo $(date) " Trading bot is not running. Starting it now..." 
-    echo $(date) " Trading bot is not running. Starting it now..."  >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
-    ./trader_oanda_AUD_SGD.sh & ./trader_oanda_EUR_HKD.sh & ./trader_oanda_EUR_USD.sh & ./trader_oanda_USD_CAD.sh & ./trader_oanda_USD_CHF.sh & ./trader_oanda_USD_HKD.sh &
+    echo $(date) " EUR_HKD Trading bot is already running." 
+    echo $(date) " EUR_HKD Trading bot is already running." >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
 else
-    echo $(date) " Trading bot is already running." 
-    echo $(date) " Trading bot is already running." >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
+    echo $(date) " EUR_HKD Trading bot is not running. Starting it now..." 
+    echo $(date) " EUR_HKD Trading bot is not running. Starting it now..."  >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
+    ~/algo-trading/trader_oanda_EUR_HKD.sh &
+fi
+
+if pgrep -f '/bin/sh ./trader_oanda_USD_HKD.sh' >/dev/null
+then
+    echo $(date) " USD_HKD Trading bot is already running." 
+    echo $(date) " USD_HKD Trading bot is already running." >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
+else
+    echo $(date) " USD_HKD Trading bot is not running. Starting it now..." 
+    echo $(date) " USD_HKD Trading bot is not running. Starting it now..."  >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
+    ~/algo-trading/trader_oanda_USD_HKD.sh &
+fi
+
+if pgrep -f '/bin/sh ./trader_oanda_EUR_USD.sh' >/dev/null
+then
+    echo $(date) " EUR_USD Trading bot is already running." 
+    echo $(date) " EUR_USD Trading bot is already running." >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
+else
+    echo $(date) " EUR_USD Trading bot is not running. Starting it now..." 
+    echo $(date) " EUR_USD Trading bot is not running. Starting it now..."  >>/home/ec2-user/algo-trading/logs/trading/time_check.txt
+    ~/algo-trading/trader_oanda_EUR_USD.sh &
 fi

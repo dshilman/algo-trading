@@ -247,7 +247,7 @@ class TradingStrategy():
                 # target = round(transaction_price + 3 * abs(self.ask - self.bid), 6)
                 target = self.sma + 0 * spread
                 if self.bid >= target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
-                    logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {target}, target: {target}")
+                    logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {target}")
                     return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
         if have_units < 0: # short position
@@ -256,7 +256,7 @@ class TradingStrategy():
             target = self.sma - 0 * spread
             # target = round(transaction_price - 3 * abs(self.ask - self.bid), 6)
             if self.ask <= target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
-                logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {target}, target: {target}")
+                logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {target}")
                 return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
 
         return None

@@ -41,8 +41,15 @@ class TradingBacktester():
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
 
-        module = __import__(f"trading.strategies.{instrument.lower()}_strategy", fromlist=[f"{instrument}_Strategy"])
-        class_ = getattr(module, f"{instrument}_Strategy")
+        class_ = None
+
+        try:
+            module = __import__(f"trading.strategies.{instrument.lower()}_strategy", fromlist=[f"{instrument}_Strategy"])
+            class_ = getattr(module, f"{instrument}_Strategy")
+        except:
+            logger.error(f"Strategy not found for {instrument}")
+            class_ = TradingStrategy
+
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
 
@@ -177,7 +184,7 @@ if __name__ == "__main__":
         pairs_file="../trading/pairs.ini",
         instrument=args.pair)
 
-    trader.days = 1
+    trader.days = args.days
     trader.refresh = (args.refresh in ['True', 'true'])
     trader.start_trading_backtest()
 
