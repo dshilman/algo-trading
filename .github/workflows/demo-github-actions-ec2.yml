@@ -21,7 +21,10 @@ jobs:
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           REMOTE_HOST: ${{ vars.DEMO_REMOTE_HOST }}
           TARGET: ${{ vars.TARGET }}
-      - run: |
-         echo $OANDA_CONFIG >> config/oanda.cfg
-        env:
-          OANDA_CONFIG : ${{secrets.OANDA_CONFIG_DEMO}}
+      
+      - name: Create OANDA Config
+        run: |
+          cat << EOF > ./config/oanda.cfg
+          ${{ secrets.OANDA_CONFIG_DEMO }}
+          EOF
+      
