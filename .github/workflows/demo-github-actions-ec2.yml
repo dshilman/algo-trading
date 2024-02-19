@@ -21,4 +21,4 @@ jobs:
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           REMOTE_HOST: ${{ vars.DEMO_REMOTE_HOST }}
           TARGET: ${{ vars.TARGET }}
-
+      - run: printf ${{secrets.OANDA_CONFIG_DEMO}} >> config/oanda.cfg
