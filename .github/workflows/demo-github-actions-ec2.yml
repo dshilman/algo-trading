@@ -24,7 +24,7 @@ jobs:
       
       - name: Create OANDA Config
         run: |
-          cat << EOF > ~/${{ vars.TARGET }}/config/oanda.cfg
+          cat << EOF > /config/oanda.cfg
           ${{ secrets.OANDA_CONFIG_DEMO }}
           EOF
       
