@@ -258,7 +258,7 @@ if __name__ == "__main__":
     parser.add_argument('pair', type=str, help='pair')
     args = parser.parse_args()
 
-    config_file = os.path.abspath(os.environ.get("oanda_config", "../../config/oanda.cfg"))
+    config_file = os.path.abspath("oanda_config", "../../config/oanda.cfg")
     print (f"oanda config file: {config_file}")
     if os.path.exists(config_file) == False:
         print(f"Config file does not exist: {config_file}")

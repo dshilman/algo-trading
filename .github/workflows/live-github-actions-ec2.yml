@@ -14,6 +14,12 @@ jobs:
       - name: Checkout the files
         uses: actions/checkout@v2
 
+      - name: Create OANDA Config
+        run: |          
+          cat << EOF > config/oanda.cfg
+          ${{ secrets.OANDA_CONFIG_LIVE }}
+          EOF
+
       - name: Deploy to Server 1
         uses: easingthemes/ssh-deploy@main
         env:
