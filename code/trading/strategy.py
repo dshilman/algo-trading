@@ -177,7 +177,7 @@ class TradingStrategy():
 
             logger.debug(f"Have {have_units} positions, checking if need to close")
             if len (self.trading_session.trades) > 0:
-                trade = self.check_if_need_close_trade(have_units)
+                trade = self.check_if_need_close_trade_from_hist()
             else:
                 trade = self.check_if_need_close_trade(have_units)
     
@@ -208,7 +208,7 @@ class TradingStrategy():
             signal = 0
          
             if self.ask <= self.bb_lower and self.has_low_rsi() and self.price > self.price_min: # if price is below lower BB, BUY
-            # if self.ask < self.bb_lower and self.has_low_rsi() and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0: # if price is below lower BB, BUY
+            # if self.ask <= self.bb_lower and self.has_low_rsi() and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0: # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
                 return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.ask, spread, "Go Long - Buy", True, False)
@@ -246,14 +246,18 @@ class TradingStrategy():
 
             if traded_units > 0: # long position
                 target = self.sma + 0 * (self.ask - self.bid)
+                # if target <= transaction_price:
+                #     target = transaction_price + 2 * (self.ask - self.bid)
                 if self.bid >= target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
-                    logger.info(f"Close long position - Sell {-traded_units} units at bid price: {self.bid}, target: {target}, target: {target}")
+                    logger.info(f"Close long position - Sell {-traded_units} units at bid price: {self.bid}, target: {target}")
                     return Trade_Action(self.instrument, -traded_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
             if traded_units < 0: # short position
                 target = self.sma - 0 * (self.ask - self.bid)
+                # if target >= transaction_price:
+                #     target = transaction_price - 2 * (self.ask - self.bid)
                 if self.ask <= target and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0:
-                    logger.info(f"Close short position  - Buy {-traded_units} units at ask price: {self.ask}, target: {target}, target: {target}")
+                    logger.info(f"Close short position  - Buy {-traded_units} units at ask price: {self.ask}, target: {target}")
                     return Trade_Action(self.instrument, -traded_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
         
         return None
