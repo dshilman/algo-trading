@@ -16,6 +16,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.api import OANDA_API
+from trading.errors import PauseTradingException
 from trading.strategy import TradingStrategy
 
 logger = logging.getLogger()
@@ -163,13 +164,11 @@ class Trader():
                     df = df.resample("30s").last()
                     logger.debug(f"Resampled Data: {df}")
 
-                    # df = df.resample("1Min").last()
-
-                self.units, sl_trade = self.strategy.execute_strategy(self.units, df)
-
-                if sl_trade:
-                    logger.error("Pausing Trading for 2 hours due to a Stop Loss Trade")
-                    time.sleep(2 * 60 * 60)
+                try:
+                    self.units = self.strategy.execute_strategy(self.units, df)
+                except PauseTradingException as e:
+                    logger.error(f"Pausing Trading for {e.hours} hour(s)")
+                    time.sleep(e.hours * 60 * 60)   
                 else:
                     time.sleep(refresh)
 

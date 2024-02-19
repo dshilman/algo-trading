@@ -2,6 +2,7 @@ import configparser
 import json
 import logging
 import sys
+from datetime import datetime, time
 from pathlib import Path
 
 import pandas as pd
@@ -15,9 +16,11 @@ from trading.api import OANDA_API
 from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
 from trading.dom.trading_session import Trading_Session
+from trading.errors import PauseTradingException
 from trading.MyTT import RSI
 
 logger = logging.getLogger()
+
 class TradingStrategy():
     def __init__(self, instrument, pair_file, api: OANDA_API = None, unit_test = False):
         super().__init__()
@@ -46,18 +49,20 @@ class TradingStrategy():
         self.price_min = None
 
         self.rsi = None
+        self.rsi_prev = None
+
         self.momentum = None
         self.momentum_long = None
 
         self.momentum_prev = None
         self.momentum_min = None
 
-
     def execute_strategy(self, have_units, resampled_tick_data: pd.DataFrame = None):
 
         self.calc_indicators(resampled_tick_data)
 
-        trade_action = self.determine_trade_action(have_units)
+        trade_action = self.determine_trade_action(have_units)        
+
         if trade_action is not None:
             # logger.info(f"trade_action: {trade_action}")
             
@@ -66,7 +71,10 @@ class TradingStrategy():
             if order is not None:
                 have_units = self.submit_order(order, have_units)
 
-        return have_units, False if trade_action is None else trade_action.sl_trade
+        if trade_action is not None and trade_action.sl_trade:
+            raise PauseTradingException(2)
+
+        return have_units
 
     def calc_indicators(self, resampled_tick_data: pd.DataFrame = None):
         
@@ -91,9 +99,10 @@ class TradingStrategy():
         # df["ema"] = df[self.instrument][-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
  
         self.rsi = df.RSI.iloc[-1]
+        self.rsi_prev = df.RSI.iloc[-2]
+
         self.rsi_max = df ['RSI'][-8:].max()
         self.rsi_min = df ['RSI'][-8:].min()
-        # self.rsi_hist = df ['RSI'][-8:].values
        
         df ["momentum"] = df[self.instrument][-self.sma_value:].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
         self.momentum = df.momentum.iloc[-1]
@@ -148,10 +157,20 @@ class TradingStrategy():
         logger.info(json.dumps(order, indent = 2))
         logger.info("\n" + 100 * "-" + "\n")
 
-    def determine_trade_action(self, have_units) -> Trade_Action:
+    def determine_trade_action(self, have_units, date_time = None) -> Trade_Action:
+
+        if date_time is None:
+            date_time = datetime.utcnow()
+
+        if self.pause_trading(date_time):
+            return None
+
+        if self.ask >= self.bb_lower and self.rsi <= 15 or self.bid <= self.bb_upper and self.rsi >= 85:
+            raise PauseTradingException(1)
+
 
         if have_units != 0:  # if already have positions
-            logger.debug(f"Have {have_units} positions, checking for stoll loss")
+            logger.debug(f"Have {have_units} positions, checking for stop loss")
             trade_action = self.check_for_sl(have_units)
             if trade_action is not None:
                 return trade_action
@@ -187,7 +206,7 @@ class TradingStrategy():
         if have_units == 0:
             
             signal = 0
-
+         
             if self.ask <= self.bb_lower and self.has_low_rsi() and self.price > self.price_min: # if price is below lower BB, BUY
             # if self.ask < self.bb_lower and self.has_low_rsi() and round(self.momentum, 6) * round(self.momentum_prev, 6) <= 0: # if price is below lower BB, BUY
                 signal = 1
@@ -201,6 +220,9 @@ class TradingStrategy():
                 return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.bid, spread, "Go Short - Sell", True, False)
             
         return None
+
+    def drastic_change_in_rsi(self):
+        return abs((self.rsi - self.rsi_prev)/self.rsi_prev) > .6
 
     def has_high_rsi(self):
 
@@ -323,3 +345,7 @@ class TradingStrategy():
         logger.debug(order)
 
         return order    
+
+    def pause_trading(self, date_time) -> bool:
+        
+        return False

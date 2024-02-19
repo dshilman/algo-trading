@@ -32,6 +32,6 @@ if __name__ == "__main__":
     )
 
       # trader.start_trading()
-    trader.start_trading(stop_after=500)
+    trader.start_trading(stop_after=5)
 
     # python trading_bot_unit.py EUR_USD

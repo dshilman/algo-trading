@@ -63,3 +63,15 @@ class EUR_USD_Strategy (TradingStrategy):
         #         return True
 
         # return False
+
+    def pause_trading(self, date_time) -> bool:
+
+        logger.debug(f"Date time: {date_time}")
+                
+        if date_time.weekday() == 3 and date_time.hour >= 13 and date_time.hour <= 18:
+            return True
+
+        if date_time.weekday() == 2 and date_time.day < 7 and date_time.hour >= 13 and date_time.hour <= 18:
+            return True
+
+        return False

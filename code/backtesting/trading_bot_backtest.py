@@ -17,9 +17,10 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
+from trading.api import OANDA_API
+from trading.errors import PauseTradingException
 from trading.MyTT import RSI
 from trading.strategy import TradingStrategy
-from trading.api import OANDA_API
 
 logger = logging.getLogger()
 
@@ -83,6 +84,7 @@ class TradingBacktester():
         df["Upper"] = df["SMA"] + std
         
         df["RSI"] = df[instrument].rolling(29).apply(lambda x: RSI(x.values, N=28))
+        df["rsi_prev"] = df["RSI"].shift(1)
         df["rsi_max"] = df ['RSI'].rolling(8).max()
         df["rsi_min"] = df ['RSI'].rolling(8).min()
 
@@ -103,6 +105,7 @@ class TradingBacktester():
             self.strategy.bb_upper =  row ['Upper']
                    
             self.strategy.rsi = row ['RSI']
+            self.strategy.rsi_prev = row ['rsi_prev']
             self.strategy.rsi_max = row ['rsi_max']
             self.strategy.rsi_min = row ['rsi_min']
             
@@ -141,18 +144,26 @@ class TradingBacktester():
 
             self.have_units = 0
 
-            stop_loss_date = None
+            pause_trading = None
 
             for index, row in df.iterrows():
+
                 self.set_strategy_parameters(row)
                 
-                if stop_loss_date == None or index > stop_loss_date:
-                    trade_action = self.strategy.determine_trade_action(self.have_units)
-                    
+                if pause_trading == None or index > pause_trading:
+                    trade_action = None
+                    try:
+                        trade_action = self.strategy.determine_trade_action(self.have_units, index)
+                    except PauseTradingException as e:
+                        logger.info(f"Pausing trading for {e.hours} hour(s) at {index}")
+                        pause_trading = index + timedelta(hours = e.hours)
+                        continue
+                                        
                     if trade_action != None:
                         self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index)
                         if trade_action.sl_trade:
-                            stop_loss_date = index + timedelta(hours = 2)                        
+                            logger.info(f"Pausing trading for 2 hours at {index}")
+                            pause_trading = index + timedelta(hours = 2)                        
             
             self.strategy.trading_session.print_trades()
 
