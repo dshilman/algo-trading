@@ -82,8 +82,8 @@ class Trader():
         treads = []
         treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
         treads.append(threading.Thread(target=self.check_trading_time, args=(60,)))
-        treads.append(threading.Thread(target=self.refresh_strategy, args=(30,)))
-        treads.append(threading.Thread(target=self.execute_strategy, args=(30,)))
+        treads.append(threading.Thread(target=self.refresh_strategy, args=(15,)))
+        # treads.append(threading.Thread(target=self.execute_strategy, args=(15,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
         for t in treads:
@@ -145,6 +145,8 @@ class Trader():
 
         i: int = 0
 
+        pause_trading = None
+
         while not self.terminate:
 
             logger.debug("Refreshing Strategy")
@@ -162,11 +164,20 @@ class Trader():
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    df = df.resample("30s").mean()
+                    df = df.resample("30s").last()
                     logger.debug(f"Resampled Data: {df}")
 
                 self.strategy.calc_indicators(df)
             
+                now = datetime.utcnow()
+                if pause_trading == None or now > pause_trading:
+                    try:
+                        self.units = self.strategy.execute_strategy(self.units)
+                    except PauseTradingException as e:
+                        logger.error(f"Pausing Trading for {e.hours} hour(s)")
+                        pause_trading = now + timedelta(hours = e.hours)
+                
+
                 time.sleep(refresh)
 
             except Exception as e:
@@ -178,32 +189,32 @@ class Trader():
                     break
                 time.sleep(5)
 
-    def execute_strategy(self, refresh = 30):
+    # def execute_strategy(self, refresh = 30):
 
-        i: int = 0
+    #     i: int = 0
 
-        while not self.terminate:
+    #     while not self.terminate:
 
-            logger.debug("Execute Strategy")
+    #         logger.debug("Execute Strategy")
 
-            try:
+    #         try:
 
-                try:
-                    self.units = self.strategy.execute_strategy(self.units)
-                except PauseTradingException as e:
-                    logger.error(f"Pausing Trading for {e.hours} hour(s)")
-                    time.sleep(e.hours * 60 * 60)
-                else:
-                    time.sleep(refresh)
+    #             try:
+    #                 self.units = self.strategy.execute_strategy(self.units)
+    #             except PauseTradingException as e:
+    #                 logger.error(f"Pausing Trading for {e.hours} hour(s)")
+    #                 time.sleep(e.hours * 60 * 60)
+    #             else:
+    #                 time.sleep(refresh)
 
-            except Exception as e:
-                logger.error("Exception occurred in execute_strategy")
-                logger.exception(e)
-                i = i + 1
-                if i > 20:
-                    self.terminate = True
-                    break
-                time.sleep(30)
+    #         except Exception as e:
+    #             logger.error("Exception occurred in execute_strategy")
+    #             logger.exception(e)
+    #             i = i + 1
+    #             if i > 20:
+    #                 self.terminate = True
+    #                 break
+    #             time.sleep(30)
 
     def check_positions(self, refresh = 300): 
 
