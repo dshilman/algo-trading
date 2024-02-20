@@ -83,6 +83,7 @@ class Trader():
         treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
         treads.append(threading.Thread(target=self.check_trading_time, args=(60,)))
         treads.append(threading.Thread(target=self.refresh_strategy, args=(30,)))
+        treads.append(threading.Thread(target=self.execute_strategy, args=(30,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
         for t in treads:
@@ -140,7 +141,7 @@ class Trader():
 
 
 
-    def refresh_strategy(self, refresh = 60):
+    def refresh_strategy(self, refresh = 30):
 
         i: int = 0
 
@@ -164,13 +165,9 @@ class Trader():
                     df = df.resample("30s").mean()
                     logger.debug(f"Resampled Data: {df}")
 
-                try:
-                    self.units = self.strategy.execute_strategy(self.units, df)
-                except PauseTradingException as e:
-                    logger.error(f"Pausing Trading for {e.hours} hour(s)")
-                    time.sleep(e.hours * 60 * 60)   
-                else:
-                    time.sleep(refresh)
+                self.strategy.calc_indicators(df)
+            
+                time.sleep(refresh)
 
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")
@@ -181,7 +178,32 @@ class Trader():
                     break
                 time.sleep(5)
 
+    def execute_strategy(self, refresh = 30):
 
+        i: int = 0
+
+        while not self.terminate:
+
+            logger.debug("Execute Strategy")
+
+            try:
+
+                try:
+                    self.units = self.strategy.execute_strategy(self.units)
+                except PauseTradingException as e:
+                    logger.error(f"Pausing Trading for {e.hours} hour(s)")
+                    time.sleep(e.hours * 60 * 60)
+                else:
+                    time.sleep(refresh)
+
+            except Exception as e:
+                logger.error("Exception occurred in execute_strategy")
+                logger.exception(e)
+                i = i + 1
+                if i > 20:
+                    self.terminate = True
+                    break
+                time.sleep(30)
 
     def check_positions(self, refresh = 300): 
 

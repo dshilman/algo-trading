@@ -57,9 +57,8 @@ class TradingStrategy():
         self.momentum_prev = None
         self.momentum_min = None
 
-    def execute_strategy(self, have_units, resampled_tick_data: pd.DataFrame = None):
 
-        self.calc_indicators(resampled_tick_data)
+    def execute_strategy(self, have_units):
 
         trade_action = self.determine_trade_action(have_units)        
 
