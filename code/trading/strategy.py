@@ -43,6 +43,7 @@ class TradingStrategy():
         self.bb_upper =  None
         self.bb_lower =  None
         self.sma = None
+        self.sma_slope = None
 
         self.price = None
         self.price_max = None
@@ -50,7 +51,6 @@ class TradingStrategy():
 
         self.std = None
         self.std_sma = None
-        self.std_sma_slope = None
 
         self.rsi = None
         self.rsi_prev = None
@@ -105,11 +105,11 @@ class TradingStrategy():
         # df["rsi_ema_slope"] = df["RSI_EMA"][-self.sma_value:].rolling(10).apply(lambda x: MyTT.SLOPE(x.dropna().values, 10))
         # df["ema"] = df[self.instrument][-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
  
-        self.rsi = df.RSI.iloc[-1]
-        self.rsi_prev = df.RSI.iloc[-2]
+        self.rsi = round(df.RSI.iloc[-1], 4)
+        self.rsi_prev = round(df.RSI.iloc[-2], 4)
 
-        self.rsi_max = df ['RSI'][-8:].max()
-        self.rsi_min = df ['RSI'][-8:].min()
+        self.rsi_max = round(df ['RSI'][-8:].max(), 4)
+        self.rsi_min = round(df ['RSI'][-8:].min(), 4)
        
         df ["momentum"] = df[self.instrument][-self.sma_value:].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
         self.momentum = round(df.momentum.iloc[-1], 6)
@@ -126,10 +126,11 @@ class TradingStrategy():
         self.bb_lower = round(df.Lower.iloc[-1], 6)
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
         self.sma = round(df.SMA.iloc[-1], 6)
+        self.sma_slope = round(abs(SLOPE(df["SMA"].dropna().values)), 6)
+
 
         self.std = round(df["std"].iloc[-1], 6)
         self.std_sma = round(df["std_sma"].iloc[-1], 6)
-        self.std_sma_slope = round(abs(SLOPE(df["std_sma_slope"][-60:]), 6))
 
         logger.debug("\n" + df[-10:].to_string(header=True))
   
@@ -325,9 +326,9 @@ class TradingStrategy():
 
     def print_indicators(self):
 
-        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, self.std, self.std_sma, self.momentum, self.momentum_prev]]
-        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "STD", "STD SMA", "MOMENTUM", "MOMENTUM PREV"]
-        logger.info("\n" + tabulate(indicators, headers = columns))
+        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, '{0:f}'.format(self.std), '{0:f}'.format(self.std_sma), '{0:f}'.format(self.sma_slope), '{0:f}'.format(self.momentum), '{0:f}'.format(self.momentum_prev)]]
+        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "STD", "STD SMA", "SMA SLOPE", "MOMENTUM", "MOMENTUM PREV"]
+        logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
 
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:

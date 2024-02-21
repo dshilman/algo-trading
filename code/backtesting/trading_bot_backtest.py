@@ -85,7 +85,7 @@ class TradingBacktester():
         
         df["std"] = df[instrument].rolling(60).std()
         df["std_sma"] = df["std"].rolling(60).mean()
-        df["std_sma_slope"] = df["std_sma"].rolling(60).apply(lambda x: SLOPE(x.values))
+        df["std_sma_slope"] = df["std_sma"].rolling(SMA).apply(lambda x: SLOPE(x.values))
         
 
         df["RSI"] = df[instrument].rolling(29).apply(lambda x: RSI(x.values, N=28))
@@ -109,10 +109,10 @@ class TradingBacktester():
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
                    
-            self.strategy.rsi = row ['RSI']
-            self.strategy.rsi_prev = row ['rsi_prev']
-            self.strategy.rsi_max = row ['rsi_max']
-            self.strategy.rsi_min = row ['rsi_min']
+            self.strategy.rsi = round(row ['RSI'], 4)
+            self.strategy.rsi_prev = round(row ['rsi_prev'], 4)
+            self.strategy.rsi_max = round(row ['rsi_max'], 4)
+            self.strategy.rsi_min = round(row ['rsi_min'], 4)
             
             self.strategy.price = row [self.strategy.instrument]
             self.strategy.price_max = row ['price_max']
