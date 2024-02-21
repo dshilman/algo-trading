@@ -33,10 +33,12 @@ class OANDA_API():
             return self.get_history_with_all_prices(instrument, days = delta.days)
         else:
             df = pd.DataFrame()
+
             for i in range(0, delta.days, self.increment_by):
+
                 start_d = start + timedelta(days = i)
                 end_d = start_d + timedelta(days = self.increment_by)
-
+        
                 logger.info(f"Getting data from {start_d} to {end_d}")
                 ask_prices: pd.DataFrame = self.api.get_history(instrument = instrument, price = "A", start = start_d, end = end_d, granularity = "S30", localize = True).c.dropna().to_frame()
                 ask_prices.rename(columns = {"c":"ask"}, inplace = True)
@@ -59,7 +61,10 @@ class OANDA_API():
     def get_history_with_all_prices(self, instrument, days = 1):
         
         if days > self.increment_by:
-            return self.get_history_with_all_prices_by_period(instrument, start = datetime.utcnow() - timedelta(days = days), end = datetime.utcnow())
+            now = datetime.utcnow()
+            now = now - timedelta(microseconds = now.microsecond)
+            past = now - timedelta(days = days)
+            return self.get_history_with_all_prices_by_period(instrument, start = past, end = now)
         else:
             ask_prices: pd.DataFrame = self.get_history(instrument = instrument, price = "A", days = days)
             ask_prices.rename(columns = {"c":"ask"}, inplace = True)

@@ -176,7 +176,8 @@ class Trader():
                     except PauseTradingException as e:
                         logger.error(f"Pausing Trading for {e.hours} hour(s)")
                         pause_trading = now + timedelta(hours = e.hours)
-                
+                else:
+                    logger.info(f"Pausing Trading until: {pause_trading}")
 
                 time.sleep(refresh)
 
