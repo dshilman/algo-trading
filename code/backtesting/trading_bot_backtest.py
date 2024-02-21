@@ -19,7 +19,7 @@ sys.path.append(str(root))
 
 from trading.api import OANDA_API
 from trading.errors import PauseTradingException
-from trading.MyTT import RSI
+from trading.MyTT import RSI, SLOPE
 from trading.strategy import TradingStrategy
 
 logger = logging.getLogger()
@@ -85,6 +85,8 @@ class TradingBacktester():
         
         df["std"] = df[instrument].rolling(60).std()
         df["std_sma"] = df["std"].rolling(60).mean()
+        df["std_sma_slope"] = df["std_sma"].rolling(60).apply(lambda x: SLOPE(x.values))
+        
 
         df["RSI"] = df[instrument].rolling(29).apply(lambda x: RSI(x.values, N=28))
         df["rsi_prev"] = df["RSI"].shift(1)
@@ -124,6 +126,7 @@ class TradingBacktester():
 
             self.strategy.std = row ['std']
             self.strategy.std_sma = row ['std_sma']
+            self.strategy.std_sma_slope = row ['std_sma_slope']
 
 
 

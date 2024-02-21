@@ -71,13 +71,10 @@ def AVEDEV(S, N):
     return pd.Series(S).rolling(N).apply(lambda x: (np.abs(x - x.mean())).mean()).values
 
 
-def SLOPE(S, N, RS=False):
-    M = pd.Series(S[-N:])
+def SLOPE(S):
+    M = pd.Series(S)
     poly = np.polyfit(M.index, M.values, deg=1)
-    Y = np.polyval(poly, M.index)
-    if RS:
-        return Y[1] - Y[0], Y
-    return Y[1] - Y[0]
+    return poly[0]
 
 
 # ------------------   1 level：(only use 0 level function to implemented） ----------------------------------

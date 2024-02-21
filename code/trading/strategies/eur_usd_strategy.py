@@ -30,19 +30,22 @@ class EUR_USD_Strategy (TradingStrategy):
             signal = 0
 
             # if self.ask <= self.bb_lower and self.has_low_rsi() and self.price > self.price_min: # if price is below lower BB, BUY
-            if self.ask < self.bb_lower and self.has_low_rsi() and self.momentum * self.momentum_prev <= 0 and self.std <= self.std_sma: # if price is below lower BB, BUY
+            if self.ask < self.bb_lower and self.has_low_rsi() and self.reverse_momentum(): # if price is below lower BB, BUY
                 signal = 1
                 logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
                 return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.ask, spread, "Go Long - Buy", True, False)
 
             # elif self.bid >= self.bb_upper and self.has_high_rsi() and self.price < self.price_max:  # if price is above upper BB, SELL
-            elif self.bid >= self.bb_upper and self.has_high_rsi() and self.momentum * self.momentum_prev <= 0 and self.std <= self.std_sma:
+            elif self.bid >= self.bb_upper and self.has_high_rsi() and self.reverse_momentum():
                 signal = -1
                 logger.info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
                 return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.bid, spread, "Go Short - Sell", True, False)
             
         return None
 
+
+    def reverse_momentum(self):
+        return self.momentum * self.momentum_prev <= 0
 
     def has_high_rsi(self):
 
@@ -64,14 +67,14 @@ class EUR_USD_Strategy (TradingStrategy):
 
         # return False
 
-    def pause_trading(self, date_time) -> bool:
+    # def pause_trading(self, date_time) -> bool:
 
-        logger.debug(f"Date time: {date_time}")
+    #     logger.debug(f"Date time: {date_time}")
                 
-        if date_time.weekday() == 3 and date_time.hour >= 13 and date_time.hour <= 18:
-            return True
+    #     if date_time.weekday() == 3 and date_time.hour >= 13 and date_time.hour <= 18:
+    #         return True
 
-        if date_time.weekday() == 2 and date_time.day < 8 and date_time.hour >= 13 and date_time.hour <= 18:
-            return True
+    #     if date_time.weekday() == 2 and date_time.day < 8 and date_time.hour >= 13 and date_time.hour <= 18:
+    #         return True
 
-        return False
+    #     return False
