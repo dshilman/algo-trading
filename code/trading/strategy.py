@@ -33,7 +33,7 @@ class TradingStrategy():
         config = configparser.ConfigParser()  
         config.read(pair_file)
         self.sma_value = int(config.get(instrument, 'SMA'))
-        self.sma_slope_threshold = float(config.get(self.instrument, 'SMA_SLOPE'))
+        self.price_slope_threshold = float(config.get(self.instrument, 'price_slope'))
         self.dev = float(config.get(instrument, 'dev'))
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
@@ -44,7 +44,7 @@ class TradingStrategy():
         self.bb_upper =  None
         self.bb_lower =  None
         self.sma = None
-        self.sma_slope = None
+        self.price_slope = None
 
         self.price = None
         self.price_max = None
@@ -93,46 +93,37 @@ class TradingStrategy():
                 
         # ******************** define your strategy here ************************
         df["SMA"] = df[self.instrument].rolling(self.sma_value).mean()
-        self.sma_slope = SLOPE(df["SMA"].dropna().values)
-
         std = df[self.instrument].rolling(self.sma_value).std() * self.dev
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         df["RSI"] = df[self.instrument][-self.sma_value:].rolling(29).apply(lambda x: RSI(x.dropna().values, N=28))
+        df ["momentum"] = df[self.instrument][-self.sma_value:].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
 
-        df["std"] = df[self.instrument].rolling(60).std()
-        df["std_sma"] = df["std"].rolling(60).mean()
+        # df["std"] = df[self.instrument].rolling(60).std()
+        # df["std_sma"] = df["std"].rolling(60).mean()
 
         # df["RSI_EMA"] = df.RSI[-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
         # df["rsi_ema_slope"] = df["RSI_EMA"][-self.sma_value:].rolling(10).apply(lambda x: MyTT.SLOPE(x.dropna().values, 10))
         # df["ema"] = df[self.instrument][-self.sma_value:].ewm(span=10, adjust=False, ignore_na = True).mean()
- 
-        self.rsi = round(df.RSI.iloc[-1], 4)
-        self.rsi_prev = round(df.RSI.iloc[-2], 4)
-
-        self.rsi_max = round(df ['RSI'][-8:].max(), 4)
-        self.rsi_min = round(df ['RSI'][-8:].min(), 4)
-       
-        df ["momentum"] = df[self.instrument][-self.sma_value:].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
-        self.momentum = round(df.momentum.iloc[-1], 6)
-        self.momentum_prev = round(df.momentum.iloc[-2], 6)
-        # self.momentum_min = df.momentum[-8:].min()
-
-        self.price = round(df[self.instrument].iloc[-1], 6)
-        self.price_max = round(df [self.instrument][-8:].max(), 6)
-        self.price_min = round(df [self.instrument][-8:].min(), 6)
 
         self.ask = round(df.ask.iloc[-1], 6)
         self.bid = round(df.bid.iloc[-1], 6)
-
+        self.sma = round(df.SMA.iloc[-1], 6)
         self.bb_lower = round(df.Lower.iloc[-1], 6)
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
-        self.sma = round(df.SMA.iloc[-1], 6)
-        self.sma_slope = round(abs(SLOPE(df["SMA"].dropna().values)), 6)
+        self.rsi = round(df.RSI.iloc[-1], 4)
+        self.rsi_prev = round(df.RSI.iloc[-2], 4)
+        self.rsi_max = round(df ['RSI'][-8:].max(), 4)
+        self.rsi_min = round(df ['RSI'][-8:].min(), 4)
+        self.momentum = round(df.momentum.iloc[-1], 6)
+        self.momentum_prev = round(df.momentum.iloc[-2], 6)
+        self.price = round(df[self.instrument].iloc[-1], 6)
+        self.price_max = round(df [self.instrument][-8:].max(), 6)
+        self.price_min = round(df [self.instrument][-8:].min(), 6)
+        self.price_slope = SLOPE(df[self.instrument].dropna().values)
 
-
-        self.std = round(df["std"].iloc[-1], 6)
-        self.std_sma = round(df["std_sma"].iloc[-1], 6)
+        # self.std = round(df["std"].iloc[-1], 6)
+        # self.std_sma = round(df["std_sma"].iloc[-1], 6)
 
         logger.debug("\n" + df[-10:].to_string(header=True))
   
@@ -199,8 +190,8 @@ class TradingStrategy():
         else:        
             logger.debug(f"Have {have_units} positions, checking if need to open")
 
-            if abs(self.sma_slope) > self.sma_slope_threshold:
-                logger.debug(f"Current slope: {self.sma_slope} is too high/low for this strategy")
+            if abs(self.price_slope) >= self.price_slope_threshold:
+                logger.debug(f"Current slope: {self.price_slope} is too high/low for this strategy")
                 return None
 
             trade = self.check_if_need_open_trade(have_units)
@@ -330,8 +321,8 @@ class TradingStrategy():
 
     def print_indicators(self):
 
-        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, '{0:f}'.format(self.std), '{0:f}'.format(self.std_sma), '{0:f}'.format(self.sma_slope), '{0:f}'.format(self.momentum), '{0:f}'.format(self.momentum_prev)]]
-        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "STD", "STD SMA", "SMA SLOPE", "MOMENTUM", "MOMENTUM PREV"]
+        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, '{0:f}'.format(self.price_slope), '{0:f}'.format(self.momentum), '{0:f}'.format(self.momentum_prev)]]
+        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "PRICE SLOPE", "MOMENTUM", "MOMENTUM PREV"]
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
 
 

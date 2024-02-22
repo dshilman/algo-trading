@@ -78,15 +78,15 @@ class TradingBacktester():
 
         df = input_df.copy()
         df["SMA"] = df[instrument].rolling(SMA).mean()
-        df["SMA_SLOPE"] = df[instrument].rolling(SMA * 3).apply(lambda x: SLOPE(x.dropna().values))
+        df["price_slope"] = df[instrument].rolling(SMA * 3).apply(lambda x: SLOPE(x.dropna().values))
 
         std = df[instrument].rolling(SMA).std() * dev
         
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         
-        df["std"] = df[instrument].rolling(SMA).std()
-        df["std_sma"] = df["std"].rolling(SMA).mean()
+        # df["std"] = df[instrument].rolling(SMA).std()
+        # df["std_sma"] = df["std"].rolling(SMA).mean()
         
 
         df["RSI"] = df[instrument].rolling(29).apply(lambda x: RSI(x.values, N=28))
@@ -107,7 +107,7 @@ class TradingBacktester():
     def set_strategy_parameters(self, row):
 
             self.strategy.sma = row ['SMA']
-            self.strategy.sma_slope = row ['SMA_SLOPE']
+            self.strategy.price_slope = row ['price_slope']
 
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
@@ -127,8 +127,8 @@ class TradingBacktester():
             self.strategy.momentum = row ['momentum']
             self.strategy.momentum_prev = row ['momentum_prev']
 
-            self.strategy.std = row ['std']
-            self.strategy.std_sma = row ['std_sma']
+            # self.strategy.std = row ['std']
+            # self.strategy.std_sma = row ['std_sma']
 
 
     def get_data(self):
