@@ -78,14 +78,15 @@ class TradingBacktester():
 
         df = input_df.copy()
         df["SMA"] = df[instrument].rolling(SMA).mean()
+        df["SMA_SLOPE"] = df[instrument].rolling(SMA * 3).apply(lambda x: SLOPE(x.dropna().values))
+
         std = df[instrument].rolling(SMA).std() * dev
         
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         
-        df["std"] = df[instrument].rolling(60).std()
-        df["std_sma"] = df["std"].rolling(60).mean()
-        df["std_sma_slope"] = df["std_sma"].rolling(SMA).apply(lambda x: SLOPE(x.values))
+        df["std"] = df[instrument].rolling(SMA).std()
+        df["std_sma"] = df["std"].rolling(SMA).mean()
         
 
         df["RSI"] = df[instrument].rolling(29).apply(lambda x: RSI(x.values, N=28))
@@ -106,6 +107,8 @@ class TradingBacktester():
     def set_strategy_parameters(self, row):
 
             self.strategy.sma = row ['SMA']
+            self.strategy.sma_slope = row ['SMA_SLOPE']
+
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
                    
@@ -126,8 +129,6 @@ class TradingBacktester():
 
             self.strategy.std = row ['std']
             self.strategy.std_sma = row ['std_sma']
-            self.strategy.std_sma_slope = row ['std_sma_slope']
-
 
 
     def get_data(self):
@@ -180,7 +181,7 @@ class TradingBacktester():
         except Exception as e:
             logger.exception("Exception occurred")
         finally:
-            logger.info("Stopping Backtesting")
+            logger.info("Stoping Backtesting")
 
 
 if __name__ == "__main__":

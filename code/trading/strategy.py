@@ -33,6 +33,7 @@ class TradingStrategy():
         config = configparser.ConfigParser()  
         config.read(pair_file)
         self.sma_value = int(config.get(instrument, 'SMA'))
+        self.sma_slope_threshold = float(config.get(self.instrument, 'SMA_SLOPE'))
         self.dev = float(config.get(instrument, 'dev'))
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
@@ -86,14 +87,15 @@ class TradingStrategy():
         if resampled_tick_data is not None and resampled_tick_data.size > 0:
             df = pd.concat([df, resampled_tick_data])
       
-        df = df.tail(self.sma_value * 2)
+        df = df.tail(self.sma_value * 3)
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
 
                 
         # ******************** define your strategy here ************************
         df["SMA"] = df[self.instrument].rolling(self.sma_value).mean()
+        self.sma_slope = SLOPE(df["SMA"].dropna().values)
+
         std = df[self.instrument].rolling(self.sma_value).std() * self.dev
-        
         df["Lower"] = df["SMA"] - std
         df["Upper"] = df["SMA"] + std
         df["RSI"] = df[self.instrument][-self.sma_value:].rolling(29).apply(lambda x: RSI(x.dropna().values, N=28))
@@ -174,9 +176,7 @@ class TradingStrategy():
         if date_time is None:
             date_time = datetime.utcnow()
 
-        if self.pause_trading(date_time):
-            return None
-
+    
         # if self.ask >= self.bb_lower and self.rsi <= 15 or self.bid <= self.bb_upper and self.rsi >= 85:
         #     raise PauseTradingException(1)
 
@@ -198,7 +198,11 @@ class TradingStrategy():
 
         else:        
             logger.debug(f"Have {have_units} positions, checking if need to open")
-            
+
+            if abs(self.sma_slope) > self.sma_slope_threshold:
+                logger.debug(f"Current slope: {self.sma_slope} is too high/low for this strategy")
+                return None
+
             trade = self.check_if_need_open_trade(have_units)
             if trade is not None:
                 return trade
@@ -363,8 +367,4 @@ class TradingStrategy():
         )
         logger.debug(order)
 
-        return order    
-
-    def pause_trading(self, date_time) -> bool:
-        
-        return False
+        return order
