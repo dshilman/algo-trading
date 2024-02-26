@@ -31,7 +31,7 @@ class Trading_Session():
 
 
 
-    def add_trade(self, trade_action: Trade_Action, have_units: int, date_time=None):
+    def add_trade(self, trade_action: Trade_Action, have_units: int, date_time=None, rsi=None):
 
         if date_time is None:
             date_time = datetime.utcnow()
@@ -67,14 +67,14 @@ class Trading_Session():
             # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         
         self.have_units = self.have_units + trade_action.units
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.units, trade_action.price, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.units, trade_action.price, rsi, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
 
         return self.have_units
 
     def print_trades(self):
 
         logger.info("\n" + 100 * "-")        
-        columns = ["datetime", "transaction", "trade units", "price", "trade cost", "trade p&l", "have units", "total p&l"]
+        columns = ["datetime", "transaction", "trade units", "price", "rsi", "trade cost", "trade p&l", "have units", "total p&l"]
         logger.info("\n" + tabulate(self.trades, headers = columns))
         logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
         logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")

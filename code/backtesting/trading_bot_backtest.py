@@ -19,7 +19,7 @@ sys.path.append(str(root))
 
 from trading.api import OANDA_API
 from trading.errors import PauseTradingException
-from trading.MyTT import RSI, SLOPE
+from trading.MyTT import RSI, SLOPE, calculate_rsi
 from trading.strategy import TradingStrategy
 
 logger = logging.getLogger()
@@ -78,7 +78,8 @@ class TradingBacktester():
 
         df = input_df.copy()
         df["SMA"] = df[instrument].rolling(SMA).mean()
-        df["price_slope"] = df[instrument].rolling(SMA * 3).apply(lambda x: SLOPE(x.dropna().values))
+
+        df["price_slope"] = df[instrument].rolling(SMA).apply(lambda x: SLOPE(x.dropna().values))
 
         std = df[instrument].rolling(SMA).std() * dev
         
@@ -88,8 +89,10 @@ class TradingBacktester():
         # df["std"] = df[instrument].rolling(SMA).std()
         # df["std_sma"] = df["std"].rolling(SMA).mean()
         
-
-        df["RSI"] = df[instrument].rolling(29).apply(lambda x: RSI(x.values, N=28))
+        rsi_periods = int(SMA/2)
+        df["RSI"] = df[instrument].rolling(rsi_periods).apply(lambda x: calculate_rsi(x.values, rsi_periods))
+        df["rsi_momentum"] = df.RSI.rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
+        df["rsi_momentum_prev"] = df ["rsi_momentum"].shift(1)
         df["rsi_prev"] = df["RSI"].shift(1)
         df["rsi_max"] = df ['RSI'].rolling(8).max()
         df["rsi_min"] = df ['RSI'].rolling(8).min()
@@ -99,6 +102,11 @@ class TradingBacktester():
 
         df["momentum"] = df[instrument].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1])/ x.iloc[0])        
         df["momentum_prev"] = df["momentum"].shift(1)
+        df["momentum_max"] = df ['momentum'].rolling(8).max()
+        df["momentum_min"] = df ['momentum'].rolling(8).min()
+        df["momentum_avg"] = df ['momentum'].rolling(8).max()
+        df["momentum_std"] = df ['momentum'].rolling(8).min()
+
 
         df.dropna(subset=["RSI", "SMA"], inplace = True)
 
@@ -107,6 +115,7 @@ class TradingBacktester():
     def set_strategy_parameters(self, row):
 
             self.strategy.sma = row ['SMA']
+
             self.strategy.price_slope = row ['price_slope']
 
             self.strategy.bb_lower = row ['Lower']
@@ -116,6 +125,10 @@ class TradingBacktester():
             self.strategy.rsi_prev = round(row ['rsi_prev'], 4)
             self.strategy.rsi_max = round(row ['rsi_max'], 4)
             self.strategy.rsi_min = round(row ['rsi_min'], 4)
+
+            self.strategy.rsi_momentum = round(row ["rsi_momentum"], 6)
+            self.strategy.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
+
             
             self.strategy.price = row [self.strategy.instrument]
             self.strategy.price_max = row ['price_max']
@@ -126,25 +139,27 @@ class TradingBacktester():
 
             self.strategy.momentum = row ['momentum']
             self.strategy.momentum_prev = row ['momentum_prev']
-
-            # self.strategy.std = row ['std']
-            # self.strategy.std_sma = row ['std_sma']
+            self.strategy.momentum_max= row ['momentum_max']
+            self.strategy.momentum_min = row ['momentum_min']
+            self.strategy.momentum_avg = row ['momentum_avg']
+            self.strategy.momentum_std = row ['momentum_std']
 
 
     def get_data(self):
 
+        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_t.pcl"
         if self.refresh:                
             df = self.get_history_with_all_prices()
-            df.to_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
+            df.to_pickle(pcl_file_name)
             # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         else:
-            df = pd.read_pickle(f"../../data/backtest_{self.strategy.instrument}.pcl")
+            df = pd.read_pickle(pcl_file_name)
 
         df = self.calculate_indicators(df)
         # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         # df.to_excel(f"../../data/backtest_{self.strategy.instrument}_with_indicators.xlsx")
 
-        df = df.between_time(self.start, self.end)
+        # df = df.between_time(self.start, self.end)
         return df
 
     def start_trading_backtest(self):
@@ -171,7 +186,8 @@ class TradingBacktester():
                         continue
                                         
                     if trade_action != None:
-                        self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index)
+                        # self.strategy.print_indicators()
+                        self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index, self.strategy.rsi)
                         if trade_action.sl_trade:
                             logger.info(f"Pausing trading for 2 hours at {index}")
                             pause_trading = index + timedelta(hours = 2)                        

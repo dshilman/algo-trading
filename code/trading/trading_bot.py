@@ -164,7 +164,7 @@ class Trader():
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    df = df.resample("30s").last()
+                    df = df.resample("30s").mean()
                     logger.debug(f"Resampled Data: {df}")
 
                 self.strategy.calc_indicators(df)

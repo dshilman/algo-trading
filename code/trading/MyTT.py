@@ -63,7 +63,7 @@ def EMA(S, N):  #   alpha=2/(span+1)
     return pd.Series(S).ewm(span=N, adjust=False, ignore_na = True).mean().values
 
 
-def SMA(S, N, M=1):  #  alpha=1/(1+com)
+def SMA(S, N):  #  alpha=1/(1+com)
     return pd.Series(S).rolling(N).mean().values
 
 
@@ -130,11 +130,38 @@ def KDJ(CLOSE, HIGH, LOW, N=9, M1=3, M2=3):
     return K, D, J
 
 
-def RSI(CLOSE, N = 14):
+def RSI1(CLOSE, N = 14):
     DIF = CLOSE - REF(CLOSE, 1)
     result =RD(100 - (100/(1 + (SMA(MAX(DIF, 0), N)[-1] / SMA(ABS(MIN(DIF, 0)), N)[-1]))), 6)
     return result
+
+def RSI2(CLOSE, N = 14):
+    DIF = CLOSE - REF(CLOSE, 1)
+    result =RD(100 - (100/(1 + (SMA(MAX(DIF, 0), N).mean() / SMA(ABS(MIN(DIF, 0)), N).mean()))), 6)
+    return result    
+
+# Calculate RSI
+def calculate_rsi(S, period=14):
     
+    prices = pd.Series(S)
+    delta = prices.diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    avg_gain = gain.ewm(com=period - 1, min_periods=period).mean()
+    avg_loss = loss.ewm(com=period - 1, min_periods=period).mean()
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    
+    return rsi.iloc[-1]
+
+def RSI(CLOSE):
+    DIF = CLOSE - REF(CLOSE, 1)
+    average_gain = pd.Series(MAX(DIF, 0)).replace(0, np.NaN).mean()
+    average_loss = ABS(pd.Series(MIN(DIF, 0)).replace(0, np.NaN).mean())
+    result =RD(100 - (100/(1 + (average_gain / average_loss))), 4)
+    return result    
 
 def WR(CLOSE, HIGH, LOW, N=10, N1=6):
     WR = (HHV(HIGH, N) - CLOSE) / (HHV(HIGH, N) - LLV(LOW, N)) * 100
