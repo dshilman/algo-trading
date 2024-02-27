@@ -174,8 +174,9 @@ class Trader():
                     try:
                         self.units = self.strategy.execute_strategy(self.units)
                     except PauseTradingException as e:
-                        logger.error(f"Pausing Trading for {e.hours} hour(s)")
-                        pause_trading = now + timedelta(hours = e.hours)
+                        logger.error(f"Caught Stop Loss Error. Keep Traiding...")
+                        # logger.error(f"Pausing Trading for {e.hours} hour(s)")
+                        # pause_trading = now + timedelta(hours = e.hours)
                 else:
                     logger.info(f"Pausing Trading until: {pause_trading}")
 

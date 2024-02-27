@@ -188,9 +188,9 @@ class TradingBacktester():
                     if trade_action != None:
                         # self.strategy.print_indicators()
                         self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index, self.strategy.rsi)
-                        if trade_action.sl_trade:
-                            logger.info(f"Pausing trading for 2 hours at {index}")
-                            pause_trading = index + timedelta(hours = 2)                        
+                        # if trade_action.sl_trade:
+                            # logger.info(f"Pausing trading for 2 hours at {index}")
+                            # pause_trading = index + timedelta(hours = 2)                        
             
             self.strategy.trading_session.print_trades()
 
