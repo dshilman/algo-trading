@@ -12,7 +12,7 @@ class EUR_HKD_Strategy (TradingStrategy):
         super().__init__(instrument, pair_file, api, unit_test)
 
     def has_high_rsi(self):
-        return self.rsi > 65
+        return self.rsi > self.high_rsi
 
     def has_low_rsi(self):
-        return self.rsi < 35
+        return self.rsi < self.low_rsi
