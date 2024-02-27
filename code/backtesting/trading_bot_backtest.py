@@ -19,7 +19,7 @@ sys.path.append(str(root))
 
 from trading.api import OANDA_API
 from trading.errors import PauseTradingException
-from trading.MyTT import RSI, SLOPE, calculate_rsi
+from trading.tech_indicatrors import calculate_rsi, calculate_momentum
 from trading.strategy import TradingStrategy
 
 logger = logging.getLogger()
@@ -79,8 +79,6 @@ class TradingBacktester():
         df = input_df.copy()
         df["SMA"] = df[instrument].rolling(SMA).mean()
 
-        df["price_slope"] = df[instrument].rolling(SMA).apply(lambda x: SLOPE(x.dropna().values))
-
         std = df[instrument].rolling(SMA).std() * dev
         
         df["Lower"] = df["SMA"] - std
@@ -91,22 +89,17 @@ class TradingBacktester():
         
         rsi_periods = int(SMA/2)
         df["RSI"] = df[instrument].rolling(rsi_periods).apply(lambda x: calculate_rsi(x.values, rsi_periods))
-        df["rsi_momentum"] = df.RSI.rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1]) / x.iloc[0])
+        df["rsi_momentum"] = df.RSI.rolling(8).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))
         df["rsi_momentum_prev"] = df ["rsi_momentum"].shift(1)
-        df["rsi_prev"] = df["RSI"].shift(1)
         df["rsi_max"] = df ['RSI'].rolling(8).max()
         df["rsi_min"] = df ['RSI'].rolling(8).min()
 
         df["price_max"] = df [instrument].rolling(8).max()
         df["price_min"] = df [instrument].rolling(8).min()
 
-        df["momentum"] = df[instrument].rolling(8).apply(lambda x: (x.iloc[0] - x.iloc[-1])/ x.iloc[0])        
+        df["momentum"] = df[instrument].rolling(8).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))        
         df["momentum_prev"] = df["momentum"].shift(1)
-        df["momentum_max"] = df ['momentum'].rolling(8).max()
-        df["momentum_min"] = df ['momentum'].rolling(8).min()
-        df["momentum_avg"] = df ['momentum'].rolling(8).max()
-        df["momentum_std"] = df ['momentum'].rolling(8).min()
-
+        
 
         df.dropna(subset=["RSI", "SMA"], inplace = True)
 
@@ -116,19 +109,15 @@ class TradingBacktester():
 
             self.strategy.sma = row ['SMA']
 
-            self.strategy.price_slope = row ['price_slope']
-
             self.strategy.bb_lower = row ['Lower']
             self.strategy.bb_upper =  row ['Upper']
                    
             self.strategy.rsi = round(row ['RSI'], 4)
-            self.strategy.rsi_prev = round(row ['rsi_prev'], 4)
             self.strategy.rsi_max = round(row ['rsi_max'], 4)
             self.strategy.rsi_min = round(row ['rsi_min'], 4)
 
             self.strategy.rsi_momentum = round(row ["rsi_momentum"], 6)
             self.strategy.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
-
             
             self.strategy.price = row [self.strategy.instrument]
             self.strategy.price_max = row ['price_max']
@@ -137,13 +126,9 @@ class TradingBacktester():
             self.strategy.ask = row ["ask"]
             self.strategy.bid = row ["bid"]
 
-            self.strategy.momentum = row ['momentum']
-            self.strategy.momentum_prev = row ['momentum_prev']
-            self.strategy.momentum_max= row ['momentum_max']
-            self.strategy.momentum_min = row ['momentum_min']
-            self.strategy.momentum_avg = row ['momentum_avg']
-            self.strategy.momentum_std = row ['momentum_std']
-
+            self.strategy.price_momentum = row ['momentum']
+            self.strategy.price_momentum_prev = row ['momentum_prev']
+          
 
     def get_data(self):
 
