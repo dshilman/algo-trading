@@ -7,3 +7,4 @@ venv
 *.xlsx
 *.pcl
 *.cfg
+.ssh

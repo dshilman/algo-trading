@@ -53,7 +53,6 @@ class TradingBacktester():
 
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
-
         self.days = 100
         self.refresh = False
     
@@ -132,7 +131,7 @@ class TradingBacktester():
 
     def get_data(self):
 
-        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_t.pcl"
+        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}.pcl"
         if self.refresh:                
             df = self.get_history_with_all_prices()
             df.to_pickle(pcl_file_name)
@@ -172,7 +171,7 @@ class TradingBacktester():
                                         
                     if trade_action != None:
                         # self.strategy.print_indicators()
-                        self.have_units = self.strategy.trading_session.add_trade(trade_action, self.have_units, index, self.strategy.rsi)
+                        self.have_units = self.strategy.trading_session.add_trade(trade_action=trade_action, have_units=self.have_units, date_time=index, rsi=self.strategy.rsi)
                         # if trade_action.sl_trade:
                             # logger.info(f"Pausing trading for 2 hours at {index}")
                             # pause_trading = index + timedelta(hours = 2)                        
