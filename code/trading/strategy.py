@@ -74,6 +74,8 @@ class TradingStrategy():
 
             if order is not None:
                 have_units = self.submit_order(order, have_units)
+                self.trading_session.add_trade(trade_action=trade_action, have_units=have_units, rsi=self.rsi)
+
 
         if trade_action is not None and trade_action.sl_trade:
             raise PauseTradingException(2)
@@ -327,7 +329,6 @@ class TradingStrategy():
         if tp_perc:
             tp_price = str(round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0)))
 
-        self.trading_session.add_trade(trade_action, have_units, self.rsi)
 
         order = Order(
             instrument = trade_action.instrument,
