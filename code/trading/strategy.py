@@ -197,8 +197,8 @@ class TradingStrategy():
 
     def check_if_need_open_trade(self, have_units, date_time = None):
         
-        if self.pause_trading(date_time):
-            return
+        # if self.pause_trading(date_time):
+        #     return
 
         spread = round(self.ask - self.bid, 4)
         # check if need to open a new position
