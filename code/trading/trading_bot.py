@@ -15,7 +15,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.api import OANDA_API
+# from trading.api import OANDA_API
 from trading.oanda_api import OandaApi
 from trading.errors import PauseTradingException
 from trading.strategy import TradingStrategy

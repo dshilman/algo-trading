@@ -80,7 +80,9 @@ class OandaApi:
             order=dict(
                 units=str(order.units),
                 instrument=order.instrument,
-                type="MARKET"
+                type="MARKET",
+                positionFill="DEFAULT",
+                timeInForce="FOK"
             )
         )
 

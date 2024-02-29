@@ -12,7 +12,6 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.api import OANDA_API
 from trading.oanda_api import OandaApi
 from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
@@ -29,7 +28,7 @@ class TradingStrategy():
         self.trading_session = Trading_Session()
 
         self.instrument = instrument
-        self.api = api
+        self.api:OandaApi = api
         self.unit_test = unit_test
         config = configparser.ConfigParser()  
         config.read(pair_file)
@@ -325,20 +324,20 @@ class TradingStrategy():
             if the price is grater that $100, do not use decimals for stop loss
         """
         # sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
-        sl_price = str(round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0)))
+        sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
 
             
         if tp_perc:
-            tp_price = str(round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0)))
+            tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0))
 
 
         order = Order(
             instrument = trade_action.instrument,
-            price = trade_action.price,
-            trade_units = trade_action.units,
+            price = str(trade_action.price),
+            trade_units = str(trade_action.units),
             # sl_dist = sl_dist,
-            sl_price = sl_price,
-            tp_price = tp_price
+            sl_price = str(sl_price),
+            tp_price = str(tp_price)
         )
         logger.debug(order)
 
