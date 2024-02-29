@@ -13,6 +13,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.api import OANDA_API
+from trading.oanda_api import OandaApi
 from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
 from trading.dom.trading_session import Trading_Session
@@ -22,7 +23,7 @@ from trading.tech_indicatrors import calculate_slope, calculate_rsi, calculate_m
 logger = logging.getLogger()
 
 class TradingStrategy():
-    def __init__(self, instrument, pair_file, api: OANDA_API = None, unit_test = False):
+    def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__()
 
         self.trading_session = Trading_Session()
@@ -140,7 +141,8 @@ class TradingStrategy():
 
         logger.info(f"Submitting Order: {order}")
         if not self.unit_test:        
-            result = self.api.create_order(order=order)
+            # result = self.api.create_order(order=order)
+            result = self.api.place_order(order=order)
             self.report_trade(result)
             if "rejectReason" not in result:
                 units = units + order.units
@@ -314,16 +316,16 @@ class TradingStrategy():
         tp_price = None
 
         # if trade_action.open_trade:
-        if sl_perc:
-            if trade_action.spread / trade_action.price >= sl_perc:
-                logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
-                return None
-            """
-                Have been getting STOP_LOSS_ON_FILL_DISTANCE_PRECISION_EXCEEDED when trading GBP_JPY
-                I assume that the price is too high for 4 digit decimals, thus adding a rule
-                if the price is grater that $100, do not use decimals for stop loss
-            """
-            sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
+        if trade_action.spread / trade_action.price >= sl_perc:
+            logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
+            return None
+        """
+            Have been getting STOP_LOSS_ON_FILL_DISTANCE_PRECISION_EXCEEDED when trading GBP_JPY
+            I assume that the price is too high for 4 digit decimals, thus adding a rule
+            if the price is grater that $100, do not use decimals for stop loss
+        """
+        # sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
+        sl_price = str(round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0)))
 
             
         if tp_perc:
@@ -334,7 +336,8 @@ class TradingStrategy():
             instrument = trade_action.instrument,
             price = trade_action.price,
             trade_units = trade_action.units,
-            sl_dist = sl_dist,
+            # sl_dist = sl_dist,
+            sl_price = sl_price,
             tp_price = tp_price
         )
         logger.debug(order)

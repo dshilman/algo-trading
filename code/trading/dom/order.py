@@ -1,10 +1,10 @@
 class Order ():
-    def __init__(self, instrument, price, trade_units, sl_dist, tp_price):
+    def __init__(self, instrument, price, trade_units, sl_price, tp_price):
         super().__init__()
         self.instrument = instrument
         self.price = price
         self.units = trade_units
-        self.sl = sl_dist
+        self.sl = sl_price
         self.tp = tp_price
 
     def __str__(self):

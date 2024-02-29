@@ -16,6 +16,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.api import OANDA_API
+from trading.oanda_api import OandaApi
 from trading.errors import PauseTradingException
 from trading.strategy import TradingStrategy
 
@@ -27,7 +28,9 @@ class Trader():
         self.instrument = instrument
         self.init_logs(unit_test=unit_test)
 
-        self.api = OANDA_API(conf_file)
+        # self.api = OANDA_API(conf_file)
+        self.api = OandaApi(conf_file)
+
 
         config = configparser.ConfigParser()  
         config.read(pair_file)
@@ -77,7 +80,9 @@ class Trader():
         self.terminate = False
 
         logger.info (f"Getting  candles for: {self.instrument}")
-        self.strategy.data = self.api.get_history_with_all_prices(self.instrument, self.days)
+        # self.strategy.data = self.api.get_history_with_all_prices(self.instrument, self.days)
+        self.strategy.data = self.api.get_price_candles(pair_name=self.instrument, days=self.days)
+
 
         treads = []
         treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
@@ -104,7 +109,9 @@ class Trader():
 
             try:
                 logger.info ("Start Stream")
-                self.api.stream_data(instrument=self.instrument, stop = stop_after, callback=self.new_price_tick)
+                # self.api.stream_data(instrument=self.instrument, stop = stop_after, callback=self.new_price_tick)
+                self.api.stream_prices(instrument=self.instrument, stop = stop_after, callback=self.new_price_tick)
+
                 self.terminate = True
                 break
 
@@ -164,7 +171,7 @@ class Trader():
                     df.set_index('time', inplace=True)    
                     df.drop(columns=['index'], inplace=True)
 
-                    df = df.resample("30s").mean()
+                    df = df.resample("30s").last()
                     logger.debug(f"Resampled Data: {df}")
 
                 self.strategy.calc_indicators(df)
@@ -227,7 +234,9 @@ class Trader():
 
                 logger.debug("Check Positions")
 
-                self.units = self.api.get_instrument_positions(instrument = self.instrument)
+                # self.units = self.api.get_instrument_positions(instrument = self.instrument)
+                self.units = self.api.get_position(instrument = self.instrument)
+
                 logger.info(f"Instrument: {self.instrument}, Units: {self.units}")
 
 
