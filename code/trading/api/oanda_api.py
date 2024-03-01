@@ -42,7 +42,6 @@ class OandaApi:
         }
 
         self.session.headers.update(self.SECURE_HEADER)
-        self.increment_by = 5
         self.stop_stream = False
 
     def get_price_candles(self, pair_name, days):
@@ -120,6 +119,8 @@ class OandaApi:
         self.stop_stream = True
 
     def stream_prices(self, instrument, callback=None, stop=None):
+
+        self.stop_stream = False
 
         url = f"accounts/{self.account_id}/pricing/stream"
         params = dict(instruments=instrument, snapshot=True)
