@@ -13,7 +13,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.dom.order import Order
+from dom.order import Order
 
 logger = logging.getLogger()
 
@@ -141,7 +141,7 @@ class OandaApi:
         for line in response.iter_lines():
             if line:
                 data = json.loads(line.decode('utf-8'))
-                # print (data)
+                print (data)
                 if data.get("type") == "HEARTBEAT":
                     continue
 
@@ -234,7 +234,8 @@ class OandaApi:
         return df
 
 if __name__ == "__main__":
-    api = OandaApi("../../config/oanda.cfg")
+    api = OandaApi("../../../config/oanda.cfg")
     api.stream_prices(instrument="EUR_USD", stop = 5)
     print ("Done!")
 
+# python oanda_api.py
