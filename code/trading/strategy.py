@@ -333,11 +333,11 @@ class TradingStrategy():
 
         order = Order(
             instrument = trade_action.instrument,
-            price = str(trade_action.price),
-            trade_units = str(trade_action.units),
+            price = trade_action.price,
+            trade_units = trade_action.units,
             # sl_dist = sl_dist,
-            sl_price = str(sl_price),
-            tp_price = str(tp_price)
+            sl_price = sl_price,
+            tp_price = tp_price
         )
         logger.debug(order)
 
