@@ -87,12 +87,12 @@ class OandaApi:
         )
 
         if order.sl is not None:
-            sld = dict(price=order.sl)
-            data['order']['stopLossOnFill']['price'] = sld
+            stopLossOnFill = dict(price=order.sl)
+            data['order']['stopLossOnFill'] = stopLossOnFill
 
         if order.tp is not None:
-            tpd = dict(price=order.tp)
-            data['order']['takeProfitOnFill']['price'] = tpd
+            takeProfitOnFill = dict(price=order.tp)
+            data['order']['takeProfitOnFill'] = takeProfitOnFill
 
         ok, response = self.__make_request(
             url, verb="post", data=data, code=201)
