@@ -141,22 +141,20 @@ class OandaApi:
         for line in response.iter_lines():
             if line:
                 data = json.loads(line.decode('utf-8'))
-                print (data)
-                if data.get("type") == "HEARTBEAT":
-                    continue
-
-                count += 1
-                instrument = data["instrument"]
-                time = data["time"]
-                bid = float(data["closeoutBid"])
-                ask = float(data["closeoutAsk"])
-                if callback is not None:
-                    callback(instrument=instrument, time=time, bid=bid, ask=ask)
-                else:
-                    self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask)
-                
-                if self.stop_stream or stop is not None and count >= stop:
-                    break
+                # print (data)
+                if data.get("type") == "PRICE":
+                    count += 1
+                    instrument = data["instrument"]
+                    time = data["time"]
+                    bid = float(data["closeoutBid"])
+                    ask = float(data["closeoutAsk"])
+                    if callback is not None:
+                        callback(instrument=instrument, time=time, bid=bid, ask=ask)
+                    else:
+                        self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask)
+                    
+                    if self.stop_stream or stop is not None and count >= stop:
+                        break
 
         return
 
