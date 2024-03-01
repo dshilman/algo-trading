@@ -144,7 +144,6 @@ class OandaApi:
                 if data.get("type") == "HEARTBEAT":
                     continue
 
-                # return_data = {"time": data["time"], "bid": data["closeoutBid"], "ask": data["closeoutAsk"]}              
                 count += 1
                 instrument = data["instrument"]
                 time = data["time"]

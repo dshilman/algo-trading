@@ -15,8 +15,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-# from trading.api import OANDA_API
-from trading.oanda_api import OandaApi
+from trading.api.oanda_api import OandaApi
 from trading.errors import PauseTradingException
 from trading.strategy import TradingStrategy
 
@@ -28,7 +27,6 @@ class Trader():
         self.instrument = instrument
         self.init_logs(unit_test=unit_test)
 
-        # self.api = OANDA_API(conf_file)
         self.api = OandaApi(conf_file)
 
 
@@ -88,7 +86,6 @@ class Trader():
         treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
         treads.append(threading.Thread(target=self.check_trading_time, args=(60,)))
         treads.append(threading.Thread(target=self.refresh_strategy, args=(15,)))
-        # treads.append(threading.Thread(target=self.execute_strategy, args=(15,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
         for t in treads:
@@ -198,32 +195,6 @@ class Trader():
                     break
                 time.sleep(5)
 
-    # def execute_strategy(self, refresh = 30):
-
-    #     i: int = 0
-
-    #     while not self.terminate:
-
-    #         logger.debug("Execute Strategy")
-
-    #         try:
-
-    #             try:
-    #                 self.units = self.strategy.execute_strategy(self.units)
-    #             except PauseTradingException as e:
-    #                 logger.error(f"Pausing Trading for {e.hours} hour(s)")
-    #                 time.sleep(e.hours * 60 * 60)
-    #             else:
-    #                 time.sleep(refresh)
-
-    #         except Exception as e:
-    #             logger.error("Exception occurred in execute_strategy")
-    #             logger.exception(e)
-    #             i = i + 1
-    #             if i > 20:
-    #                 self.terminate = True
-    #                 break
-    #             time.sleep(30)
 
     def check_positions(self, refresh = 300): 
 
@@ -278,23 +249,7 @@ class Trader():
 
         self.strategy.trading_session.print_trades()
 
-        """
-            Close the open position, I have observed that trades open from one day to the next
-            have incurred a signifucant loss
-        """
 
-        """""
-        if self.units != 0 and not self.unit_test:
-            close_order = self.create_order(self.instrument, units = -self.units, suppress = True, ret = True)
-            if not "rejectReason" in close_order:
-                self.report_trade(close_order, "Closing Long Position" if self.units > 0 else "Closing Short Position")
-                self.units = 0
-                trade = [close_order["fullPrice"]["bids"][0]["price"], close_order["fullPrice"]["asks"][0]["price"], self.strategy.sma, self.strategy.bb_lower, self.strategy.bb_upper, float(close_order.get("units")), float(close_order["price"]), self.units]
-                self.trades.append(trade)
-            else:
-                logger.error(f"Close order was not filled: {close_order ['type']}, reason: {close_order['rejectReason']}")
-
-        """
     
 if __name__ == "__main__":
 

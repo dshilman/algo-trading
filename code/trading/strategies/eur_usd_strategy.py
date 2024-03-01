@@ -1,9 +1,6 @@
 import logging
 
-from api import OANDA_API
 from strategy import TradingStrategy
-from trading.api import OANDA_API
-
 
 logger = logging.getLogger()
 

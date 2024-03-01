@@ -17,7 +17,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.api import OANDA_API
+from trading.api.oanda_api import OandaApi
 from trading.errors import PauseTradingException
 from trading.tech_indicatrors import calculate_rsi, calculate_momentum
 from trading.strategy import TradingStrategy
@@ -28,7 +28,7 @@ class TradingBacktester():
     
     def __init__(self, conf_file, pairs_file, instrument):
         
-        self.api = OANDA_API(conf_file)
+        self.api = OandaApi(conf_file)
         config = configparser.ConfigParser()  
         config.read(pairs_file)
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
@@ -58,12 +58,7 @@ class TradingBacktester():
     
     def get_history_with_all_prices(self):
         
-        now = datetime.utcnow()
-        now = now - timedelta(microseconds = now.microsecond)
-        past = now - timedelta(days = self.days)
-        instrument = self.strategy.instrument
-
-        df: pd.DataFrame = self.api.get_history_with_all_prices_by_period(instrument, past, now)
+        df: pd.DataFrame = self.api.get_price_candles(self.strategy.instrument, self.days)
                
         # df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
 
