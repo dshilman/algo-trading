@@ -96,7 +96,7 @@ class OandaApi:
         ok, response = self.__make_request(
             url, verb="post", data=data, code=201)
 
-        if ok == True:
+        if ok:
             return response
         else:
             return None
@@ -203,7 +203,7 @@ class OandaApi:
 
         ok, data = self.__make_request(url, params=params)
 
-        if ok == True and 'candles' in data:
+        if ok and 'candles' in data:
             return data['candles']
         else:
             print("ERROR fetch_candles()", params, data)

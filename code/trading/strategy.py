@@ -70,7 +70,7 @@ class TradingStrategy():
         if trade_action is not None:
             # logger.info(f"trade_action: {trade_action}")
             
-            order = self.create_order(trade_action, self.sl_perc, self.tp_perc, have_units)
+            order = self.create_order(trade_action, self.sl_perc, self.tp_perc)
 
             if order is not None:
                 have_units = self.submit_order(order, have_units)
@@ -309,26 +309,29 @@ class TradingStrategy():
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
 
 
-    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc, have_units) -> Order:
+    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
         
-        sl_dist = None
         tp_price = None
+        sl_price = None
 
         # if trade_action.open_trade:
         if trade_action.spread / trade_action.price >= sl_perc:
             logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
             return None
-        """
-            Have been getting STOP_LOSS_ON_FILL_DISTANCE_PRECISION_EXCEEDED when trading GBP_JPY
-            I assume that the price is too high for 4 digit decimals, thus adding a rule
-            if the price is grater that $100, do not use decimals for stop loss
-        """
-        # sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
-        sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
-
+        if trade_action.open_trade:
             
-        if tp_perc:
-            tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0))
+            """
+                Have been getting STOP_LOSS_ON_FILL_DISTANCE_PRECISION_EXCEEDED when trading GBP_JPY
+                I assume that the price is too high for 4 digit decimals, thus adding a rule
+                if the price is grater that $100, do not use decimals for stop loss
+            """
+
+            # sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
+            sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
+
+                
+            if tp_perc:
+                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0))
 
 
         order = Order(
