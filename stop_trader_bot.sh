@@ -4,7 +4,7 @@
 check_process() {
     local process_name="$1"
     # Check if the process exists
-    if pgrep -x "$process_name" >/dev/null; then
+    if pgrep -f "$process_name" >/dev/null; then
         return 0  # Process is running
     else
         return 1  # Process is not running
@@ -18,8 +18,6 @@ if [ $# -ne 1 ]; then
 fi
 
 process_name="$1"
-
-echo "Stopping $process_name process..."
 
 if check_process "$process_name"; then
     echo "Process $process_name is running. Attempting to kill..."
