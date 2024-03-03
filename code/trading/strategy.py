@@ -17,7 +17,7 @@ from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
 from trading.dom.trading_session import Trading_Session
 from trading.errors import PauseTradingException
-from trading.tech_indicatrors import calculate_slope, calculate_rsi, calculate_momentum
+from trading.tech_indicators import calculate_slope, calculate_rsi, calculate_momentum
 
 logger = logging.getLogger()
 

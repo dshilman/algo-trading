@@ -11,7 +11,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytz
-import tpqoa
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
@@ -19,7 +18,7 @@ sys.path.append(str(root))
 
 from trading.api.oanda_api import OandaApi
 from trading.errors import PauseTradingException
-from trading.tech_indicatrors import calculate_rsi, calculate_momentum
+from trading.tech_indicators import calculate_rsi, calculate_momentum
 from trading.strategy import TradingStrategy
 
 logger = logging.getLogger()
