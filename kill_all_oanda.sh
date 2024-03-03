@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 processes=("/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_HKD.sh"
 "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD.sh"
 "/bin/sh /home/ec2-user/algo-trading/trader_oanda_USD_HKD.sh"
@@ -9,5 +12,5 @@ processes=("/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_HKD.sh"
 # Loop through each process name
 for process_name in "${processes[@]}"; do
     # Call kill_process.sh script for each process name
-    ./kill_process.sh "$process_name"
+    ./stop_trader_bot.sh "$process_name"
 done
