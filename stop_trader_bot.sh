@@ -21,7 +21,7 @@ process_name="$1"
 
 if check_process "$process_name"; then
     echo "Process $process_name is running. Attempting to kill..."
-    pkill -x "$process_name"
+    pkill -f "$process_name"
     if [ $? -eq 0 ]; then
         echo "Process $process_name killed successfully."
     else
