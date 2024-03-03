@@ -1,7 +1,7 @@
 #!/bin/bash
 
-processes=("/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_HKD.sh",
-"python3 trading_bot.py EUR_HKD",
+processes=("\"/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_HKD.sh\"",
+"\"python3 trading_bot.py EUR_HKD\"",
 "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD.sh",
 "python3 trading_bot.py EUR_USD",
 "/bin/sh /home/ec2-user/algo-trading/trader_oanda_USD_HKD.sh",
