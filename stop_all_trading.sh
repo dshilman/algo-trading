@@ -16,7 +16,7 @@ processes=("\"/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_HKD.sh\"",
 
 # Loop through each process name
 for process_name in "${processes[@]}"; do
-    # echo "Stopping $process_name process..."
+    echo "Stopping $process_name process..."
     # ./stop_trader_bot.sh "$process_name"
     pkill -f "$process_name"
 done
