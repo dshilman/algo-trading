@@ -40,8 +40,15 @@ class Trader():
         self.tick_data = []
         self.units = 0
 
-        module = __import__(f"trading.strategies.{instrument.lower()}_strategy", fromlist=[f"{instrument}_Strategy"])
-        class_ = getattr(module, f"{instrument}_Strategy")
+        class_ = None
+
+        try:
+            module = __import__(f"trading.strategies.{instrument.lower()}_strategy", fromlist=[f"{instrument}_Strategy"])
+            class_ = getattr(module, f"{instrument}_Strategy")
+        except:
+            logger.error(f"Strategy not found for {instrument}")
+            class_ = TradingStrategy
+
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
 
         today = datetime.utcnow().date()

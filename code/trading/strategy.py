@@ -224,7 +224,14 @@ class TradingStrategy():
 
     def reverse_rsi_momentum(self):
         # do not change this logic
-        return self.rsi < self.rsi_max if self.rsi_momentum < 0 else self.rsi > self.rsi_min
+        if self.rsi_momentum < 0:
+            return self.rsi < self.rsi_max
+        elif self.rsi_momentum > 0:
+            return self.rsi > self.rsi_min
+        else:
+            return False
+
+        # return self.rsi < self.rsi_max if self.rsi_momentum < 0 else self.rsi > self.rsi_min
         
 
     def reverse_price_momentum(self):
