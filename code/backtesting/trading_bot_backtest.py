@@ -97,6 +97,10 @@ class TradingBacktester():
 
         df.dropna(subset=["RSI", "SMA"], inplace = True)
 
+        # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
+        # df.to_excel(f"../../data/backtest_{self.strategy.instrument}_with_indicators.xlsx")
+
+
         return df
     
     def set_strategy_parameters(self, row):
@@ -127,17 +131,16 @@ class TradingBacktester():
     def get_data(self):
 
         pcl_file_name = f"../../data/backtest_{self.strategy.instrument}.pcl"
-        if self.refresh:                
+        if self.refresh:
+            logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()
+            logger.info(f"Saving data to {pcl_file_name}")
             df.to_pickle(pcl_file_name)
             # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         else:
+            logger.info(f"Reading data from {pcl_file_name}")
             df = pd.read_pickle(pcl_file_name)
-
-        df = self.calculate_indicators(df)
-        # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
-        # df.to_excel(f"../../data/backtest_{self.strategy.instrument}_with_indicators.xlsx")
-
+      
         # df = df.between_time(self.start, self.end)
         return df
 
@@ -147,6 +150,10 @@ class TradingBacktester():
 
             df:pd.DataFrame = self.get_data()
 
+            logger.info("Calculating indicators...")
+            df = self.calculate_indicators(df)
+    
+            logger.info(f"Starting trading for {self.strategy.instrument}...")
             self.have_units = 0
 
             pause_trading = None
@@ -171,6 +178,7 @@ class TradingBacktester():
                             # logger.info(f"Pausing trading for 2 hours at {index}")
                             # pause_trading = index + timedelta(hours = 2)                        
             
+            logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()
 
         except Exception as e:

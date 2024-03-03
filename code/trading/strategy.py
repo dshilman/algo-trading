@@ -207,13 +207,13 @@ class TradingStrategy():
             logger.debug(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
             return None
 
-        if self.ask < self.bb_lower and self.has_low_rsi() and self.reverse_rsi_momentum(): # if price is below lower BB, BUY
+        if self.ask < self.bb_lower and self.has_low_rsi() and self.reverse_price_momentum(): # if price is below lower BB, BUY
         # if self.ask <= self.bb_lower and self.has_low_rsi() and self.price_momentum * self.price_momentum_prev <= 0: # if price is below lower BB, BUY
             signal = 1
             logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.ask, spread, "Go Long - Buy", True, False)
 
-        elif self.bid > self.bb_upper and self.has_high_rsi() and self.reverse_rsi_momentum():  # if price is above upper BB, SELL
+        elif self.bid > self.bb_upper and self.has_high_rsi() and self.reverse_price_momentum():  # if price is above upper BB, SELL
         # elif self.bid >= self.bb_upper and self.has_high_rsi() and self.price_momentum * self.price_momentum_prev <= 0:
             signal = -1
             logger.info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
@@ -229,7 +229,13 @@ class TradingStrategy():
 
     def reverse_price_momentum(self):
         # do not change this logic
-        return self.price < self.price_max if self.price_momentum < 0 else self.price > self.price_min
+        if self.price_momentum < 0:
+            return self.price < self.price_max
+        elif self.price_momentum > 0:
+            return self.price > self.price_min
+        else:
+            return False
+        # return self.price < self.price_max if self.price_momentum < 0 else self.price > self.price_min
         
     def has_high_rsi(self):
 
