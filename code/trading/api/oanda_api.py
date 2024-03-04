@@ -97,19 +97,17 @@ class OandaApi:
             url, verb="post", data=data, code=201)
 
         if ok:
+            order = None
             if 'orderRejectTransaction' in response:
                 order = response.get('orderRejectTransaction')
             elif 'orderFillTransaction' in response:
                 order = response.get('orderFillTransaction')
             elif 'orderCreateTransaction' in response:
                 order = response.get('orderCreateTransaction')
-            else:
-                # This case does not happen. But keeping this for completeness.
-                order = None
-
+            
             return order
-        else:
-            return None
+        
+        return None
 
 
     def get_position(self, instrument): 
@@ -158,7 +156,7 @@ class OandaApi:
                     time = data["time"]
                     bid = float(data["closeoutBid"])
                     ask = float(data["closeoutAsk"])
-                    if callback is not None:
+                    if callback:
                         callback(instrument=instrument, time=time, bid=bid, ask=ask)
                     else:
                         self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask)
