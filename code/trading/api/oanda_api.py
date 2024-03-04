@@ -97,7 +97,17 @@ class OandaApi:
             url, verb="post", data=data, code=201)
 
         if ok:
-            return response
+            if 'orderRejectTransaction' in response:
+                order = response.get('orderRejectTransaction')
+            elif 'orderFillTransaction' in response:
+                order = response.get('orderFillTransaction')
+            elif 'orderCreateTransaction' in response:
+                order = response.get('orderCreateTransaction')
+            else:
+                # This case does not happen. But keeping this for completeness.
+                order = None
+
+            return order
         else:
             return None
 

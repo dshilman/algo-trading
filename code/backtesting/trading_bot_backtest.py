@@ -129,7 +129,7 @@ class TradingBacktester():
 
     def get_data(self):
 
-        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_t.pcl"
+        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}.pcl"
         if self.refresh:
             logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()

@@ -236,9 +236,9 @@ class TradingStrategy():
 
     def reverse_price_momentum(self):
         # do not change this logic
-        if self.price_momentum < 0:
+        if self.price_momentum > 0:
             return self.price < self.price_max
-        elif self.price_momentum > 0:
+        elif self.price_momentum < 0:
             return self.price > self.price_min
         else:
             return False
