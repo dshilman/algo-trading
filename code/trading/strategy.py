@@ -207,13 +207,13 @@ class TradingStrategy():
             logger.debug(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
             return None
 
-        if self.ask < self.bb_lower and self.has_low_rsi() and self.reverse_price_momentum(): # if price is below lower BB, BUY
+        if self.ask < self.bb_lower and self.has_low_rsi() and self.reverse_rsi_momentum(): # if price is below lower BB, BUY
         # if self.ask <= self.bb_lower and self.has_low_rsi() and self.price_momentum * self.price_momentum_prev <= 0: # if price is below lower BB, BUY
             signal = 1
             logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.ask, spread, "Go Long - Buy", True, False)
 
-        elif self.bid > self.bb_upper and self.has_high_rsi() and self.reverse_price_momentum():  # if price is above upper BB, SELL
+        elif self.bid > self.bb_upper and self.has_high_rsi() and self.reverse_rsi_momentum():  # if price is above upper BB, SELL
         # elif self.bid >= self.bb_upper and self.has_high_rsi() and self.price_momentum * self.price_momentum_prev <= 0:
             signal = -1
             logger.info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
@@ -224,9 +224,9 @@ class TradingStrategy():
 
     def reverse_rsi_momentum(self):
         # do not change this logic
-        if self.rsi_momentum < 0:
+        if self.rsi_momentum > 0:
             return self.rsi < self.rsi_max
-        elif self.rsi_momentum > 0:
+        elif self.rsi_momentum < 0:
             return self.rsi > self.rsi_min
         else:
             return False
@@ -263,14 +263,14 @@ class TradingStrategy():
             if trade_units > 0: # long position
                 # target = self.sma
                 target = min(self.sma,  transaction_price + 2 * (self.ask - self.bid))
-                if self.bid > target and self.reverse_price_momentum():
+                if self.bid > target and self.reverse_rsi_momentum():
                     logger.info(f"Close long position - Sell {-trade_units} units at bid price: {self.bid}, target: {target}")
                     return Trade_Action(self.instrument, -trade_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
             if trade_units < 0: # short position
                 target = max(self.sma,  transaction_price - 2 * (self.ask - self.bid))
                 # target = self.sma
-                if self.ask < target and self.reverse_price_momentum():
+                if self.ask < target and self.reverse_rsi_momentum():
                     logger.info(f"Close short position  - Buy {-trade_units} units at ask price: {self.ask}, target: {target}")
                     return Trade_Action(self.instrument, -trade_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
         
@@ -281,13 +281,13 @@ class TradingStrategy():
 
         if have_units > 0: # long position
                 target = self.sma
-                if self.bid > target and self.reverse_price_momentum():
+                if self.bid > target and self.reverse_rsi_momentum():
                     logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {target}")
                     return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
         if have_units < 0: # short position
             target = self.sma
-            if self.ask < target and self.reverse_price_momentum():
+            if self.ask < target and self.reverse_rsi_momentum():
                 logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {target}")
                 return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
 
