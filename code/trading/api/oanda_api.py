@@ -115,7 +115,7 @@ class OandaApi:
 
         return units
 
-    def stop_stream(self):
+    def stop_streaming(self):
         self.stop_stream = True
 
     def stream_prices(self, instrument, callback=None, stop=None):

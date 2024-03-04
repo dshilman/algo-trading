@@ -130,7 +130,7 @@ class Trader():
     def stop_streaming(self):
 
         logger.info ("Stop Stream")
-        self.api.stop_stream()
+        self.api.stop_streaming()
 
 
     def check_trading_time(self, refresh = 60):
