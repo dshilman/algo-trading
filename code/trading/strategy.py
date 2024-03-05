@@ -250,7 +250,7 @@ class TradingStrategy():
         target = None
         have_units = self.trading_session.have_units
 
-        if len (self.trading_session.trades) > 0:
+        if have_units != 0 and len (self.trading_session.trades) > 0:
             transaction_price =  self.trading_session.trades[-1][3]
             # traded_units = self.trading_session.trades[-1][2]
 
@@ -270,9 +270,9 @@ class TradingStrategy():
         have_units = self.trading_session.have_units
         
         if have_units > 0: # long position
-                if self.bid > self.price_target and self.reverse_rsi_momentum():
-                    logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {self.price_target}")
-                    return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
+            if self.bid > self.price_target and self.reverse_rsi_momentum():
+                logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {self.price_target}")
+                return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
         if have_units < 0: # short position
             if self.ask < self.price_target and self.reverse_rsi_momentum():
