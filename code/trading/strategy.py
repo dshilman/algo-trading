@@ -173,10 +173,7 @@ class TradingStrategy():
                 return trade_action
 
             logger.debug(f"Have {have_units} positions, checking if need to close")
-            if len (self.trading_session.trades) > 0:
-                trade = self.check_if_need_close_trade_from_hist()
-            else:
-                trade = self.check_if_need_close_trade()
+            trade = self.check_if_need_close_trade()
     
             if trade is not None:
                 return trade
