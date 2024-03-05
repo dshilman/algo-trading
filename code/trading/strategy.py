@@ -54,7 +54,7 @@ class TradingStrategy():
         self.price_min = None
         self.price_momentum = None
         self.price_momentum_prev = None
-
+        self.price_target = None
         
         self.rsi = None
         self.rsi_min = None
@@ -128,6 +128,7 @@ class TradingStrategy():
         self.price = round(last_prices[-1], 6)
         self.price_min = round(last_prices[-8:].min(), 6)
         self.price_max = round(last_prices.max(), 6)
+        self.price_target = round(self.get_target_price(), 6)
 
         logger.debug("\n" + df[-10:].to_string(header=True))
   
@@ -247,45 +248,38 @@ class TradingStrategy():
         
         return self.rsi_min < self.low_rsi
     
-    def check_if_need_close_trade_from_hist(self):
+    def get_target_price(self):
 
-        trade_units = self.trading_session.have_units
+        target = None
+        have_units = self.trading_session.have_units
 
         if len (self.trading_session.trades) > 0:
             transaction_price =  self.trading_session.trades[-1][3]
             # traded_units = self.trading_session.trades[-1][2]
 
-            if trade_units > 0: # long position
-                # target = self.sma
+            if have_units > 0: # long position
                 target = min(self.sma,  transaction_price + 2 * (self.ask - self.bid))
-                if self.bid > target and self.reverse_rsi_momentum():
-                    logger.info(f"Close long position - Sell {-trade_units} units at bid price: {self.bid}, target: {target}")
-                    return Trade_Action(self.instrument, -trade_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
-
-            if trade_units < 0: # short position
+       
+            elif have_units < 0: # short position
                 target = max(self.sma,  transaction_price - 2 * (self.ask - self.bid))
-                # target = self.sma
-                if self.ask < target and self.reverse_rsi_momentum():
-                    logger.info(f"Close short position  - Buy {-trade_units} units at ask price: {self.ask}, target: {target}")
-                    return Trade_Action(self.instrument, -trade_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
-        
-        return None
+        else:
+            target = self.sma
+
+        return target
 
     
     def check_if_need_close_trade(self):
 
         have_units = self.trading_session.have_units
-
+        
         if have_units > 0: # long position
-                target = self.sma
-                if self.bid > target and self.reverse_rsi_momentum():
-                    logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {target}")
+                if self.bid > self.price_target and self.reverse_rsi_momentum():
+                    logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {self.price_target}")
                     return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
         if have_units < 0: # short position
-            target = self.sma
-            if self.ask < target and self.reverse_rsi_momentum():
-                logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {target}")
+            if self.ask < self.price_target and self.reverse_rsi_momentum():
+                logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {self.price_target}")
                 return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
 
         return None
@@ -316,8 +310,8 @@ class TradingStrategy():
 
     def print_indicators(self):
 
-        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, '{0:f}'.format(self.rsi_momentum), '{0:f}'.format(self.price), '{0:f}'.format(self.price_min), '{0:f}'.format(self.price_max), '{0:f}'.format(self.price_momentum)]]
-        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "RSI MOMENTUM", "PRICE", "PRICE MIN", "PRICE MAX", "PRICE MOMENTUM"]
+        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, '{0:f}'.format(self.rsi_momentum), '{0:f}'.format(self.price), '{0:f}'.format(self.price_min), '{0:f}'.format(self.price_max), '{0:f}'.format(self.price_momentum), '{0:f}'.format(self.price_target)]]
+        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "RSI MOMENTUM", "PRICE", "PRICE MIN", "PRICE MAX", "PRICE MOMENTUM", "TARGET PRICE"]
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
 
 
