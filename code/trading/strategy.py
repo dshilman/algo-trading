@@ -74,7 +74,7 @@ class TradingStrategy():
 
             if order is not None:
                 have_units = self.submit_order(order, have_units)
-                self.trading_session.add_trade(trade_action=trade_action, have_units=have_units, rsi=self.rsi)
+                have_units = self.trading_session.add_trade(trade_action=trade_action, have_units=have_units, rsi=self.rsi)
 
 
         if trade_action is not None and trade_action.sl_trade:
@@ -317,8 +317,8 @@ class TradingStrategy():
 
     def print_indicators(self):
 
-        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, '{0:f}'.format(self.rsi_momentum), '{0:f}'.format(self.price_momentum)]]
-        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "RSI MOMENTUM", "PRICE MOMENTUM"]
+        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, '{0:f}'.format(self.rsi_momentum), '{0:f}'.format(self.price), '{0:f}'.format(self.price_min), '{0:f}'.format(self.price_max), '{0:f}'.format(self.price_momentum)]]
+        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "RSI MOMENTUM", "PRICE", "PRICE MIN", "PRICE MAX", "PRICE MOMENTUM"]
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
 
 
