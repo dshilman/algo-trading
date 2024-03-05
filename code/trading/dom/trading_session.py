@@ -31,13 +31,10 @@ class Trading_Session():
 
 
 
-    def add_trade(self, trade_action: Trade_Action, have_units=None, date_time=None, rsi=None):
+    def add_trade(self, trade_action: Trade_Action, date_time=None, rsi=None):
 
         if date_time is None:
             date_time = datetime.utcnow()
-
-        if have_units is not None:
-            self.have_units = have_units
 
         transaction = None
         if self.have_units == 0 and trade_action.units > 0:
@@ -72,7 +69,7 @@ class Trading_Session():
         self.have_units = self.have_units + trade_action.units
         self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.units, trade_action.price, rsi, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
 
-        return self.have_units
+        return
 
     def print_trades(self):
 

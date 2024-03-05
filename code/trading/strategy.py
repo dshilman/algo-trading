@@ -74,7 +74,7 @@ class TradingStrategy():
 
             if order is not None:
                 self.submit_order(order)
-                have_units = self.trading_session.add_trade(trade_action=trade_action, have_units=have_units, rsi=self.rsi)
+                self.trading_session.add_trade(trade_action=trade_action, rsi=self.rsi)
 
 
         if trade_action is not None and trade_action.sl_trade:
