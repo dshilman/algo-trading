@@ -38,8 +38,7 @@ class Trader():
         self.end = config.get(self.instrument, 'end')
 
         self.tick_data = []
-        self.units = 0
-
+        
         class_ = None
 
         try:
@@ -183,7 +182,7 @@ class Trader():
                 now = datetime.utcnow()
                 if pause_trading == None or now > pause_trading:
                     try:
-                        self.units = self.strategy.execute_strategy(self.units)
+                        self.strategy.execute_strategy()
                     except PauseTradingException as e:
                         logger.error(f"Caught Stop Loss Error. Keep Traiding...")
                         # logger.error(f"Pausing Trading for {e.hours} hour(s)")
@@ -212,10 +211,11 @@ class Trader():
 
                 logger.debug("Check Positions")
 
-                # self.units = self.api.get_instrument_positions(instrument = self.instrument)
-                self.units = self.api.get_position(instrument = self.instrument)
+                units = self.api.get_position(instrument = self.instrument)
+                if not units == self.strategy.trading_session.have_units:
+                    self.strategy.trading_session.have_units = units
 
-                logger.info(f"Instrument: {self.instrument}, Units: {self.units}")
+                logger.info(f"Instrument: {self.instrument}, Units: {units}")
 
 
                 time.sleep(refresh)

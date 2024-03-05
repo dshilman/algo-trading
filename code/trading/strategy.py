@@ -63,9 +63,9 @@ class TradingStrategy():
         self.rsi_momentum_prev = None
 
 
-    def execute_strategy(self, have_units):
+    def execute_strategy(self):
 
-        trade_action = self.determine_trade_action(have_units)        
+        trade_action = self.determine_trade_action()        
 
         if trade_action is not None:
             # logger.info(f"trade_action: {trade_action}")
@@ -80,7 +80,7 @@ class TradingStrategy():
         if trade_action is not None and trade_action.sl_trade:
             raise PauseTradingException(2)
 
-        return have_units
+        return
 
     def calc_indicators(self, resampled_tick_data: pd.DataFrame = None):
         
@@ -161,39 +161,40 @@ class TradingStrategy():
         logger.info(json.dumps(order, indent = 2))
         logger.info("\n" + 100 * "-" + "\n")
 
-    def determine_trade_action(self, have_units, date_time = None) -> Trade_Action:
+    def determine_trade_action(self) -> Trade_Action:
 
-        if date_time is None:
-            date_time = datetime.utcnow()
+        have_units = self.trading_session.have_units
 
         if have_units != 0:  # if already have positions
             logger.debug(f"Have {have_units} positions, checking for stop loss")
-            trade_action = self.check_for_sl(have_units)
+            trade_action = self.check_for_sl()
             if trade_action is not None:
                 return trade_action
 
             logger.debug(f"Have {have_units} positions, checking if need to close")
             if len (self.trading_session.trades) > 0:
-                trade = self.check_if_need_close_trade_from_hist(have_units)
+                trade = self.check_if_need_close_trade_from_hist()
             else:
-                trade = self.check_if_need_close_trade(have_units)
+                trade = self.check_if_need_close_trade()
     
             if trade is not None:
                 return trade
 
         else:        
             logger.debug(f"Have {have_units} positions, checking if need to open")
-            trade = self.check_if_need_open_trade(have_units, date_time)
+            trade = self.check_if_need_open_trade()
             if trade is not None:
                 return trade
 
         return None
 
 
-    def check_if_need_open_trade(self, have_units, date_time = None):
+    def check_if_need_open_trade(self):
         
         # if self.pause_trading(date_time):
         #     return
+
+        have_units = self.trading_session.have_units
 
         spread = round(self.ask - self.bid, 4)
         # check if need to open a new position
@@ -246,13 +247,13 @@ class TradingStrategy():
         
         return self.rsi_min < self.low_rsi
     
-    def check_if_need_close_trade_from_hist(self, have_units):
+    def check_if_need_close_trade_from_hist(self):
+
+        trade_units = self.trading_session.have_units
 
         if len (self.trading_session.trades) > 0:
             transaction_price =  self.trading_session.trades[-1][3]
             # traded_units = self.trading_session.trades[-1][2]
-
-            trade_units = have_units
 
             if trade_units > 0: # long position
                 # target = self.sma
@@ -271,7 +272,9 @@ class TradingStrategy():
         return None
 
     
-    def check_if_need_close_trade(self, have_units):
+    def check_if_need_close_trade(self):
+
+        have_units = self.trading_session.have_units
 
         if have_units > 0: # long position
                 target = self.sma
@@ -287,7 +290,9 @@ class TradingStrategy():
 
         return None
 
-    def check_for_sl(self, have_units):
+    def check_for_sl(self):
+
+        have_units = self.trading_session.have_units
 
         if len (self.trading_session.trades) == 0:
             return None

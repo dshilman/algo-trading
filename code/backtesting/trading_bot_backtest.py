@@ -163,7 +163,7 @@ class TradingBacktester():
                 if pause_trading == None or index > pause_trading:
                     trade_action = None
                     try:
-                        trade_action = self.strategy.determine_trade_action(self.strategy.trading_session.have_units, index)
+                        trade_action = self.strategy.determine_trade_action()
                     except PauseTradingException as e:
                         logger.info(f"Pausing trading for {e.hours} hour(s) at {index}")
                         pause_trading = index + timedelta(hours = e.hours)
