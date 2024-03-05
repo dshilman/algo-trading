@@ -73,7 +73,7 @@ class TradingStrategy():
             order = self.create_order(trade_action, self.sl_perc, self.tp_perc)
 
             if order is not None:
-                have_units = self.submit_order(order, have_units)
+                self.submit_order(order)
                 have_units = self.trading_session.add_trade(trade_action=trade_action, have_units=have_units, rsi=self.rsi)
 
 
@@ -136,25 +136,19 @@ class TradingStrategy():
         self.data = df.copy()
 
     
-    def submit_order(self, order: Order, units: int):
+    def submit_order(self, order: Order):
 
         logger.info(f"Submitting Order: {order}")
         if not self.unit_test:        
             # result = self.api.create_order(order=order)
             result = self.api.place_order(order=order)
             self.report_trade(result)
-            if "rejectReason" not in result:
-                units = units + order.units
-                logger.info(f"New # of {order.instrument} units: {units}")
-            else:
+            if "rejectReason" in result:               
                 error = f"Order was not filled: {result ['type']}, reason: {result['rejectReason']}"
                 logger.error(error)
                 raise Exception(error)
-        else:
-            units = units + order.units
-            logger.info(f"New # of {order.instrument} units: {units}")
-
-        return units
+        
+        return
 
     def report_trade(self, order):
 

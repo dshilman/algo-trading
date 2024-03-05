@@ -129,7 +129,7 @@ class TradingBacktester():
 
     def get_data(self):
 
-        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}.pcl"
+        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_t.pcl"
         if self.refresh:
             logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()
@@ -153,7 +153,6 @@ class TradingBacktester():
             df = self.calculate_indicators(df)
     
             logger.info(f"Starting trading for {self.strategy.instrument}...")
-            self.have_units = 0
 
             pause_trading = None
 
@@ -164,7 +163,7 @@ class TradingBacktester():
                 if pause_trading == None or index > pause_trading:
                     trade_action = None
                     try:
-                        trade_action = self.strategy.determine_trade_action(self.have_units, index)
+                        trade_action = self.strategy.determine_trade_action(self.strategy.trading_session.have_units, index)
                     except PauseTradingException as e:
                         logger.info(f"Pausing trading for {e.hours} hour(s) at {index}")
                         pause_trading = index + timedelta(hours = e.hours)
@@ -172,7 +171,7 @@ class TradingBacktester():
                                         
                     if trade_action != None:
                         # self.strategy.print_indicators()
-                        self.have_units = self.strategy.trading_session.add_trade(trade_action=trade_action, have_units=self.have_units, date_time=index, rsi=self.strategy.rsi)
+                        self.strategy.trading_session.add_trade(trade_action=trade_action, date_time=index, rsi=self.strategy.rsi)
                         # if trade_action.sl_trade:
                             # logger.info(f"Pausing trading for 2 hours at {index}")
                             # pause_trading = index + timedelta(hours = 2)                        
