@@ -197,9 +197,9 @@ class TradingStrategy():
 
         spread = round(self.ask - self.bid, 4)
         # check if need to open a new position
-        if 1.5 * spread >= abs(self.bb_upper - self.sma):                            
-            logger.debug(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
-            return None
+        # if 1.5 * spread >= abs(self.bb_upper - self.sma):                            
+        #     logger.debug(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
+        #     return None
 
         if self.ask < self.bb_lower and self.has_low_rsi() and self.reverse_rsi_momentum(): # if price is below lower BB, BUY
         # if self.ask <= self.bb_lower and self.has_low_rsi() and self.price_momentum * self.price_momentum_prev <= 0: # if price is below lower BB, BUY

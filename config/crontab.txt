@@ -40,5 +40,3 @@
 30 18 * * 0-5 ~/algo-trading/start_trading.sh
 30 19 * * 0-5 ~/algo-trading/start_trading.sh
 30 20 * * 0-5 ~/algo-trading/start_trading.sh
-
-
