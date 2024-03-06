@@ -160,7 +160,7 @@ class OandaApi:
                         callback(instrument=instrument, time=time, bid=bid, ask=ask)
                     else:
                         self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask)
-                    
+                
                     if self.stop_stream or stop is not None and count >= stop:
                         break
 

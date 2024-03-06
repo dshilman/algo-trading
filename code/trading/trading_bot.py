@@ -172,10 +172,7 @@ class Trader():
 
                 if len(temp_tick_data) > 0:
                     df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "ask"])
-                    df.reset_index(inplace=True)
                     df.set_index('time', inplace=True)    
-                    df.drop(columns=['index'], inplace=True)
-
                     df = df.resample("30s").last()
                     logger.debug(f"Resampled Data: {df}")
 
@@ -234,7 +231,11 @@ class Trader():
  
     def new_price_tick(self, instrument, time, bid, ask):
 
-        logger.debug(f"{instrument} ----- time: {time}  ---- ask: {ask} ----- bid: {bid}")
+        if not (instrument and time and bid and ask):
+            logger.error(f"Invalid values!!! instrument: {instrument} --- time: {time}  --- ask: {ask} --- bid: {bid}")
+            return
+        
+        logger.debug(f"{instrument} --- time: {time}  --- ask: {ask} --- bid: {bid}")
          # 2023-12-19T13:28:35.194571445Z
         date_time = pd.to_datetime(time).replace(tzinfo=None)
         
