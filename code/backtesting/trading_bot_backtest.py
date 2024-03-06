@@ -79,18 +79,19 @@ class TradingBacktester():
         
         # df["std"] = df[instrument].rolling(SMA).std()
         # df["std_sma"] = df["std"].rolling(SMA).mean()
-        
+
+        period = 8
         rsi_periods = int(SMA/2)
         df["RSI"] = df[instrument].rolling(rsi_periods).apply(lambda x: calculate_rsi(x.values, rsi_periods))
-        df["rsi_momentum"] = df.RSI.rolling(8).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))
+        df["rsi_momentum"] = df.RSI.rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))
         df["rsi_momentum_prev"] = df ["rsi_momentum"].shift(1)
-        df["rsi_max"] = df ['RSI'].rolling(8).max()
-        df["rsi_min"] = df ['RSI'].rolling(8).min()
+        df["rsi_max"] = df ['RSI'].rolling(period).max()
+        df["rsi_min"] = df ['RSI'].rolling(period).min()
+        df["rsi_avg"] = df ['RSI'].rolling(period).apply(lambda x: x.ewm(com=period - 1, min_periods=period).mean().iloc[-1])
+        df["price_max"] = df [instrument].rolling(period).max()
+        df["price_min"] = df [instrument].rolling(period).min()
 
-        df["price_max"] = df [instrument].rolling(8).max()
-        df["price_min"] = df [instrument].rolling(8).min()
-
-        df["momentum"] = df[instrument].rolling(8).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))        
+        df["momentum"] = df[instrument].rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))        
         df["momentum_prev"] = df["momentum"].shift(1)
         
 
@@ -112,6 +113,7 @@ class TradingBacktester():
             self.strategy.rsi = round(row ['RSI'], 4)
             self.strategy.rsi_max = round(row ['rsi_max'], 4)
             self.strategy.rsi_min = round(row ['rsi_min'], 4)
+            self.strategy.rsi_avg = round(row ['rsi_avg'], 4)
 
             self.strategy.rsi_momentum = round(row ["rsi_momentum"], 6)
             self.strategy.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)

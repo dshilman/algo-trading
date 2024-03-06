@@ -14,3 +14,12 @@ class EUR_HKD_Strategy (TradingStrategy):
 
     def has_low_rsi(self):
         return self.rsi < self.low_rsi
+
+    def reverse_rsi_momentum(self):
+        # do not change this logic
+        if self.rsi_momentum > 0:
+            return  self.rsi < self.rsi_avg
+        elif self.rsi_momentum < 0:
+            return self.rsi_avg < self.rsi
+        else:
+            return False

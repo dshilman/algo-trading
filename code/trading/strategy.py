@@ -60,6 +60,7 @@ class TradingStrategy():
         self.rsi = None
         self.rsi_min = None
         self.rsi_max = None
+        self.rsi_avg = None
         self.rsi_momentum = None
         self.rsi_momentum_prev = None
 
@@ -115,23 +116,28 @@ class TradingStrategy():
         self.bb_lower = round(df.Lower.iloc[-1], 6)
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
         # self.rsi = round(df.RSI.iloc[-1], 4)
-        last_rsi = df.RSI[-8:].values
-        self.rsi = last_rsi[-1]
-        self.rsi_min = last_rsi.min()
-        self.rsi_max = last_rsi.max()
+
+        period = 8
+
+        last_rsi = df.RSI[-period:]
+        self.rsi = last_rsi.iloc[-1]
+        self.rsi_min = round(last_rsi.min(), 4)
+        self.rsi_max = round(last_rsi.max(), 4)
+        self.rsi_avg = round(last_rsi.ewm(com=period - 1, min_periods=period).mean().iloc[-1], 4)
+
         self.rsi_momentum = round(df ["rsi_momentum"].iloc[-1], 6)
         self.rsi_momentum_prev = round(df ["rsi_momentum"].iloc[-2], 6)
 
-        last_momentum = df.momentum[-8:].values
+        last_momentum = df.momentum[-period:].values
         self.price_momentum = round(last_momentum[-1], 6)
         self.price_momentum_prev = round(last_momentum[-2], 6)
-        last_prices = df[self.instrument][-8:].values
+        last_prices = df[self.instrument][-period:].values
         self.price = round(last_prices[-1], 6)
-        self.price_min = round(last_prices[-8:].min(), 6)
+        self.price_min = round(last_prices[-period:].min(), 6)
         self.price_max = round(last_prices.max(), 6)
         self.price_target = round(self.get_target_price(), 6)
 
-        logger.debug("\n" + df[-10:].to_string(header=True))
+        logger.debug("\n" + df[-period:].to_string(header=True))
   
         self.print_indicators()
         
@@ -219,9 +225,9 @@ class TradingStrategy():
     def reverse_rsi_momentum(self):
         # do not change this logic
         if self.rsi_momentum > 0:
-            return self.rsi < self.rsi_max
+            return  self.rsi < self.rsi_max
         elif self.rsi_momentum < 0:
-            return self.rsi > self.rsi_min
+            return self.rsi_min < self.rsi
         else:
             return False
 
