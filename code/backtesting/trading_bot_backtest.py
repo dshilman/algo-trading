@@ -125,11 +125,14 @@ class TradingBacktester():
 
             self.strategy.price_momentum = row ['momentum']
             self.strategy.price_momentum_prev = row ['momentum_prev']
+
+            self.strategy.price_target = round(self.strategy.get_target_price(), 6)
+
           
 
     def get_data(self):
 
-        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_t.pcl"
+        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}.pcl"
         if self.refresh:
             logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()

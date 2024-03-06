@@ -47,8 +47,10 @@ class Trader():
         except:
             logger.error(f"Strategy not found for {instrument}")
             class_ = TradingStrategy
-
+        
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
+
+        logger.info(f"Trading Strategy: {self.strategy}")
 
         today = datetime.utcnow().date()
 

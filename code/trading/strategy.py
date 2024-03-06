@@ -41,6 +41,7 @@ class TradingStrategy():
         self.high_rsi = float(config.get(self.instrument, 'high_rsi'))
         self.pause_start = int(config.get(self.instrument, 'pause_start'))
         self.pause_end = int(config.get(self.instrument, 'pause_end'))
+        self.target = float(config.get(self.instrument, 'target'))
 
 
         self.data = None
@@ -255,10 +256,10 @@ class TradingStrategy():
             # traded_units = self.trading_session.trades[-1][2]
 
             if have_units > 0: # long position
-                target = min(self.sma,  transaction_price + 2 * (self.ask - self.bid))
+                target = min(self.sma,  transaction_price + self.target * (self.ask - self.bid))
        
             elif have_units < 0: # short position
-                target = max(self.sma,  transaction_price - 2 * (self.ask - self.bid))
+                target = max(self.sma,  transaction_price - self.target * (self.ask - self.bid))
         else:
             target = self.sma
 
@@ -357,3 +358,17 @@ class TradingStrategy():
             return True
 
         return False
+
+    """
+        SMA=200
+        dev=2
+        sl_perc=0.0025
+        high_rsi=60
+        low_rsi=35
+        target=3
+    """
+    def __str__(self):
+        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}, rsi high: {self.high_rsi}, rsi low: {self.low_rsi}, target: {self.target}"
+
+    def __repr__(self):
+        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}, rsi high: {self.high_rsi}, rsi low: {self.low_rsi}, target: {self.target}"
