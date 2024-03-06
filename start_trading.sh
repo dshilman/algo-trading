@@ -77,13 +77,3 @@ else
     ~/algo-trading/trader_oanda_EUR_GBP.sh &
 fi
 
-# AUD_CHF
-if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_AUD_CHF.sh' >/dev/null
-then
-    echo $(date) " AUD_CHF Trading bot is already running." 
-    echo $(date) " AUD_CHF Trading bot is already running." >>~/algo-trading/logs/trading/time_check.txt
-else
-    echo $(date) " AUD_CHF Trading bot is not running. Starting it now..." 
-    echo $(date) " AUD_CHF Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
-    ~/algo-trading/trader_oanda_AUD_CHF.sh &
-fi

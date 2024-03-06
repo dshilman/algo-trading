@@ -16,9 +16,7 @@ processes=(
     "python3 trading_bot.py USD_CAD"
     "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_GBP.sh"
     "python3 trading_bot.py EUR_GBP"
-    "/bin/sh /home/ec2-user/algo-trading/trader_oanda_AUD_CHF.sh"
-    "python3 trading_bot.py AUD_CHF"
-)
+   )
 
 # Loop through each process name
 for process_name in "${processes[@]}"; do

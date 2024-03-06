@@ -115,12 +115,11 @@ class TradingStrategy():
         
         self.bb_lower = round(df.Lower.iloc[-1], 6)
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
-        # self.rsi = round(df.RSI.iloc[-1], 4)
 
         period = 8
 
         last_rsi = df.RSI[-period:]
-        self.rsi = last_rsi.iloc[-1]
+        self.rsi = round(last_rsi.iloc[-1], 4)
         self.rsi_min = round(last_rsi.min(), 4)
         self.rsi_max = round(last_rsi.max(), 4)
         self.rsi_avg = round(last_rsi.ewm(com=period - 1, min_periods=period).mean().iloc[-1], 4)

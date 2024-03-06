@@ -59,6 +59,7 @@ class Trader():
         if self.to_dt < self.from_dt:
             self.to_dt = self.to_dt + timedelta(days=1)
 
+        self.terminate = False
 
         super().__init__()
 
@@ -92,7 +93,7 @@ class Trader():
 
         treads = []
         treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
-        treads.append(threading.Thread(target=self.check_trading_time, args=(60,)))
+        treads.append(threading.Thread(target=self.check_trading_time, args=(5 * 60,)))
         treads.append(threading.Thread(target=self.refresh_strategy, args=(15,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
@@ -138,9 +139,9 @@ class Trader():
 
         while not self.terminate:
 
-            logger.debug("Check Trading Time")
-
             now = datetime.utcnow()
+            logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
+            
             
             if self.from_dt <= now <= self.to_dt:
                 time.sleep(refresh)
