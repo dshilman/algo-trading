@@ -86,6 +86,6 @@ then
 else
     echo $(date) " EUR_CHF Trading bot is not running. Starting it now..." 
     echo $(date) " EUR_CHF Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
-    ~/algo-trading/trader_oanda_EUR_GBP.sh &
+    ~/algo-trading/trader_oanda_EUR_CHF.sh &
 fi
 
