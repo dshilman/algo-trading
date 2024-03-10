@@ -4,6 +4,7 @@ import logging
 import sys
 from datetime import datetime, time
 from pathlib import Path
+from random import randint
 
 import pandas as pd
 from tabulate import tabulate
@@ -17,7 +18,8 @@ from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
 from trading.dom.trading_session import Trading_Session
 from trading.errors import PauseTradingException
-from trading.tech_indicators import calculate_slope, calculate_rsi, calculate_momentum
+from trading.tech_indicators import (calculate_momentum, calculate_rsi,
+                                     calculate_slope)
 
 logger = logging.getLogger()
 
@@ -39,10 +41,10 @@ class TradingStrategy():
         self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
         self.low_rsi = float(config.get(self.instrument, 'low_rsi'))
         self.high_rsi = float(config.get(self.instrument, 'high_rsi'))
-        self.pause_start = int(config.get(self.instrument, 'pause_start'))
-        self.pause_end = int(config.get(self.instrument, 'pause_end'))
+        self.pause_start = config.get(self.instrument, 'pause_start')
+        self.pause_end = config.get(self.instrument, 'pause_end')
         self.target = float(config.get(self.instrument, 'target'))
-
+        
 
         self.data = None
         # Caculated attributes
@@ -67,7 +69,8 @@ class TradingStrategy():
 
     def execute_strategy(self):
 
-        trade_action = self.determine_trade_action()        
+        trading_time = datetime.utcnow()
+        trade_action = self.determine_trade_action(trading_time)        
 
         if trade_action is not None:
             # logger.info(f"trade_action: {trade_action}")
@@ -161,20 +164,20 @@ class TradingStrategy():
 
         logger.info("\n" + 100 * "-" + "\n")
         logger.info("")
-        logger.info("\n" + self.data[-10:].to_string(header=True))
+        logger.info("\n" + self.data[-8:].to_string(header=True))
         logger.info("")
         self.print_indicators()
         logger.info("")
         logger.info(json.dumps(order, indent = 2))
         logger.info("\n" + 100 * "-" + "\n")
 
-    def determine_trade_action(self) -> Trade_Action:
+    def determine_trade_action(self, trading_time) -> Trade_Action:
 
         have_units = self.trading_session.have_units
 
         if have_units != 0:  # if already have positions
             logger.debug(f"Have {have_units} positions, checking for stop loss")
-            trade_action = self.check_for_sl()
+            trade_action = self.check_for_sl(trading_time)
             if trade_action is not None:
                 return trade_action
 
@@ -186,37 +189,32 @@ class TradingStrategy():
 
         else:        
             logger.debug(f"Have {have_units} positions, checking if need to open")
-            trade = self.check_if_need_open_trade()
+            trade = self.check_if_need_open_trade(trading_time)
             if trade is not None:
                 return trade
 
         return None
 
 
-    def check_if_need_open_trade(self):
+    def check_if_need_open_trade(self, trading_time):
         
-        # if self.pause_trading(date_time):
-        #     return
-
-        have_units = self.trading_session.have_units
-
         spread = round(self.ask - self.bid, 4)
         # check if need to open a new position
         # if 1.5 * spread >= abs(self.bb_upper - self.sma):                            
         #     logger.debug(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
         #     return None
 
-        if self.ask < self.bb_lower and self.has_low_rsi() and self.reverse_rsi_momentum(): # if price is below lower BB, BUY
+        if self.ask < self.bb_lower and self.has_low_rsi(trading_time) and self.reverse_rsi_momentum(): # if price is below lower BB, BUY
         # if self.ask <= self.bb_lower and self.has_low_rsi() and self.price_momentum * self.price_momentum_prev <= 0: # if price is below lower BB, BUY
             signal = 1
             logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
-            return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.ask, spread, "Go Long - Buy", True, False)
+            return Trade_Action(self.instrument, signal * (self.units_to_trade + randint(0, 5)), self.ask, spread, "Go Long - Buy", True, False)
 
-        elif self.bid > self.bb_upper and self.has_high_rsi() and self.reverse_rsi_momentum():  # if price is above upper BB, SELL
+        elif self.bid > self.bb_upper and self.has_high_rsi(trading_time) and self.reverse_rsi_momentum():  # if price is above upper BB, SELL
         # elif self.bid >= self.bb_upper and self.has_high_rsi() and self.price_momentum * self.price_momentum_prev <= 0:
             signal = -1
             logger.info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
-            return Trade_Action(self.instrument, signal * (self.units_to_trade + (0 if have_units == 0 else 1)), self.bid, spread, "Go Short - Sell", True, False)
+            return Trade_Action(self.instrument, signal * (self.units_to_trade + randint(0, 5)), self.bid, spread, "Go Short - Sell", True, False)
             
         return
     
@@ -243,13 +241,22 @@ class TradingStrategy():
             return False
         # return self.price < self.price_max if self.price_momentum < 0 else self.price > self.price_min
         
-    def has_high_rsi(self):
+    def has_high_rsi(self, trading_time):
 
-        return self.rsi_max > self.high_rsi
-    
-    def has_low_rsi(self):
+        if self.risk_time(trading_time):
+            return self.rsi > 70
+        else:
+            return self.rsi_max > self.high_rsi
         
-        return self.rsi_min < self.low_rsi
+        # return self.rsi_max > (self.high_rsi if not self.risk_time(trading_time) else 70)
+    
+    def has_low_rsi(self, trading_time = None):
+        
+        if self.risk_time(trading_time):
+            return self.rsi < 30
+        else:
+            return self.rsi_min < self.low_rsi
+        # return self.rsi_min < (self.low_rsi if not self.risk_time(trading_time) else 30)
     
     def get_target_price(self):
 
@@ -287,7 +294,7 @@ class TradingStrategy():
 
         return None
 
-    def check_for_sl(self):
+    def check_for_sl(self, trading_time):
 
         have_units = self.trading_session.have_units
 
@@ -297,17 +304,18 @@ class TradingStrategy():
         transaction_price =  self.trading_session.trades[-1][3]
         traded_units = self.trading_session.trades[-1][2]
 
-        if have_units < 0:
-            current_loss_perc = round((self.ask - transaction_price)/transaction_price, 4)
-            if current_loss_perc >= self.sl_perc  - .0005:
-                logger.info(f"Close short position, - Stop Loss Buy, short price {transaction_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
-                return Trade_Action(self.instrument, -traded_units, self.ask, (self.ask - self.bid), "Close Short - Stop Loss Buy", False, True)
+        if (traded_units == have_units):
+            if have_units < 0:
+                current_loss_perc = round((self.ask - transaction_price)/transaction_price, 4)
+                if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc  - .0005):
+                    logger.info(f"Close short position, - Stop Loss Buy, short price {transaction_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
+                    return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Short - Stop Loss Buy", False, True)
 
-        if have_units > 0:
-            current_loss_perc = round((transaction_price - self.bid)/transaction_price, 4)
-            if current_loss_perc >= self.sl_perc - .0005:
-                logger.info(f"Close long position, - Stop Loss Sell, long price {transaction_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
-                return Trade_Action(self.instrument, -traded_units, self.bid, (self.ask - self.bid), "Close Long - Stop Loss Sell", False, True)
+            if have_units > 0:
+                current_loss_perc = round((transaction_price - self.bid)/transaction_price, 4)
+                if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc  - .0005):
+                    logger.info(f"Close long position, - Stop Loss Sell, long price {transaction_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
+                    return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Long - Stop Loss Sell", False, True)
         
         return None
 
@@ -355,11 +363,15 @@ class TradingStrategy():
 
         return order
 
-    def pause_trading(self, date_time) -> bool:
+    def risk_time(self, date_time) -> bool:
 
         logger.debug(f"Date time: {date_time}")
 
-        if self.pause_start != self.pause_end and self.pause_start <= date_time.hour <= self.pause_end:
+        pause_from_dt = datetime.combine(date_time, datetime.strptime(self.pause_start, '%H:%M:%S').time())
+        pause_to_dt = datetime.combine(date_time, datetime.strptime(self.pause_end, '%H:%M:%S').time())
+
+
+        if pause_from_dt < date_time < pause_to_dt:
             return True
 
         return False

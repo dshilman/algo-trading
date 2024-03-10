@@ -134,7 +134,7 @@ class TradingBacktester():
 
     def get_data(self):
 
-        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}.pcl"
+        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_t.pcl"
         if self.refresh:
             logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()
@@ -168,7 +168,7 @@ class TradingBacktester():
                 if pause_trading == None or index > pause_trading:
                     trade_action = None
                     try:
-                        trade_action = self.strategy.determine_trade_action()
+                        trade_action = self.strategy.determine_trade_action(trading_time=index)
                     except PauseTradingException as e:
                         logger.info(f"Pausing trading for {e.hours} hour(s) at {index}")
                         pause_trading = index + timedelta(hours = e.hours)
