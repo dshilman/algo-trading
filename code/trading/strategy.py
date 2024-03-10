@@ -243,16 +243,16 @@ class TradingStrategy():
         
     def has_high_rsi(self, trading_time):
 
-        if self.risk_time(trading_time):
+        if self.risk_time(trading_time) or self.rsi_max - self.rsi >= 10:
             return self.rsi > 70
         else:
             return self.rsi_max > self.high_rsi
         
         # return self.rsi_max > (self.high_rsi if not self.risk_time(trading_time) else 70)
     
-    def has_low_rsi(self, trading_time = None):
+    def has_low_rsi(self, trading_time):
         
-        if self.risk_time(trading_time):
+        if self.risk_time(trading_time) or self.rsi_max - self.rsi >= 10:
             return self.rsi < 30
         else:
             return self.rsi_min < self.low_rsi
