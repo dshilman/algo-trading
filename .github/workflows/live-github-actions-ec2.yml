@@ -1,10 +1,9 @@
-name: Push-to-EC2
+name: Push-to-LIVE-EC2
 
-# Trigger deployment only on push to master branch
 on:
-  push:
+  pull_request:
     branches:
-      - main
+      - live
 
 jobs:
   deploy:
@@ -15,11 +14,17 @@ jobs:
       - name: Checkout the files
         uses: actions/checkout@v2
 
+      - name: Create OANDA Config
+        run: |          
+          cat << EOF > config/oanda.cfg
+          ${{ secrets.OANDA_CONFIG_LIVE }}
+          EOF
+
       - name: Deploy to Server 1
         uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: ${{ secrets.TARGET }}
+          REMOTE_HOST: ${{ vars.LIVE_REMOTE_HOST }}
+          TARGET: ${{ vars.TARGET }}
 
