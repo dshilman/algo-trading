@@ -20,6 +20,7 @@ from trading.api.oanda_api import OandaApi
 from trading.errors import PauseTradingException
 from trading.tech_indicators import calculate_rsi, calculate_momentum
 from trading.strategy import TradingStrategy
+from trading.strategy_b import TradingStrategy_B
 
 logger = logging.getLogger()
 
@@ -48,7 +49,7 @@ class TradingBacktester():
             class_ = getattr(module, f"{instrument}_Strategy")
         except:
             logger.error(f"Strategy not found for {instrument}")
-            class_ = TradingStrategy
+            class_ = TradingStrategy_B
 
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)

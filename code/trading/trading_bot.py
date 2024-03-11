@@ -18,6 +18,7 @@ sys.path.append(str(root))
 from trading.api.oanda_api import OandaApi
 from trading.errors import PauseTradingException
 from trading.strategy import TradingStrategy
+from trading.strategy_b import TradingStrategy_B
 
 logger = logging.getLogger()
 
@@ -38,6 +39,7 @@ class Trader():
         self.end = config.get(self.instrument, 'end')
 
         self.tick_data = []
+        self.stop_loss_count = 0
         
         class_ = None
 
@@ -46,7 +48,7 @@ class Trader():
             class_ = getattr(module, f"{instrument}_Strategy")
         except:
             logger.error(f"Strategy not found for {instrument}")
-            class_ = TradingStrategy
+            class_ = class_ = TradingStrategy_B
         
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
 
@@ -158,8 +160,6 @@ class Trader():
 
         i: int = 0
 
-        pause_trading = None
-
         while not self.terminate:
 
             logger.debug("Refreshing Strategy")
@@ -179,16 +179,16 @@ class Trader():
 
                 self.strategy.calc_indicators(df)
             
-                now = datetime.utcnow()
-                if pause_trading == None or now > pause_trading:
-                    try:
-                        self.strategy.execute_strategy()
-                    except PauseTradingException as e:
-                        logger.error(f"Caught Stop Loss Error. Keep Traiding...")
-                        # logger.error(f"Pausing Trading for {e.hours} hour(s)")
-                        # pause_trading = now + timedelta(hours = e.hours)
-                else:
-                    logger.info(f"Pausing Trading until: {pause_trading}")
+                try:
+                    self.strategy.execute_strategy()
+                except PauseTradingException as e:
+                    logger.error(f"Caught Stop Loss Error. Keep Traiding...")
+                    self.stop_loss_count = self.stop_loss_count + 1
+
+                    if self.stop_loss_count > 2:
+                        logger.error(f"Stop Loss Count > 2. Terminating Trading")
+                        self.terminate = True
+                        break
 
                 time.sleep(refresh)
 

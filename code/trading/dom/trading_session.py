@@ -37,37 +37,39 @@ class Trading_Session():
             date_time = datetime.utcnow()
 
         transaction = None
-        if self.have_units == 0 and trade_action.units > 0:
+        if self.have_units >= 0 and trade_action.units > 0:
             self.trade_cost = abs(trade_action.units) * trade_action.price
-            self.outstanding = self.trade_cost
-            self.trade_pl = 0
+            self.outstanding = self.outstanding + self.trade_cost      
+            self.trade_pl = 0      
             self.go_long = self.go_long + 1
-            transaction = "Go Long"
+            transaction = "Go Long - Buy"
             # logger.info(f"Go Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
-        elif self.have_units == 0 and trade_action.units < 0:
+        elif self.have_units <= 0 and trade_action.units < 0:
             self.trade_cost = abs(trade_action.units) * trade_action.price
-            self.outstanding = self.trade_cost
-            self.trade_pl = 0
+            self.outstanding = self.outstanding + self.trade_cost      
+            self.trade_pl = 0      
             self.go_short = self.go_short + 1
-            transaction = "Go Short"
+            transaction = "Go Short - Sell"
             # logger.info(f"Go Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         elif self.have_units > 0 and trade_action.units < 0:
             self.trade_cost = abs(trade_action.units) * trade_action.price
             self.trade_pl = self.trade_cost - self.outstanding
             self.pl = self.pl + self.trade_pl
             self.close_long = self.close_long + 1
-            transaction = "Close Long"
+            self.outstanding = 0
+            transaction = "Close Long - Sell"
             # logger.info(f"Close Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         elif self.have_units < 0 and trade_action.units > 0:
             self.trade_cost = abs(trade_action.units) * trade_action.price
             self.trade_pl = self.outstanding - self.trade_cost
             self.pl = self.pl + self.trade_pl
             self.close_short = self.close_short + 1
-            transaction = "Close Short"
+            self.outstanding = 0
+            transaction = "Close Short - Buy"
             # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         
         self.have_units = self.have_units + trade_action.units
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.units, trade_action.price, rsi, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), transaction, trade_action.units, trade_action.price, rsi, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
 
         return
 
