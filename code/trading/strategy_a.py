@@ -1,34 +1,27 @@
-import configparser
-import json
 import logging
 import sys
-from datetime import datetime, time
 from pathlib import Path
-from random import randint
-
-import pandas as pd
-from tabulate import tabulate
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.api.oanda_api import OandaApi
-from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
-from trading.dom.trading_session import Trading_Session
-from trading.errors import PauseTradingException
 from trading.strategy import TradingStrategy
 from trading.tech_indicators import (calculate_momentum, calculate_rsi,
                                      calculate_slope)
 
 logger = logging.getLogger()
 
+"""
+Go Long (buy) when below the low Bollinger Band and close trade (sell) when above the high Bollinger Band
+
+Go Short (sell) when above the high Bollinger Band and close trade (buy) when below the low Bollinger Band
+
+"""
 class TradingStrategy_A(TradingStrategy):
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
-
-
 
 
     def get_target_price(self):
@@ -92,17 +85,3 @@ class TradingStrategy_A(TradingStrategy):
         
         return None
 
-
-    """
-        SMA=200
-        dev=2
-        sl_perc=0.0025
-        high_rsi=60
-        low_rsi=35
-        target=3
-    """
-    def __str__(self):
-        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}, rsi high: {self.high_rsi}, rsi low: {self.low_rsi}, target: {self.target}"
-
-    def __repr__(self):
-        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}, rsi high: {self.high_rsi}, rsi low: {self.low_rsi}, target: {self.target}"

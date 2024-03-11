@@ -1,29 +1,28 @@
-import configparser
-import json
 import logging
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from random import randint
 
-import pandas as pd
-from tabulate import tabulate
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.api.oanda_api import OandaApi
-from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
-from trading.dom.trading_session import Trading_Session
-from trading.errors import PauseTradingException
 from trading.strategy import TradingStrategy
 from trading.tech_indicators import (calculate_momentum, calculate_rsi,
                                      calculate_slope)
 
 logger = logging.getLogger()
 
+"""
+Same as the base strategy but allows averaging down and up
+
+Go Long (buy) when the ask price is below the low Bollinger Band and close trade (sell) when the bid price above the SMA
+
+Go Short (sell) when the bid price is above the high Bollinger Band and close trade (buy) when the ask price below the low Bollinger Band
+
+"""
 class TradingStrategy_B(TradingStrategy):
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)

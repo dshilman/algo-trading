@@ -23,6 +23,12 @@ from trading.tech_indicators import (calculate_momentum, calculate_rsi,
 
 logger = logging.getLogger()
 
+"""
+Go Long (buy) when the ask price is below the low Bollinger Band and close trade (sell) when the bid price above the SMA
+
+Go Short (sell) when the bid price is above the high Bollinger Band and close trade (buy) when the ask price below the low Bollinger Band
+
+"""
 class TradingStrategy():
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__()
