@@ -7,8 +7,8 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.dom.trade import Trade_Action
-from trading.strategy import TradingStrategy
-from trading.tech_indicators import (calculate_momentum, calculate_rsi,
+from trading.strategies.strategy import TradingStrategy
+from trading.utils.tech_indicators import (calculate_momentum, calculate_rsi,
                                      calculate_slope)
 
 logger = logging.getLogger()

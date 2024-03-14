@@ -6,20 +6,10 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.strategy_b import TradingStrategy_B
-from trading.tech_indicators import (calculate_momentum, calculate_rsi,
-                                     calculate_slope)
+from trading.strategies.strategy_b import TradingStrategy_B
 
 logger = logging.getLogger()
 
-"""
-Same as the base strategy but allows averaging down and up
-
-Go Long (buy) when the ask price is below the low Bollinger Band and close trade (sell) when the bid price above the SMA
-
-Go Short (sell) when the bid price is above the high Bollinger Band and close trade (buy) when the ask price below the low Bollinger Band
-
-"""
 class TradingStrategy_C(TradingStrategy_B):
 
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
