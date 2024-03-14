@@ -18,7 +18,7 @@ sys.path.append(str(root))
 from trading.api.oanda_api import OandaApi
 from trading.errors import PauseTradingException
 from trading.strategy import TradingStrategy
-from trading.strategy_b import TradingStrategy_B
+
 
 logger = logging.getLogger()
 
@@ -42,16 +42,20 @@ class Trader():
         self.stop_loss_count = 0
         
         class_ = None
+        strategy = config.get(instrument, 'strategy')
 
         try:
-            module = __import__(f"trading.strategies.{instrument.lower()}_strategy", fromlist=[f"{instrument}_Strategy"])
-            class_ = getattr(module, f"{instrument}_Strategy")
-        except:
-            logger.error(f"Strategy not found for {instrument}")
-            class_ = class_ = TradingStrategy_B
-        
-        self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
+            modules = strategy.split(sep=".", maxsplit=2)
+            logger.info(f"Loading:{modules[0]} strategy")
+            module = __import__(f"trading.{modules[0]}", fromlist=[f"{modules[1]}"])
+            logger.info(f"Loading:{modules[1]} class")
+            class_ = getattr(module, modules[1])
+        except Exception as e:            
+            logger.error(f"Strategy not found for {instrument}", e)
+            raise Exception(f"Strategy not found for {instrument}")
 
+        logger.info(f"Running:{class_} strategy")
+        self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
         logger.info(f"Trading Strategy: {self.strategy}")
 
         today = datetime.utcnow().date()
@@ -184,11 +188,12 @@ class Trader():
                 except PauseTradingException as e:
                     logger.error(f"Caught Stop Loss Error. Keep Traiding...")
                     self.stop_loss_count = self.stop_loss_count + 1
-
+                    time.sleep(5 * 60)
                     if self.stop_loss_count > 2:
                         logger.error(f"Stop Loss Count > 2. Terminating Trading")
                         self.terminate = True
-                        break
+                        time.sleep(60 * 60)
+
 
                 time.sleep(refresh)
 
