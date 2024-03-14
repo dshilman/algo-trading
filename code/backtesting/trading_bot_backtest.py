@@ -17,10 +17,9 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.api.oanda_api import OandaApi
-from trading.errors import PauseTradingException
-from trading.tech_indicators import calculate_rsi, calculate_momentum
-from trading.strategy import TradingStrategy
-from trading.strategy_b import TradingStrategy_B
+from trading.utils.errors import PauseTradingException
+from trading.utils.tech_indicators import calculate_rsi, calculate_momentum
+from trading.strategies.base.strategy import TradingStrategy
 
 logger = logging.getLogger()
 
@@ -34,6 +33,7 @@ class TradingBacktester():
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
         self.start = config.get(instrument, 'start')
         self.end = config.get(instrument, 'end')
+
         logger.setLevel(logging.INFO)
 
         log_file = os.path.join("logs", f"{instrument}.log")
@@ -43,13 +43,17 @@ class TradingBacktester():
         logger.addHandler(logHandler)
 
         class_ = None
+        strategy = config.get(instrument, 'strategy')
 
         try:
-            module = __import__(f"trading.strategies.{instrument.lower()}_strategy", fromlist=[f"{instrument}_Strategy"])
-            class_ = getattr(module, f"{instrument}_Strategy")
-        except:
-            logger.error(f"Strategy not found for {instrument}")
-            class_ = TradingStrategy_B
+            modules = strategy.split(sep=".", maxsplit=2)
+            logger.info(f"Loading:{modules[0]} strategy")
+            module = __import__(f"trading.strategies.{modules[0]}", fromlist=[f"{modules[1]}"])
+            logger.info(f"Loading:{modules[1]} class")
+            class_ = getattr(module, modules[1])
+        except Exception as e:            
+            logger.error(f"Strategy not found for {instrument}", e)
+            raise Exception(f"Strategy not found for {instrument}")
 
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
@@ -81,7 +85,7 @@ class TradingBacktester():
         # df["std"] = df[instrument].rolling(SMA).std()
         # df["std_sma"] = df["std"].rolling(SMA).mean()
 
-        period = 8
+        period = 14
         rsi_periods = int(SMA/2)
         df["RSI"] = df[instrument].rolling(rsi_periods).apply(lambda x: calculate_rsi(x.values, rsi_periods))
         df["rsi_momentum"] = df.RSI.rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))
@@ -135,7 +139,7 @@ class TradingBacktester():
 
     def get_data(self):
 
-        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}.pcl"
+        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_t.pcl"
         if self.refresh:
             logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()
@@ -178,9 +182,9 @@ class TradingBacktester():
                     if trade_action != None:
                         # self.strategy.print_indicators()
                         self.strategy.trading_session.add_trade(trade_action=trade_action, date_time=index, rsi=self.strategy.rsi)
-                        # if trade_action.sl_trade:
-                            # logger.info(f"Pausing trading for 2 hours at {index}")
-                            # pause_trading = index + timedelta(hours = 2)                        
+                        if trade_action.sl_trade:
+                            logger.info(f"Pausing trading for 5 minutes at {index}")
+                            pause_trading = index + timedelta(minutes = 5)                        
             
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()

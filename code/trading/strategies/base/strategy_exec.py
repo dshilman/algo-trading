@@ -122,13 +122,13 @@ class TradingStrategyExec(TradingStrategyCalc):
         if (traded_units == have_units):
             if have_units < 0:
                 current_loss_perc = round((self.ask - transaction_price)/transaction_price, 4)
-                if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc):
+                if current_loss_perc >= (self.sl_perc/4 if (self.risk_time(trading_time) or abs(have_units) >= self.units_to_trade) else self.sl_perc):
                     logger.info(f"Close short position, - Stop Loss Buy, short price {transaction_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
                     return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Short - Stop Loss Buy", False, True)
 
             if have_units > 0:
                 current_loss_perc = round((transaction_price - self.bid)/transaction_price, 4)
-                if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc):
+                if current_loss_perc >= (self.sl_perc/4 if (self.risk_time(trading_time) or abs(have_units) >= self.units_to_trade) else self.sl_perc):
                     logger.info(f"Close long position, - Stop Loss Sell, long price {transaction_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
                     return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Long - Stop Loss Sell", False, True)
         
