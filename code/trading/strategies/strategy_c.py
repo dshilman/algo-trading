@@ -17,8 +17,8 @@ class TradingStrategy_C(TradingStrategy_B):
 
     def rsi_spike(self):
 
-        return (self.rsi_max - self.rsi_min > 5) and self.rsi_max < self.high_rsi and self.price < self.price_max
+        return (self.rsi_max - self.rsi_min > 5) and self.rsi_max < self.high_rsi and self.rsi < self.rsi_max
 
     def rsi_drop(self):
 
-        return (self.rsi_max - self.rsi_min > 5) and self.rsi_min > self.low_rsi and self.price > self.price_min
+        return (self.rsi_max - self.rsi_min > 5) and self.rsi_min > self.low_rsi and self.rsi > self.rsi_min
