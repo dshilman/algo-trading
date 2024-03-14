@@ -2,7 +2,7 @@ import configparser
 import json
 import logging
 import sys
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from pathlib import Path
 from random import randint
 
@@ -125,7 +125,7 @@ class TradingStrategy():
         self.bb_lower = round(df.Lower.iloc[-1], 6)
         self.bb_upper =  round(df.Upper.iloc[-1], 6)
 
-        period = 8
+        period = 14
 
         last_rsi = df.RSI[-period:]
         self.rsi = round(last_rsi.iloc[-1], 4)
@@ -177,53 +177,73 @@ class TradingStrategy():
         logger.info(json.dumps(order, indent = 2))
         logger.info("\n" + 100 * "-" + "\n")
 
+
     def determine_trade_action(self, trading_time) -> Trade_Action:
 
         have_units = self.trading_session.have_units
 
-        if have_units != 0:  # if already have positions
-            logger.debug(f"Have {have_units} positions, checking for stop loss")
-            trade_action = self.check_for_sl(trading_time)
-            if trade_action is not None:
-                return trade_action
-
+        if have_units != 0:  # if already have positions             
             logger.debug(f"Have {have_units} positions, checking if need to close")
             trade = self.check_if_need_close_trade()
-    
             if trade is not None:
                 return trade
 
-        else:        
+        if have_units == 0 or (abs(have_units / self.units_to_trade) < 2 and not self.too_soon(trading_time)):
             logger.debug(f"Have {have_units} positions, checking if need to open")
             trade = self.check_if_need_open_trade(trading_time)
             if trade is not None:
                 return trade
 
-        return None
+        if have_units != 0:  # if already have positions             
+            logger.debug(f"Have {have_units} positions, checking for stop loss")
+            trade_action = self.check_for_sl(trading_time)
+            if trade_action is not None:
+                return trade_action
+      
 
+        return None
+        
+
+    def too_soon(self, trading_time):
+
+        last_tran_time = self.get_last_trade_time()
+        return last_tran_time is None or (last_tran_time + timedelta(minutes=10)) > trading_time
+
+
+    def get_last_trade_time(self):
+
+        date_time = None
+        
+        if len(self.trading_session.trades) > 0:
+            date_time_s = self.trading_session.trades[-1][0]
+            date_time = datetime.strptime(date_time_s, "%m/%d/%Y %H:%M:%S").replace(tzinfo=None)
+        
+        return date_time
 
     def check_if_need_open_trade(self, trading_time):
         
         spread = round(self.ask - self.bid, 4)
-        # check if need to open a new position
-        # if 1.5 * spread >= abs(self.bb_upper - self.sma):                            
-        #     logger.debug(f"Current spread: {spread} is too large to trade for possible gain: {round(abs(self.bb_upper - self.sma), 6)}")
-        #     return None
 
-        if self.ask < self.bb_lower and self.has_low_rsi(trading_time) and self.reverse_rsi_momentum(): # if price is below lower BB, BUY
-        # if self.ask <= self.bb_lower and self.has_low_rsi() and self.price_momentum * self.price_momentum_prev <= 0: # if price is below lower BB, BUY
+        if self.ask < self.bb_lower and self.rsi_drop():
             signal = 1
             logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, signal * (self.units_to_trade + randint(0, 5)), self.ask, spread, "Go Long - Buy", True, False)
 
-        elif self.bid > self.bb_upper and self.has_high_rsi(trading_time) and self.reverse_rsi_momentum():  # if price is above upper BB, SELL
-        # elif self.bid >= self.bb_upper and self.has_high_rsi() and self.price_momentum * self.price_momentum_prev <= 0:
+        elif self.bid > self.bb_upper and self.rsi_spike():
             signal = -1
             logger.info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, signal * (self.units_to_trade + randint(0, 5)), self.bid, spread, "Go Short - Sell", True, False)
             
         return
     
+    def rsi_spike(self):
+
+        pass
+
+    def rsi_drop(self):
+
+        pass
+
 
     def reverse_rsi_momentum(self):
         # do not change this logic
@@ -231,38 +251,9 @@ class TradingStrategy():
             return  self.rsi < self.rsi_max
         elif self.rsi_momentum < 0:
             return self.rsi_min < self.rsi
-        else:
-            return False
-
-        # return self.rsi < self.rsi_max if self.rsi_momentum < 0 else self.rsi > self.rsi_min
+        elif self.rsi_momentum == 0:
+            return True
         
-
-    def reverse_price_momentum(self):
-        # do not change this logic
-        if self.price_momentum > 0:
-            return self.price < self.price_max
-        elif self.price_momentum < 0:
-            return self.price > self.price_min
-        else:
-            return False
-        # return self.price < self.price_max if self.price_momentum < 0 else self.price > self.price_min
-        
-    def has_high_rsi(self, trading_time):
-
-        if self.risk_time(trading_time) or self.rsi_max - self.rsi >= 10:
-            return self.rsi > 70
-        else:
-            return self.rsi_max > self.high_rsi
-        
-        # return self.rsi_max > (self.high_rsi if not self.risk_time(trading_time) else 70)
-    
-    def has_low_rsi(self, trading_time):
-        
-        if self.risk_time(trading_time) or self.rsi_max - self.rsi >= 10:
-            return self.rsi < 30
-        else:
-            return self.rsi_min < self.low_rsi
-        # return self.rsi_min < (self.low_rsi if not self.risk_time(trading_time) else 30)
     
     def get_target_price(self):
 
@@ -272,6 +263,8 @@ class TradingStrategy():
         if have_units != 0 and len (self.trading_session.trades) > 0:
             transaction_price =  self.trading_session.trades[-1][3]
             # traded_units = self.trading_session.trades[-1][2]
+
+            # target = round(transaction_price + (1 if have_units > 0 else -1) * transaction_price * self.tp_perc, 4)
 
             if have_units > 0: # long position
                 target = min(self.sma,  transaction_price + self.target * (self.ask - self.bid))
@@ -313,13 +306,13 @@ class TradingStrategy():
         if (traded_units == have_units):
             if have_units < 0:
                 current_loss_perc = round((self.ask - transaction_price)/transaction_price, 4)
-                if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc  - .0005):
+                if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc):
                     logger.info(f"Close short position, - Stop Loss Buy, short price {transaction_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
                     return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Short - Stop Loss Buy", False, True)
 
             if have_units > 0:
                 current_loss_perc = round((transaction_price - self.bid)/transaction_price, 4)
-                if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc  - .0005):
+                if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc):
                     logger.info(f"Close long position, - Stop Loss Sell, long price {transaction_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
                     return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Long - Stop Loss Sell", False, True)
         
@@ -350,11 +343,11 @@ class TradingStrategy():
             """
 
             # sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
-            sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * sl_perc, (4 if trade_action.price < 100 else 0))
+            sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * (sl_perc + .0005), (4 if trade_action.price < 100 else 0))
 
                 
             if tp_perc:
-                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * tp_perc, (4 if trade_action.price < 100 else 0))
+                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * (tp_perc + .0005), (4 if trade_action.price < 100 else 0))
 
 
         order = Order(
