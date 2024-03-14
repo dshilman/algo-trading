@@ -16,8 +16,8 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.api.oanda_api import OandaApi
-from trading.errors import PauseTradingException
-from trading.strategy import TradingStrategy
+from trading.utils.errors import PauseTradingException
+from trading.strategies.base.strategy import TradingStrategy
 
 
 logger = logging.getLogger()
@@ -47,7 +47,7 @@ class Trader():
         try:
             modules = strategy.split(sep=".", maxsplit=2)
             logger.info(f"Loading:{modules[0]} strategy")
-            module = __import__(f"trading.{modules[0]}", fromlist=[f"{modules[1]}"])
+            module = __import__(f"trading.strategies.{modules[0]}", fromlist=[f"{modules[1]}"])
             logger.info(f"Loading:{modules[1]} class")
             class_ = getattr(module, modules[1])
         except Exception as e:            
