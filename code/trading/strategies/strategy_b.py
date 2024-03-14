@@ -1,6 +1,5 @@
 import logging
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 
 
@@ -8,7 +7,6 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.dom.trade import Trade_Action
 from trading.strategies.base.strategy import TradingStrategy
 
 logger = logging.getLogger()
