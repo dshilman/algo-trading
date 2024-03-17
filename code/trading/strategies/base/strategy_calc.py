@@ -75,6 +75,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         last_momentum = df.momentum[-period:].values
         self.price_momentum = round(last_momentum[-1], 6)
         self.price_momentum_prev = round(last_momentum[-2], 6)
+        
         last_prices = df[self.instrument][-period:].values
         self.price = round(last_prices[-1], 6)
         self.price_min = round(last_prices[-period:].min(), 6)
