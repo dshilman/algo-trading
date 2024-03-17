@@ -66,6 +66,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi = round(last_rsi.iloc[-1], 4)
         self.rsi_min = round(last_rsi.min(), 4)
         self.rsi_max = round(last_rsi.max(), 4)
+        self.rsi_mean = round(last_rsi.mean(), 4)
+
 
         self.rsi_momentum = round(df ["rsi_momentum"].iloc[-1], 6)
         self.rsi_momentum_prev = round(df ["rsi_momentum"].iloc[-2], 6)
@@ -160,10 +162,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         return date_time
 
-    def rsi_spike(self):
-        pass
+    def rsi_spike(self, trading_time):
 
-    def rsi_drop(self):
-        pass
+        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_max < self.high_rsi if not self.risk_time(trading_time) else self.high_rsi - 5 ) and self.reverse_rsi_down()
 
-   
+    def rsi_drop(self, trading_time):
+
+        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_min > self.low_rsi if not self.risk_time(trading_time) else self.low_rsi + 5) and self.reverse_rsi_up()

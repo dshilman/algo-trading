@@ -17,7 +17,7 @@ sys.path.append(str(root))
 
 from trading.api.oanda_api import OandaApi
 from trading.utils.errors import PauseTradingException
-from trading.strategies.base.strategy import TradingStrategy
+from trading.strategies.base.strategy_exec import TradingStrategyExec
 
 
 logger = logging.getLogger()
@@ -55,7 +55,7 @@ class Trader():
             raise Exception(f"Strategy not found for {instrument}")
 
         logger.info(f"Running:{class_} strategy")
-        self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
+        self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
         logger.info(f"Trading Strategy: {self.strategy}")
 
         today = datetime.utcnow().date()

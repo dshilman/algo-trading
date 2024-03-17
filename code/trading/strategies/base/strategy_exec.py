@@ -80,12 +80,12 @@ class TradingStrategyExec(TradingStrategyCalc):
         
         spread = round(self.ask - self.bid, 4)
 
-        if self.ask < self.bb_lower and self.rsi_drop():
+        if self.ask < self.bb_lower and self.rsi_drop(trading_time):
             signal = 1
             logger.info(f"Go Long - BUY at ask price: {self.ask}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, signal * (self.units_to_trade + randint(0, 5) * 1000), self.ask, spread, "Go Long - Buy", True, False)
 
-        elif self.bid > self.bb_upper and self.rsi_spike():
+        elif self.bid > self.bb_upper and self.rsi_spike(trading_time):
             signal = -1
             logger.info(f"Go Short - SELL at bid price: {self.bid}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, signal * (self.units_to_trade + randint(0, 5) * 1000), self.bid, spread, "Go Short - Sell", True, False)
