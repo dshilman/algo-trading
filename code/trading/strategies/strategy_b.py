@@ -19,9 +19,9 @@ class TradingStrategy(TradingStrategyExec):
     
     def rsi_spike(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min >= 5) and (self.rsi_mean < self.high_rsi if not self.risk_time(trading_time) else self.rsi_max < self.high_rsi) and self.reverse_rsi_down()
+        return abs(self.rsi_max - self.rsi_min > 5) and (self.rsi_mean < self.high_rsi if not self.risk_time(trading_time) else self.rsi_max < self.high_rsi) and self.reverse_rsi_down()
 
     def rsi_drop(self, trading_time):
 
-        return (self.rsi_max - self.rsi_mean >= 5) and (self.rsi_mean > self.low_rsi if not self.risk_time(trading_time) else self.rsi_min > self.low_rsi) and self.reverse_rsi_up()
+        return abs(self.rsi_max - self.rsi_min > 5) and (self.rsi_mean > self.low_rsi if not self.risk_time(trading_time) else self.rsi_min > self.low_rsi) and self.reverse_rsi_up()
 
