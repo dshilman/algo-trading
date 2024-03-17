@@ -149,7 +149,7 @@ class TradingStrategyCalc(TradingStrategyBase):
     def too_soon(self, trading_time):
 
         last_tran_time = self.get_last_trade_time()
-        return last_tran_time is None or (last_tran_time + timedelta(minutes=10)) > trading_time
+        return last_tran_time is None or (last_tran_time + timedelta(minutes=30)) > trading_time
 
 
     def get_last_trade_time(self):
@@ -164,8 +164,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     def rsi_spike(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_max < self.high_rsi if not self.risk_time(trading_time) else self.high_rsi - 5 ) and self.reverse_rsi_down()
+        return (self.rsi_max < self.high_rsi if not self.risk_time(trading_time) else self.high_rsi - 5 ) and self.reverse_rsi_down()
 
     def rsi_drop(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_min > self.low_rsi if not self.risk_time(trading_time) else self.low_rsi + 5) and self.reverse_rsi_up()
+        return (self.rsi_min > self.low_rsi if not self.risk_time(trading_time) else self.low_rsi + 5) and self.reverse_rsi_up()
