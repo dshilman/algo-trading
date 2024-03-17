@@ -68,6 +68,7 @@ class TradingStrategyBase():
         self.rsi = None
         self.rsi_min = None
         self.rsi_max = None
+        self.rsi_mean = None
         self.rsi_momentum = None
         self.rsi_momentum_prev = None
    

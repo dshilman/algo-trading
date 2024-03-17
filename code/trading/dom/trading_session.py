@@ -69,7 +69,7 @@ class Trading_Session():
             # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         
         self.have_units = self.have_units + trade_action.units
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), transaction, trade_action.units, trade_action.price, rsi, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.units, trade_action.price, rsi, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
 
         return
 
