@@ -66,7 +66,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi = round(last_rsi.iloc[-1], 4)
         self.rsi_min = round(last_rsi.min(), 4)
         self.rsi_max = round(last_rsi.max(), 4)
-        self.rsi_avg = round(last_rsi.ewm(com=period - 1, min_periods=period).mean().iloc[-1], 4)
 
         self.rsi_momentum = round(df ["rsi_momentum"].iloc[-1], 6)
         self.rsi_momentum_prev = round(df ["rsi_momentum"].iloc[-2], 6)
@@ -102,6 +101,14 @@ class TradingStrategyCalc(TradingStrategyBase):
         elif self.rsi_momentum == 0:
             return True
 
+    
+    def reverse_rsi_up(self):
+
+        return round(self.rsi, self.rsi_round) > round(self.rsi_min, self.rsi_round)
+
+    def reverse_rsi_down(self):
+        
+        return round(self.rsi, self.rsi_round) < round(self.rsi_max, self.rsi_round)
 
     def get_target_price(self):
 

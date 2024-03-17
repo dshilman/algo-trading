@@ -8,9 +8,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-import pytz
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
@@ -25,8 +23,10 @@ logger = logging.getLogger()
 
 class TradingBacktester():
     
-    def __init__(self, conf_file, pairs_file, instrument):
+    def __init__(self, conf_file, pairs_file, instrument, days = 33, refresh = False):
         
+        self.days = days
+        self.refresh = refresh
         self.api = OandaApi(conf_file)
         config = configparser.ConfigParser()  
         config.read(pairs_file)
@@ -36,7 +36,7 @@ class TradingBacktester():
 
         logger.setLevel(logging.INFO)
 
-        log_file = os.path.join("logs", f"{instrument}.log")
+        log_file = os.path.join("logs", f"{instrument}_{days}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         logHandler.setFormatter(formatter)
@@ -57,8 +57,7 @@ class TradingBacktester():
 
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategy  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
-        self.days = 100
-        self.refresh = False
+        
     
     def get_history_with_all_prices(self):
         
@@ -92,7 +91,7 @@ class TradingBacktester():
         df["rsi_momentum_prev"] = df ["rsi_momentum"].shift(1)
         df["rsi_max"] = df ['RSI'].rolling(period).max()
         df["rsi_min"] = df ['RSI'].rolling(period).min()
-        df["rsi_avg"] = df ['RSI'].rolling(period).apply(lambda x: x.ewm(com=period - 1, min_periods=period).mean().iloc[-1])
+        # df["rsi_avg"] = df ['RSI'].rolling(period).apply(lambda x: x.ewm(com=period - 1, min_periods=period).mean().iloc[-1])
         df["price_max"] = df [instrument].rolling(period).max()
         df["price_min"] = df [instrument].rolling(period).min()
 
@@ -118,7 +117,6 @@ class TradingBacktester():
             self.strategy.rsi = round(row ['RSI'], 4)
             self.strategy.rsi_max = round(row ['rsi_max'], 4)
             self.strategy.rsi_min = round(row ['rsi_min'], 4)
-            self.strategy.rsi_avg = round(row ['rsi_avg'], 4)
 
             self.strategy.rsi_momentum = round(row ["rsi_momentum"], 6)
             self.strategy.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
@@ -139,7 +137,7 @@ class TradingBacktester():
 
     def get_data(self):
 
-        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}.pcl"
+        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_{self.days}.pcl"
         if self.refresh:
             logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()
@@ -200,8 +198,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('pair', type=str, help='pair')
 
+    parser.add_argument('--days', type = int, default=33, help='Number of days, numeric only')
     parser.add_argument('--refresh', choices=['True', 'False', 'true', 'false'], default="False", type = str, help='Refresh data')
-    parser.add_argument('--days', type = int, default=0, help='Number of days, numeric only')
     args = parser.parse_args()
 
     
@@ -215,10 +213,8 @@ if __name__ == "__main__":
     trader = TradingBacktester(
         conf_file=config_file,
         pairs_file="../trading/pairs.ini",
-        instrument=args.pair)
+        instrument=args.pair, days=args.days, refresh=(args.refresh in ['True', 'true']))
 
-    trader.days = args.days
-    trader.refresh = (args.refresh in ['True', 'true'])
     trader.start_trading_backtest()
 
 
