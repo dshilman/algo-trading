@@ -56,7 +56,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         if have_units != 0:  # if already have positions             
             logger.debug(f"Have {have_units} positions, checking if need to close")
-            trade = self.check_if_need_close_trade()
+            trade = self.check_if_need_close_trade(trading_time)
             if trade is not None:
                 return trade
 
@@ -91,7 +91,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         return
       
     
-    def check_if_need_close_trade(self):
+    def check_if_need_close_trade(self, trading_time):
 
         have_units = self.trading_session.have_units
         
@@ -105,6 +105,11 @@ class TradingStrategyExec(TradingStrategyCalc):
                 logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {self.price_target}")
                 return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
 
+        # last_trade_time = self.get_last_trade_time()
+        # if last_trade_time is not None and (trading_time - last_trade_time) > timedelta(minutes=120):
+        #     logger.info(f"Close position - Sell {have_units} units at bid price: {self.bid}, last trade time: {last_trade_time}")
+        #     return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Position", False, False)
+        
         return None
 
     def check_for_sl(self, trading_time):
