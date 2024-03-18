@@ -52,7 +52,7 @@ class TradingStrategyBase():
         self.rsi_round = int(config.get(instrument, 'rsi_round'))
         
 
-        self.data = None
+        self.data: pd.DataFrame = None
         # Caculated attributes
         self.bb_upper =  None
         self.bb_lower =  None

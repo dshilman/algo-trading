@@ -181,7 +181,11 @@ class Trader():
                     df = df.resample("30s").last()
                     logger.debug(f"Resampled Data: {df}")
 
+                if df is not None and not df.empty:
+                    self.strategy.add_tickers(df)
+
                 self.strategy.calc_indicators(df)
+                self.strategy.set_strategy_indicators(df.iloc[-1], True)
             
                 try:
                     self.strategy.execute_strategy()
