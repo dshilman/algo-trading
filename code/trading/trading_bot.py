@@ -93,7 +93,6 @@ class Trader():
         self.terminate = False
 
         logger.info (f"Getting  candles for: {self.instrument}")
-        # self.strategy.data = self.api.get_history_with_all_prices(self.instrument, self.days)
         self.strategy.data = self.api.get_price_candles(pair_name=self.instrument, days=self.days)
 
 
@@ -171,17 +170,19 @@ class Trader():
             try:
 
                 temp_tick_data = self.tick_data.copy()
-                self.tick_data = []
+                self.tick_data.clear()
 
-                df = None
-
+              
                 if len(temp_tick_data) > 0:
                     df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "ask"])
                     df.set_index('time', inplace=True)    
                     df = df.resample("30s").last()
                     logger.debug(f"Resampled Data: {df}")
 
-                self.strategy.calc_indicators(df)
+                    self.strategy.add_tickers(ticker_df=df)
+
+                self.strategy.calc_indicators()                
+                self.strategy.set_strategy_indicators(print=True)
             
                 try:
                     self.strategy.execute_strategy()

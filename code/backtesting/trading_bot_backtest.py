@@ -67,79 +67,6 @@ class TradingBacktester():
 
         return df
 
-    def calculate_indicators(self, input_df: pd.DataFrame):
-
-        instrument = self.strategy.instrument
-        SMA = self.strategy.sma_value
-        dev = self.strategy.dev
-
-        df = input_df.copy()
-        df["SMA"] = df[instrument].rolling(SMA).mean()
-
-        std = df[instrument].rolling(SMA).std() * dev
-        
-        df["Lower"] = df["SMA"] - std
-        df["Upper"] = df["SMA"] + std
-        
-        # df["std"] = df[instrument].rolling(SMA).std()
-        # df["std_sma"] = df["std"].rolling(SMA).mean()
-
-        period = 14
-        rsi_periods = int(SMA/2)
-        df["RSI"] = df[instrument].rolling(rsi_periods).apply(lambda x: calculate_rsi(x.values, rsi_periods))
-        df["rsi_momentum"] = df.RSI.rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))
-        df["rsi_momentum_prev"] = df ["rsi_momentum"].shift(1)
-        df["rsi_max"] = df ['RSI'].rolling(period).max()
-        df["rsi_min"] = df ['RSI'].rolling(period).min()
-        df["rsi_mean"] = df ['RSI'].rolling(period).mean()
-        df["rsi_mean_prev"] = df ['RSI'].shift(period)
-        
-        # df["rsi_avg"] = df ['RSI'].rolling(period).apply(lambda x: x.ewm(com=period - 1, min_periods=period).mean().iloc[-1])
-        df["price_max"] = df [instrument].rolling(period).max()
-        df["price_min"] = df [instrument].rolling(period).min()
-
-        df["momentum"] = df[instrument].rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))        
-        df["momentum_prev"] = df["momentum"].shift(1)
-        
-
-        df.dropna(subset=["RSI", "SMA"], inplace = True)
-
-        # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
-        # df.to_excel(f"../../data/backtest_{self.strategy.instrument}_with_indicators.xlsx")
-
-
-        return df
-    
-    def set_strategy_parameters(self, row):
-
-            self.strategy.sma = row ['SMA']
-
-            self.strategy.bb_lower = row ['Lower']
-            self.strategy.bb_upper =  row ['Upper']
-                   
-            self.strategy.rsi = round(row ['RSI'], 4)
-            self.strategy.rsi_max = round(row ['rsi_max'], 4)
-            self.strategy.rsi_min = round(row ['rsi_min'], 4)
-            self.strategy.rsi_mean = round(row ['rsi_mean'], 4)
-            self.strategy.rsi_mean_prev = round(row ['rsi_mean_prev'], 4)
-                        
-            self.strategy.rsi_momentum = round(row ["rsi_momentum"], 6)
-            self.strategy.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
-            
-            self.strategy.price = row [self.strategy.instrument]
-            self.strategy.price_max = row ['price_max']
-            self.strategy.price_min = row ['price_min']
-
-            self.strategy.ask = row ["ask"]
-            self.strategy.bid = row ["bid"]
-
-            self.strategy.price_momentum = row ['momentum']
-            self.strategy.price_momentum_prev = row ['momentum_prev']
-
-            self.strategy.price_target = round(self.strategy.get_target_price(), 6)
-
-          
-
     def get_data(self):
 
         pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_{self.days}.pcl"
@@ -160,18 +87,18 @@ class TradingBacktester():
 
         try:
 
-            df:pd.DataFrame = self.get_data()
+            self.strategy.data = self.get_data()
 
             logger.info("Calculating indicators...")
-            df = self.calculate_indicators(df)
+            self.strategy.calc_indicators()
     
             logger.info(f"Starting trading for {self.strategy.instrument}...")
 
             pause_trading = None
 
-            for index, row in df.iterrows():
+            for index, row in self.strategy.data.iterrows():
 
-                self.set_strategy_parameters(row)
+                self.strategy.set_strategy_indicators(row=row, print=False)
                 
                 if pause_trading == None or index > pause_trading:
                     trade_action = None
