@@ -10,7 +10,10 @@ processes=(
     "python3 trading_bot.py USD_CAD"
     "/bin/sh /home/ec2-user/algo-trading/trader_oanda_USD_CAD.sh"
     "python3 trading_bot.py USD_CAD"
-
+    "/bin/sh /home/ec2-user/algo-trading/trader_oanda_AUD_USD.sh"
+    "python3 trading_bot.py AUD_USD"
+    "/bin/sh /home/ec2-user/algo-trading/trader_oanda_GBP_USD.sh"
+    "python3 trading_bot.py GBP_USD"
    )
 
 # Loop through each process name
