@@ -105,13 +105,22 @@ class TradingStrategyCalc(TradingStrategyBase):
             return True
 
     
-    def reverse_rsi_up(self):
+    def reverse_rsi_up_sell(self):
 
         return round(self.rsi, self.rsi_round) > round(self.rsi_min, self.rsi_round)
 
-    def reverse_rsi_down(self):
+    def reverse_rsi_down_sell(self):
         
         return round(self.rsi, self.rsi_round) < round(self.rsi_max, self.rsi_round)
+
+    def reverse_rsi_up_buy(self):
+
+        return round(self.rsi_mean, 0) > round(self.rsi_mean_prev, 0)
+
+    def reverse_rsi_down_buy(self):
+        
+        return round(self.rsi_mean), 0 < round(self.rsi_mean_prev, 0)
+
 
     def get_target_price(self):
 
@@ -165,8 +174,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     def rsi_spike(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_max < self.high_rsi) and self.reverse_rsi_down()
+        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_max < self.high_rsi)
 
     def rsi_drop(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_min > self.low_rsi) and self.reverse_rsi_up()
+        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_min > self.low_rsi)

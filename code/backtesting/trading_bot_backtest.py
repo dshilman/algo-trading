@@ -92,6 +92,7 @@ class TradingBacktester():
         df["rsi_max"] = df ['RSI'].rolling(period).max()
         df["rsi_min"] = df ['RSI'].rolling(period).min()
         df["rsi_mean"] = df ['RSI'].rolling(period).mean()
+        df["rsi_mean_prev"] = df ['RSI'].shift(period)
         
         # df["rsi_avg"] = df ['RSI'].rolling(period).apply(lambda x: x.ewm(com=period - 1, min_periods=period).mean().iloc[-1])
         df["price_max"] = df [instrument].rolling(period).max()
@@ -120,7 +121,8 @@ class TradingBacktester():
             self.strategy.rsi_max = round(row ['rsi_max'], 4)
             self.strategy.rsi_min = round(row ['rsi_min'], 4)
             self.strategy.rsi_mean = round(row ['rsi_mean'], 4)
-            
+            self.strategy.rsi_mean_prev = round(row ['rsi_mean_prev'], 4)
+                        
             self.strategy.rsi_momentum = round(row ["rsi_momentum"], 6)
             self.strategy.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
             
