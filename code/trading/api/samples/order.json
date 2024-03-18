@@ -1,0 +1,94 @@
+{
+    "orderCreateTransaction": {
+        "id": "815",
+        "accountID": "001-001-11158113-001",
+        "userID": 11158113,
+        "batchID": "815",
+        "requestID": "115256714448645720",
+        "time": "2024-03-04T07:45:14.409711150Z",
+        "type": "MARKET_ORDER",
+        "instrument": "USD_CHF",
+        "units": "-40000",
+        "timeInForce": "FOK",
+        "positionFill": "DEFAULT",
+        "reason": "CLIENT_ORDER"
+    },
+    "orderFillTransaction": {
+        "id": "816",
+        "accountID": "001-001-11158113-001",
+        "userID": 11158113,
+        "batchID": "815",
+        "requestID": "115256714448645720",
+        "time": "2024-03-04T07:45:14.409711150Z",
+        "type": "ORDER_FILL",
+        "orderID": "815",
+        "instrument": "USD_CHF",
+        "units": "-40000",
+        "requestedUnits": "-40000",
+        "price": "0.88069",
+        "pl": "-63.8994",
+        "quotePL": "-56.00000",
+        "financing": "0.0000",
+        "baseFinancing": "0.00000000000000",
+        "commission": "0.0000",
+        "accountBalance": "9456.7234",
+        "gainQuoteHomeConversionFactor": "1.129706169995",
+        "lossQuoteHomeConversionFactor": "1.141060000849",
+        "guaranteedExecutionFee": "0.0000",
+        "quoteGuaranteedExecutionFee": "0",
+        "halfSpreadCost": "3.4061",
+        "fullVWAP": "0.88069",
+        "reason": "MARKET_ORDER",
+        "tradesClosed": [
+            {
+                "tradeID": "808",
+                "units": "-40000",
+                "realizedPL": "-63.8994",
+                "financing": "0.0000",
+                "baseFinancing": "0.00000000000000",
+                "price": "0.88069",
+                "guaranteedExecutionFee": "0.0000",
+                "quoteGuaranteedExecutionFee": "0",
+                "halfSpreadCost": "3.4061"
+            }
+        ],
+        "fullPrice": {
+            "closeoutBid": "0.88069",
+            "closeoutAsk": "0.88084",
+            "timestamp": "2024-03-04T07:45:12.302709596Z",
+            "bids": [
+                {
+                    "price": "0.88069",
+                    "liquidity": "10000000"
+                }
+            ],
+            "asks": [
+                {
+                    "price": "0.88084",
+                    "liquidity": "10000000"
+                }
+            ]
+        },
+        "homeConversionFactors": {
+            "gainQuoteHome": {
+                "factor": "1.12970616999521"
+            },
+            "lossQuoteHome": {
+                "factor": "1.14106000084943"
+            },
+            "gainBaseHome": {
+                "factor": "1"
+            },
+            "lossBaseHome": {
+                "factor": "1"
+            }
+        }
+    },
+    "relatedTransactionIDs": [
+        "815",
+        "816",
+        "817",
+        "818"
+    ],
+    "lastTransactionID": "818"
+}
