@@ -98,7 +98,7 @@ class TradingBacktester():
 
             for index, row in self.strategy.data.iterrows():
 
-                self.strategy.set_strategy_indicators(row, False)
+                self.strategy.set_strategy_indicators(row=row, print=False)
                 
                 if pause_trading == None or index > pause_trading:
                     trade_action = None

@@ -27,11 +27,17 @@ class TradingStrategyCalc(TradingStrategyBase):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
     
 
-    def add_tickers(self, df: pd.DataFrame):
+    def add_tickers(self, ticker_df: pd.DataFrame):
 
-        self.data = pd.concat([self.data, df])
-        self.data = self.data.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-        self.data = self.data.tail(self.sma_value * 3)
+        # logger.debug(f"Adding tickers to dataframe: {ticker_df}")
+
+        df = self.data.copy()
+        df = pd.concat([df, ticker_df])
+        df = df.tail(self.sma_value * 3)
+        df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
+        self.data = df.copy()
+
+        # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
      
     
     def calc_indicators(self):
@@ -64,44 +70,44 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["momentum"] = df[instrument].rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))        
         df["momentum_prev"] = df["momentum"].shift(1)
-        
-
-        df.dropna(subset=["RSI", "SMA"], inplace = True)
-
-        logger.debug("\n" + df[-period:].to_string(header=True))
+    
+        logger.debug("\n" + df.iloc[-period:].to_string(header=True))
 
         self.data = df.copy()
 
-    def set_strategy_indicators(self, row: pd.Series, print=False):
+    def set_strategy_indicators(self, row: pd.Series=None, print=False):
 
-            self.sma = row ['SMA']
+        if row is None:
+            row = self.data.iloc[-1]
 
-            self.bb_lower = row ['Lower']
-            self.bb_upper =  row ['Upper']
-                   
-            self.rsi = round(row ['RSI'], 4)
-            self.rsi_max = round(row ['rsi_max'], 4)
-            self.rsi_min = round(row ['rsi_min'], 4)
-            self.rsi_mean = round(row ['rsi_mean'], 4)
-            self.rsi_mean_prev = round(row ['rsi_mean_prev'], 4)
-                        
-            self.rsi_momentum = round(row ["rsi_momentum"], 6)
-            self.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
-            
-            self.price = row [self.instrument]
-            self.price_max = row ['price_max']
-            self.price_min = row ['price_min']
+        self.sma = row ['SMA']
 
-            self.ask = row ["ask"]
-            self.bid = row ["bid"]
+        self.bb_lower = row ['Lower']
+        self.bb_upper =  row ['Upper']
+                
+        self.rsi = round(row ['RSI'], 4)
+        self.rsi_max = round(row ['rsi_max'], 4)
+        self.rsi_min = round(row ['rsi_min'], 4)
+        self.rsi_mean = round(row ['rsi_mean'], 4)
+        self.rsi_mean_prev = round(row ['rsi_mean_prev'], 4)
+                    
+        self.rsi_momentum = round(row ["rsi_momentum"], 6)
+        self.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
+        
+        self.price = row [self.instrument]
+        self.price_max = row ['price_max']
+        self.price_min = row ['price_min']
 
-            self.price_momentum = row ['momentum']
-            self.price_momentum_prev = row ['momentum_prev']
+        self.ask = row ["ask"]
+        self.bid = row ["bid"]
 
-            self.price_target = round(self.get_target_price(), 6)
+        self.price_momentum = row ['momentum']
+        self.price_momentum_prev = row ['momentum_prev']
 
-            if print:
-                self.print_indicators()
+        self.price_target = round(self.get_target_price(), 6)
+
+        if print:
+            self.print_indicators()
 
     def print_indicators(self):
 
