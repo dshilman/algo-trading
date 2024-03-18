@@ -62,8 +62,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_momentum_prev"] = df ["rsi_momentum"].shift(1)
         df["rsi_max"] = df ['RSI'].rolling(period).max()
         df["rsi_min"] = df ['RSI'].rolling(period).min()
-        df["rsi_mean"] = df ['RSI'].rolling(period).mean()
-        df["rsi_mean_prev"] = df ['RSI'].shift(period)
+        # df["rsi_mean"] = df ['RSI'].rolling(period).mean()
+        # df["rsi_mean_prev"] = df ['RSI'].shift(period)
         
         df["price_max"] = df [instrument].rolling(period).max()
         df["price_min"] = df [instrument].rolling(period).min()
@@ -88,8 +88,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi = round(row ['RSI'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
-        self.rsi_mean = round(row ['rsi_mean'], 4)
-        self.rsi_mean_prev = round(row ['rsi_mean_prev'], 4)
+        # self.rsi_mean = round(row ['rsi_mean'], 4)
+        # self.rsi_mean_prev = round(row ['rsi_mean_prev'], 4)
                     
         self.rsi_momentum = round(row ["rsi_momentum"], 6)
         self.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
@@ -126,21 +126,9 @@ class TradingStrategyCalc(TradingStrategyBase):
             return True
 
     
-    def reverse_rsi_up_sell(self):
+    def reverse_rsi(self):
 
-        return round(self.rsi, self.rsi_round) > round(self.rsi_min, self.rsi_round)
-
-    def reverse_rsi_down_sell(self):
-        
-        return round(self.rsi, self.rsi_round) < round(self.rsi_max, self.rsi_round)
-
-    def reverse_rsi_up_buy(self):
-
-        return round(self.rsi_mean, 0) > round(self.rsi_mean_prev, 0)
-
-    def reverse_rsi_down_buy(self):
-        
-        return round(self.rsi_mean), 0 < round(self.rsi_mean_prev, 0)
+        return round(self.rsi_min, self.rsi_round) < round(self.rsi, self.rsi_round) < round(self.rsi_max, self.rsi_round)
 
 
     def get_target_price(self):
@@ -193,10 +181,18 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         return date_time
 
+    # def rsi_spike(self, trading_time):
+
+    #     return (self.rsi_max - self.rsi_min > 5) and (self.rsi_max < self.high_rsi)
+
+    # def rsi_drop(self, trading_time):
+
+    #     return (self.rsi_max - self.rsi_min > 5) and (self.rsi_min > self.low_rsi)
+    
     def rsi_spike(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_max < self.high_rsi)
+        return (self.rsi_max - self.rsi_min > self.rsi_spike_int) and (self.rsi_max < self.high_rsi if not self.risk_time(trading_time) else self.rsi_max < self.high_rsi - 5)
 
     def rsi_drop(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > 5) and (self.rsi_min > self.low_rsi)
+        return (self.rsi_max - self.rsi_min > self.rsi_spike_int) and (self.rsi_min > self.low_rsi if not self.risk_time(trading_time) else self.rsi_min > self.low_rsi + 5)

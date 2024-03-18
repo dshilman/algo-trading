@@ -17,11 +17,12 @@ class TradingStrategy(TradingStrategyExec):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
     
     
-    def rsi_spike(self, trading_time):
+    # def rsi_spike(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > 10) and (self.rsi_mean < self.high_rsi if not self.risk_time(trading_time) else self.rsi_max < self.high_rsi)
+    #     return (self.rsi_max - self.rsi_min > 10) and (self.rsi_mean < self.high_rsi if not self.risk_time(trading_time) else self.rsi_max < self.high_rsi)
 
-    def rsi_drop(self, trading_time):
+    # def rsi_drop(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > 10) and (self.rsi_mean > self.low_rsi if not self.risk_time(trading_time) else self.rsi_min > self.low_rsi)
+    #     return (self.rsi_max - self.rsi_min > 10) and (self.rsi_mean > self.low_rsi if not self.risk_time(trading_time) else self.rsi_min > self.low_rsi)
+
 

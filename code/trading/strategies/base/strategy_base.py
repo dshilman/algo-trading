@@ -50,6 +50,8 @@ class TradingStrategyBase():
         self.pause_end = config.get(self.instrument, 'pause_end')
         self.target = float(config.get(self.instrument, 'target'))
         self.rsi_round = int(config.get(instrument, 'rsi_round'))
+        self.rsi_spike_int = int(config.get(instrument, 'rsi_spike'))
+
         
 
         self.data: pd.DataFrame = None
