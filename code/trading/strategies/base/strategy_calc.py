@@ -116,19 +116,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
 
 
-    def reverse_rsi_momentum(self):
-        # do not change this logic
-        if self.rsi_momentum > 0:
-            return  self.rsi < self.rsi_max
-        elif self.rsi_momentum < 0:
-            return self.rsi_min < self.rsi
-        elif self.rsi_momentum == 0:
-            return True
-
     
     def reverse_rsi(self):
 
-        return round(self.rsi_min, self.rsi_round) < round(self.rsi, self.rsi_round) < round(self.rsi_max, self.rsi_round)
+        return self.rsi_min < self.rsi < self.rsi_max
 
 
     def get_target_price(self):
@@ -181,18 +172,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         return date_time
 
-    # def rsi_spike(self, trading_time):
-
-    #     return (self.rsi_max - self.rsi_min > 5) and (self.rsi_max < self.high_rsi)
-
-    # def rsi_drop(self, trading_time):
-
-    #     return (self.rsi_max - self.rsi_min > 5) and (self.rsi_min > self.low_rsi)
-    
     def rsi_spike(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > self.rsi_spike_int) and (self.rsi_max < self.high_rsi if not self.risk_time(trading_time) else self.rsi_max < self.high_rsi - 5)
+        return (self.rsi_max - self.rsi_min > self.rsi_spike_int)
 
     def rsi_drop(self, trading_time):
 
-        return (self.rsi_max - self.rsi_min > self.rsi_spike_int) and (self.rsi_min > self.low_rsi if not self.risk_time(trading_time) else self.rsi_min > self.low_rsi + 5)
+        return (self.rsi_max - self.rsi_min > self.rsi_spike_int)
