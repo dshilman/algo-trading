@@ -49,7 +49,6 @@ class TradingStrategyBase():
         self.pause_start = config.get(self.instrument, 'pause_start')
         self.pause_end = config.get(self.instrument, 'pause_end')
         self.target = float(config.get(self.instrument, 'target'))
-        self.rsi_round = int(config.get(instrument, 'rsi_round'))
         self.rsi_spike_int = int(config.get(instrument, 'rsi_spike'))
 
         
