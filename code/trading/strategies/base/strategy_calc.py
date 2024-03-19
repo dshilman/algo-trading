@@ -75,7 +75,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.data = df.copy()
 
-    def set_strategy_indicators(self, row: pd.Series=None, print=False):
+    def set_strategy_indicators(self, row: pd.Series=None, print_ind=False):
 
         if row is None:
             row = self.data.iloc[-1]
@@ -106,7 +106,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.price_target = round(self.get_target_price(), 6)
 
-        if print:
+        if print_ind:
             self.print_indicators()
 
     def print_indicators(self):
