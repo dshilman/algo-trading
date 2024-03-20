@@ -31,18 +31,19 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # logger.debug(f"Adding tickers to dataframe: {ticker_df}")
 
-        df = self.data.copy()
+        df = self.data
         df = pd.concat([df, ticker_df])
         df = df.tail(self.sma_value * 3)
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-        self.data = df.copy()
+    
+        self.data = df
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
      
     
     def calc_indicators(self):
         
-        df: pd.DataFrame = self.data.copy()
+        df: pd.DataFrame = self.data
 
         instrument = self.instrument
         SMA = self.sma_value
@@ -73,7 +74,7 @@ class TradingStrategyCalc(TradingStrategyBase):
     
         logger.debug("\n" + df.iloc[-period:].to_string(header=True))
 
-        self.data = df.copy()
+        self.data = df
 
     def set_strategy_indicators(self, row: pd.Series=None, print_ind=False):
 
