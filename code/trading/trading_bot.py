@@ -182,7 +182,7 @@ class Trader():
                     self.strategy.add_tickers(ticker_df=df)
 
                 self.strategy.calc_indicators()                
-                self.strategy.set_strategy_indicators(print_ind=True)
+                self.strategy.set_strategy_indicators(row = None, print_ind = True)
             
                 try:
                     self.strategy.execute_strategy()

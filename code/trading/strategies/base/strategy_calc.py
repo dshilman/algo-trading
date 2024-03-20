@@ -172,10 +172,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         return date_time
 
-    def rsi_spike(self, trading_time):
+    def rsi_spike(self):
 
         return (self.rsi_max - self.rsi_min > self.rsi_spike_int)
 
-    def rsi_drop(self, trading_time):
+    def rsi_drop(self):
 
         return (self.rsi_max - self.rsi_min > self.rsi_spike_int)
