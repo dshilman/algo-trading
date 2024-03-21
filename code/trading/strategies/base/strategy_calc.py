@@ -137,7 +137,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     def reverse_rsi_down(self):
 
-        return self.rsi < self.rsi_prev
+        return self.rsi < self.rsi_min
 
 
     def get_target_price(self):
