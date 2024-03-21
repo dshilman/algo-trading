@@ -59,6 +59,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         period = 14
         rsi_periods = int(SMA/2)
         df["RSI"] = df[instrument].rolling(rsi_periods).apply(lambda x: calculate_rsi(x.values, rsi_periods))
+        df["RSI_PREV"] = df.RSI.shift(2)
+
         # df["rsi_momentum"] = df.RSI.rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))
         # df["rsi_momentum_prev"] = df ["rsi_momentum"].shift(1)
         df["rsi_max"] = df ['RSI'].rolling(period).max()
@@ -87,8 +89,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_upper =  row ['Upper']
                 
         self.rsi = round(row ['RSI'], 4)
+        self.rsi_prev = round(row ['RSI_PREV'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
+
         # self.rsi_mean = round(row ['rsi_mean'], 4)
         # self.rsi_mean_prev = round(row ['rsi_mean_prev'], 4)
                     
@@ -118,9 +122,13 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
     
-    def reverse_rsi(self):
+    def reverse_rsi_up(self):
 
-        return self.rsi_min < self.rsi < self.rsi_max
+        return not self.rsi_prev <= self.rsi <= self.rsi_max
+
+    def reverse_rsi_down(self):
+
+        return not self.rsi_min <= self.rsi <= self.rsi_prev
 
 
     def get_target_price(self):
