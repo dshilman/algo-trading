@@ -51,30 +51,8 @@ class TradingStrategyBase():
         self.target = float(config.get(self.instrument, 'target'))
         self.rsi_spike_int = int(config.get(instrument, 'rsi_spike'))
 
-        
-
         self.data: pd.DataFrame = None
-        # Caculated attributes
-        self.bb_upper =  None
-        self.bb_lower =  None
-        self.sma = None
-
-        # self.price = None
-        # self.price_max = None
-        # self.price_min = None
-        # self.price_momentum = None
-        # self.price_momentum_prev = None
-        self.price_target = None
-        
-        self.rsi = None
-        self.rsi_prev = None
-        self.rsi_min = None
-        self.rsi_max = None
-        # self.rsi_mean = None
-        # self.rsi_mean_prev = None
-        # self.rsi_momentum = None
-        # self.rsi_momentum_prev = None
-   
+  
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
         
