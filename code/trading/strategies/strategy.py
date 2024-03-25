@@ -1,5 +1,3 @@
-import configparser
-import json
 import logging
 import sys
 from pathlib import Path
