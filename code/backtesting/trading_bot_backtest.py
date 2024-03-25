@@ -91,6 +91,7 @@ class TradingBacktester():
 
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
+            # self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
     
             logger.info(f"Starting trading for {self.strategy.instrument}...")
 

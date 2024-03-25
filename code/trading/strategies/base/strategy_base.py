@@ -2,9 +2,7 @@ import configparser
 import json
 import logging
 import sys
-from datetime import datetime, time, timedelta
 from pathlib import Path
-from random import randint
 
 import pandas as pd
 from tabulate import tabulate
@@ -37,6 +35,7 @@ class TradingStrategyBase():
         self.instrument = instrument
         self.api:OandaApi = api
         self.unit_test = unit_test
+
         config = configparser.ConfigParser()  
         config.read(pair_file)
         self.sma_value = int(config.get(instrument, 'SMA'))
@@ -44,13 +43,10 @@ class TradingStrategyBase():
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
         self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
-        self.low_rsi = float(config.get(self.instrument, 'low_rsi'))
-        self.high_rsi = float(config.get(self.instrument, 'high_rsi'))
         self.pause_start = config.get(self.instrument, 'pause_start')
         self.pause_end = config.get(self.instrument, 'pause_end')
         self.target = float(config.get(self.instrument, 'target'))
-        self.rsi_spike_int = int(config.get(instrument, 'rsi_spike'))
-
+        
         self.data: pd.DataFrame = None
   
 
@@ -106,19 +102,8 @@ class TradingStrategyBase():
         
         return
 
-    def report_trade(self, order):
-
-        logger.info("\n" + 100 * "-" + "\n")
-        logger.info("")
-        logger.info("\n" + self.data[-8:].to_string(header=True))
-        logger.info("")
-        self.print_indicators()
-        logger.info("")
-        logger.info(json.dumps(order, indent = 2))
-        logger.info("\n" + 100 * "-" + "\n")
-
     def __str__(self):
-        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}, rsi high: {self.high_rsi}, rsi low: {self.low_rsi}, target: {self.target}"
+        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}"
 
     def __repr__(self):
-        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}, rsi high: {self.high_rsi}, rsi low: {self.low_rsi}, target: {self.target}"
+        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}"
