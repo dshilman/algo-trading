@@ -97,7 +97,7 @@ class Trader():
 
 
         treads = []
-        treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
+        treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
         treads.append(threading.Thread(target=self.check_trading_time, args=(5 * 60,)))
         treads.append(threading.Thread(target=self.refresh_strategy, args=(15,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
@@ -211,6 +211,7 @@ class Trader():
     def check_positions(self, refresh = 300): 
 
         i: int = 0
+        print_logs: int = 0
 
         while not self.terminate:
             try:
@@ -221,9 +222,10 @@ class Trader():
                 if not units == self.strategy.trading_session.have_units:
                     self.strategy.trading_session.have_units = units
 
-                logger.info(f"Instrument: {self.instrument}, Units: {units}")
+                if print_logs % 5 == 0:
+                    logger.info(f"Instrument: {self.instrument}, Units: {units}")
 
-
+                print_logs = print_logs + 1
                 time.sleep(refresh)
 
             except Exception as e:
