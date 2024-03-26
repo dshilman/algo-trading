@@ -118,7 +118,7 @@ class OandaApi:
         if ok and "position" in data:
             long_units = data["position"]["long"]["units"]
             short_units = data["position"]["short"]["units"]
-            logger.info (f"Currently have position: {instrument} | long_units: {long_units} | short_units: {short_units}")
+            # logger.info (f"Currently have position: {instrument} | long_units: {long_units} | short_units: {short_units}")
             units = round(float(long_units) + float(short_units), 0)
 
         return units

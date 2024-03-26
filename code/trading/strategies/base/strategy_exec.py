@@ -118,20 +118,18 @@ class TradingStrategyExec(TradingStrategyCalc):
             return None
 
         transaction_price =  self.trading_session.trades[-1][3]
-        traded_units = self.trading_session.trades[-1][2]
+        
+        if have_units < 0:
+            current_loss_perc = round((self.ask - transaction_price)/transaction_price, 4)
+            if current_loss_perc >= (self.sl_perc/2 if (self.risk_time(trading_time) or round(self.units_to_trade/abs(have_units), 1) != 1) else self.sl_perc):
+                logger.info(f"Close short position, - Stop Loss Buy, short price {transaction_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
+                return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Short - Buy (SL)", False, True)
 
-        if (traded_units == have_units):
-            if have_units < 0:
-                current_loss_perc = round((self.ask - transaction_price)/transaction_price, 4)
-                if current_loss_perc >= (self.sl_perc/2 if (self.risk_time(trading_time) or round(self.units_to_trade/abs(have_units), 1) != 1) else self.sl_perc):
-                    logger.info(f"Close short position, - Stop Loss Buy, short price {transaction_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
-                    return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Short - Buy (SL)", False, True)
-
-            if have_units > 0:
-                current_loss_perc = round((transaction_price - self.bid)/transaction_price, 4)
-                if current_loss_perc >= (self.sl_perc/2 if (self.risk_time(trading_time) or round(self.units_to_trade/abs(have_units), 1) != 1) else self.sl_perc):
-                    logger.info(f"Close long position, - Stop Loss Sell, long price {transaction_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
-                    return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Long - Sell (SL)", False, True)
+        if have_units > 0:
+            current_loss_perc = round((transaction_price - self.bid)/transaction_price, 4)
+            if current_loss_perc >= (self.sl_perc/2 if (self.risk_time(trading_time) or round(self.units_to_trade/abs(have_units), 1) != 1) else self.sl_perc):
+                logger.info(f"Close long position, - Stop Loss Sell, long price {transaction_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
+                return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Long - Sell (SL)", False, True)
         
         return None
 
