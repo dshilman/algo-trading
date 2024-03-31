@@ -182,7 +182,7 @@ class Trader():
                     self.strategy.add_tickers(ticker_df=df)
 
                 self.strategy.calc_indicators()                
-                self.strategy.set_strategy_indicators(row = None, print_ind = True)
+                self.strategy.set_strategy_indicators(row = None)
             
                 try:
                     self.strategy.execute_strategy()
@@ -266,7 +266,7 @@ class Trader():
         # self.stop_stream = True
         logger.info (cause)
 
-        self.strategy.trading_session.print_trades()
+        self.strategy.terminate()
 
 
     
