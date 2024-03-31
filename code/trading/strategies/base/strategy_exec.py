@@ -41,7 +41,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
             if order is not None:
                 self.submit_order(order)
-                self.trading_session.add_trade(trade_action=trade_action, rsi=self.rsi)
+                self.trading_session.add_trade(trade_action=trade_action)
 
 
         if trade_action is not None and trade_action.sl_trade:
@@ -103,19 +103,20 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         close_trade = False
         transaction_date =  self.get_last_trade_time()
+        target_price = self.get_target_price()
         if transaction_date is None or (transaction_date + timedelta(minutes=20)) <= trading_time or self.risk_time(trading_time):
             close_trade = True
         
         if have_units > 0: # long position
-            if close_trade or self.bid > self.price_target and self.reverse_rsi_down():
+            if close_trade or self.bid > target_price and self.reverse_rsi_down():
                 if not self.backtest:
-                    logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {self.price_target}")
+                    logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}, target: {target_price}")
                 return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
 
         if have_units < 0: # short position
-            if close_trade or self.ask < self.price_target and self.reverse_rsi_up():
+            if close_trade or self.ask < target_price and self.reverse_rsi_up():
                 if not self.backtest:
-                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {self.price_target}")
+                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, target: {target_price}")
                 return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
 
         

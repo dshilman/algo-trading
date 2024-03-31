@@ -14,7 +14,7 @@ from trading.trading_bot import Trader
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('pair', type=str, help='pair')
+    parser.add_argument('pair', type=str, default = "EUR_USD", help='pair')
     args = parser.parse_args()
 
     config_file = os.path.abspath(path="../../config/oanda.cfg")

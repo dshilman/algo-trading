@@ -40,8 +40,8 @@ class TradingStrategyBase():
 
         config = configparser.ConfigParser()  
         config.read(pair_file)
-        self.sma_config = int(config.get(instrument, 'SMA'))
-        self.dev = float(config.get(instrument, 'dev'))
+        self.SMA = int(config.get(instrument, 'SMA'))
+        self.DEV = float(config.get(instrument, 'dev'))
         self.rsi_change = float(config.get(instrument, 'rsi_change'))
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
@@ -105,7 +105,7 @@ class TradingStrategyBase():
         return
 
     def __str__(self):
-        return f"Strategy -- SMA: {self.sma_config}, STD: {self.dev}, stop loss: {self.sl_perc}"
+        return f"Strategy -- SMA: {self.SMA}, STD: {self.DEV}, stop loss: {self.sl_perc}"
 
     def __repr__(self):
-        return f"Strategy -- SMA: {self.sma_config}, STD: {self.dev}, stop loss: {self.sl_perc}"
+        return f"Strategy -- SMA: {self.SMA}, STD: {self.DEV}, stop loss: {self.sl_perc}"

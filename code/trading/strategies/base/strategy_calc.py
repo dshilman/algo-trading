@@ -33,8 +33,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df = self.data.copy()
         df = pd.concat([df, ticker_df])
-        # df.dropna(subset=["SMA"], inplace=True)
-        df = df.tail(self.sma_config * 2)
+        df = df.tail(self.SMA * 2)
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
     
         self.data = df
@@ -46,36 +45,44 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         df: pd.DataFrame = self.data.copy()
 
+        logger.debug("debug 1\n" + df.tail().to_string(header=True))
+
+
         instrument = self.instrument
-        SMA = self.sma_config
-        dev = self.dev
+        SMA = self.SMA
+        DEV = self.DEV
 
         df["SMA"] = df[instrument].rolling(SMA).mean()
 
-        std = df[instrument].rolling(SMA).std()
+        logger.debug("debug 2\n" + df.tail().to_string(header=True))
+
+
+        std = df[instrument].rolling(SMA).std() * DEV
         
-        df["Lower"] = df["SMA"] - std * dev
-        df["Upper"] = df["SMA"] + std * dev
+        df["Lower"] = df["SMA"] - std
+        df["Upper"] = df["SMA"] + std
+
+        logger.debug("debug 3\n" + df.tail().to_string(header=True))
 
         rsi_periods = int(SMA/2)
         df["RSI"] = df[instrument].rolling(rsi_periods).apply(lambda x: calculate_rsi(x.values, rsi_periods))
-        df["RSI_PREV1"] = df.RSI.shift()
+        # df["RSI_PREV1"] = df.RSI.shift()
         # df["RSI_PREV2"] = df.RSI.shift(2)
 
 
         period = 28
         
-        df["rsi_max"] = df ['RSI'].rolling(period).max()
-        df["rsi_min"] = df ['RSI'].rolling(period).min()
+        df["rsi_max"] = df['RSI'].rolling(period).max()
+        df["rsi_min"] = df['RSI'].rolling(period).min()
         
         df["rsi_mom"] = df["RSI"].rolling(period).apply(lambda x: calculate_momentum(x, 1))
         df["rsi_mom_min"] = df["rsi_mom"].rolling(period).min()
         df["rsi_mom_max"] = df["rsi_mom"].rolling(period).max()
 
-        df["price_max"] = df [instrument].rolling(period).max()
-        df["price_min"] = df [instrument].rolling(period).min()
+        # df["price_max"] = df [instrument].rolling(period).max()
+        # df["price_min"] = df [instrument].rolling(period).min()
     
-        logger.debug("\n" + df.iloc[-period:].to_string(header=True))
+        logger.debug("\n" + df.tail().to_string(header=True))
 
         self.data = df
 
@@ -89,7 +96,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_high =  round(row ['Upper'], 4)
                 
         self.rsi = round(row ['RSI'], 4)
-        self.rsi_prev1 = round(row ['RSI_PREV1'], 4)
+        # self.rsi_prev1 = round(row ['RSI_PREV1'], 4)
         # self.rsi_prev2 = round(row ['RSI_PREV2'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
@@ -99,21 +106,19 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_mom_max = round(row ['rsi_mom_max'], 4)
 
         self.price = row [self.instrument]
-        self.price_max = row ['price_max']
-        self.price_min = row ['price_min']
+        # self.price_max = row ['price_max']
+        # self.price_min = row ['price_min']
 
         self.ask = row ["ask"]
         self.bid = row ["bid"]
-
-        self.price_target = round(self.get_target_price(), 6)
 
         if not self.backtest:
             self.print_indicators()
 
     def print_indicators(self):
 
-        indicators = [[self.ask, self.bid, self.sma, self.bb_low, self.bb_high, self.rsi, self.rsi_min, self.rsi_max, self.price_target]]
-        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "TARGET PRICE"]
+        indicators = [[self.ask, self.bid, self.sma, self.bb_low, self.bb_high, self.rsi, self.rsi_min, self.rsi_max]]
+        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX"]
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
     
 
@@ -149,11 +154,6 @@ class TradingStrategyCalc(TradingStrategyBase):
             return True
 
         return False
-
-    def is_too_soon(self, trading_time):
-
-        last_tran_time = self.get_last_trade_time()
-        return last_tran_time is None or (last_tran_time + timedelta(minutes=30)) > trading_time
 
 
     def get_last_trade_time(self):

@@ -55,7 +55,7 @@ class Trader():
             raise Exception(f"Strategy not found for {instrument}")
 
         logger.info(f"Running:{class_} strategy")
-        self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
+        self.strategy: TradingStrategyExec  = class_(instrument=self.instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
         logger.info(f"Trading Strategy: {self.strategy}")
 
         today = datetime.utcnow().date()
@@ -148,7 +148,7 @@ class Trader():
             logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
             
             
-            if self.from_dt <= now <= self.to_dt:
+            if self.from_dt <= now <= self.to_dt or self.api.get_position(instrument = self.instrument) != 0:
                 time.sleep(refresh)
             else:
                 logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
