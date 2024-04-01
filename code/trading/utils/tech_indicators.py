@@ -7,8 +7,9 @@ def calculate_slope(S):
     poly = np.polyfit(M.index, M.values, deg=1)
     return poly[0]
 
-def calculate_momentum(a, b):
-    return -(a - b) / a
+def calculate_momentum(S: pd.Series, n):
+
+    return (S - S.shift(n)).mean()
 
 # Calculate RSI
 def calculate_rsi(S, period=14):

@@ -35,7 +35,7 @@ class TradingBacktester():
         self.end = config.get(instrument, 'end')
 
         logger.setLevel(logging.INFO)
-
+        
         log_file = os.path.join("logs", f"{instrument}_{days}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -57,7 +57,7 @@ class TradingBacktester():
 
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
-        
+        self.strategy.backtest = True
     
     def get_history_with_all_prices(self):
         
@@ -91,7 +91,7 @@ class TradingBacktester():
 
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
-            # self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
+            # self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
     
             logger.info(f"Starting trading for {self.strategy.instrument}...")
 
@@ -99,23 +99,22 @@ class TradingBacktester():
 
             for index, row in self.strategy.data.iterrows():
 
-                self.strategy.set_strategy_indicators(row=row, print_ind=False)
+                from_dt = datetime.combine(index, datetime.strptime(self.start, '%H:%M:%S').time())
+                to_dt = datetime.combine(index, datetime.strptime(self.end, '%H:%M:%S').time())
+
+                if not from_dt <= index <= to_dt:
+                    continue
+
+                self.strategy.set_strategy_indicators(row=row)
                 
                 if pause_trading == None or index > pause_trading:
-                    trade_action = None
-                    try:
-                        trade_action = self.strategy.determine_trade_action(trading_time=index)
-                    except PauseTradingException as e:
-                        logger.info(f"Pausing trading for {e.hours} hour(s) at {index}")
-                        pause_trading = index + timedelta(hours = e.hours)
-                        continue
+                    trade_action = self.strategy.determine_trade_action(trading_time=index)
                                         
                     if trade_action != None:
-                        # self.strategy.print_indicators()
-                        self.strategy.trading_session.add_trade(trade_action=trade_action, date_time=index, rsi=self.strategy.rsi)
-                        if trade_action.sl_trade:
-                            logger.info(f"Pausing trading for 5 minutes at {index}")
-                            pause_trading = index + timedelta(minutes = 5)                        
+                        self.strategy.trading_session.add_trade(trade_action=trade_action, date_time=index)
+                        # if trade_action.sl_trade:
+                        #     logger.debug(f"Pausing trading for 5 minutes at {index}")
+                        #     pause_trading = index + timedelta(hours = 2)                        
             
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()
