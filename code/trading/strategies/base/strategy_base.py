@@ -51,6 +51,8 @@ class TradingStrategyBase():
         
         self.data: pd.DataFrame = None
   
+        self.rsi_min_date = None
+        self.rsi_max_date = None
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
         
