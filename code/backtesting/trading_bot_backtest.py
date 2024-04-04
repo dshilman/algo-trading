@@ -102,10 +102,10 @@ class TradingBacktester():
                 from_dt = datetime.combine(index, datetime.strptime(self.start, '%H:%M:%S').time())
                 to_dt = datetime.combine(index, datetime.strptime(self.end, '%H:%M:%S').time())
 
-                if not from_dt <= index <= to_dt:
+                if not from_dt <= index <= to_dt and self.strategy.trading_session.have_units == 0:
                     continue
 
-                self.strategy.set_strategy_indicators(row=row)
+                self.strategy.set_strategy_indicators(row=row, time=index)
                 
                 if pause_trading == None or index > pause_trading:
                     trade_action = self.strategy.determine_trade_action(trading_time=index)
