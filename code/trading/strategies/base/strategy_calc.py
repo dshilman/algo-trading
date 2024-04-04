@@ -63,7 +63,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["Upper"] = df["SMA"] + std
 
         rsi_periods = int(SMA/2)
-        period = 20
+        period = 28
 
         df["RSI"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x.values, period))
         df["RSI_PREV"] = df.RSI.shift()
@@ -112,7 +112,6 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.ask = row ["ask"]
         self.bid = row ["bid"]
-
         
         if self.rsi == self.rsi_min:
             self.rsi_min_date = time
@@ -183,7 +182,6 @@ class TradingStrategyCalc(TradingStrategyBase):
     def reverse_rsi_down_open(self):
 
         return round(self.rsi, 0) < round(self.rsi_prev, 0) < round(self.rsi_max, 0)
-        
 
     def reverse_rsi_up_close(self):
 
@@ -196,12 +194,19 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     def rsi_spike(self):
 
-        return self.rsi_max - self.rsi_min > self.rsi_change and self.rsi_mom > 0 and self.rsi_min_date is not None and self.rsi_max_date is not None and self.rsi_max_date > self.rsi_min_date
-        # return self.rsi_max - self.rsi_min > self.rsi_change
+        return self.rsi_max - self.rsi_min > self.rsi_change \
+            and self.rsi_mom > 0 \
+                and self.rsi_min_date is not None and self.rsi_max_date is not None and \
+                    self.rsi_min_date < self.rsi_max_date and \
+                        self.rsi_max_date - self.rsi_min_date < timedelta(minutes=5)
     
     def rsi_drop(self):
 
-        return self.rsi_max - self.rsi_min > self.rsi_change and self.rsi_mom < 0 and self.rsi_min_date is not None and self.rsi_max_date is not None and self.rsi_min_date > self.rsi_max_date
+        return self.rsi_max - self.rsi_min > self.rsi_change \
+            and self.rsi_mom < 0 \
+                and self.rsi_min_date is not None and self.rsi_max_date is not None and \
+                    self.rsi_min_date > self.rsi_max_date and \
+                        self.rsi_max_date - self.rsi_min_date < timedelta(minutes=5)
         # return self.rsi_max - self.rsi_min > self.rsi_change
 
     def reset_rsi(self):

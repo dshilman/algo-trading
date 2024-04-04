@@ -64,7 +64,7 @@ class TradingStrategyExec(TradingStrategyCalc):
             logger.debug(f"Have {have_units} positions, checking if need to open")
             trade = self.check_if_need_open_trade(trading_time)
             if trade is not None:
-                self.reset_rsi()
+                # self.reset_rsi()
                 return trade
 
         if have_units != 0:  # if already have positions             
@@ -85,12 +85,12 @@ class TradingStrategyExec(TradingStrategyCalc):
         
         spread = round(self.ask - self.bid, 4)
 
-        if self.rsi_drop() and self.reverse_rsi_up_open():
+        if self.bid < self.bb_low and self.rsi_drop() and self.reverse_rsi_up_open():
             if not self.backtest:
                 logger.info(f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}, rsi mom : {self.rsi_mom}")
             return Trade_Action(self.instrument, self.units_to_trade, self.ask, spread, "Go Long - Buy", True, False, self.tp_perc)
 
-        elif self.rsi_spike() and self.reverse_rsi_down_open(): 
+        elif self.bid > self.bb_high and self.rsi_spike() and self.reverse_rsi_down_open(): 
             if not self.backtest:
                 logger.info(f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}, rsi mom : {self.rsi_mom}")
             return Trade_Action(self.instrument, -self.units_to_trade, self.bid, spread, "Go Short - Sell", True, False, self.tp_perc)

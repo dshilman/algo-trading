@@ -42,6 +42,8 @@ class TradingStrategyBase():
         config.read(pair_file)
         self.SMA = int(config.get(instrument, 'SMA'))
         self.DEV = float(config.get(instrument, 'dev'))
+        # self.rsi_high = float(config.get(instrument, 'rsi_high'))
+        # self.rsi_low = float(config.get(instrument, 'rsi_low'))
         self.rsi_change = float(config.get(instrument, 'rsi_change'))
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
         self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
