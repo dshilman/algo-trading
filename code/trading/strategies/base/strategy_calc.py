@@ -89,8 +89,9 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         if row is None:
             row = self.data.iloc[-1]
-            time = self.data.iloc[-1].index 
-            logger.debug(f"Setting strategy indicators for time: {time}")
+            time = self.data.index[-1]
+        
+        logger.debug(f"Setting strategy indicators for time: {time}")
 
         self.sma = row ['SMA']
         self.bb_low = round(row ['Lower'], 4)
@@ -130,24 +131,28 @@ class TradingStrategyCalc(TradingStrategyBase):
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
     
 
-    def get_target_price(self):
+    def get_close_trade_price(self):
 
-        target = None
         have_units = self.trading_session.have_units
 
         if have_units != 0 and len (self.trading_session.trades) > 0:
-            transaction_target =  self.trading_session.trades[-1][4]
+            trade_close_target =  self.trading_session.trades[-1][4]
 
-            return transaction_target
+            return trade_close_target
 
-            if have_units > 0: # long position
-                target = min(transaction_target, self.sma)       
-            elif have_units < 0: # short position
-                target = max(transaction_target, self.sma)       
-        else:
-            target = self.sma
+        return self.sma
 
-        return target
+    def get_open_trade_price(self):
+
+        have_units = self.trading_session.have_units
+
+        if have_units != 0 and len (self.trading_session.trades) > 0:
+            open_trade_price =  self.trading_session.trades[-1][3]
+
+            return open_trade_price
+
+     
+        return None
 
     def risk_time(self, date_time) -> bool:
 
@@ -177,11 +182,12 @@ class TradingStrategyCalc(TradingStrategyBase):
      
     def reverse_rsi_up_open(self):
 
-        return round(self.rsi, 0) > round(self.rsi_prev, 0) > round(self.rsi_min, 0)
+        return round(self.rsi, 0) > round(self.rsi_prev, 0) == round(self.rsi_min, 0)
         
     def reverse_rsi_down_open(self):
 
-        return round(self.rsi, 0) < round(self.rsi_prev, 0) < round(self.rsi_max, 0)
+        return round(self.rsi, 0) < round(self.rsi_prev, 0) == round(self.rsi_max, 0)
+        
 
     def reverse_rsi_up_close(self):
 
@@ -195,19 +201,19 @@ class TradingStrategyCalc(TradingStrategyBase):
     def rsi_spike(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
-            and self.rsi_mom > 0 \
-                and self.rsi_min_date is not None and self.rsi_max_date is not None and \
-                    self.rsi_min_date < self.rsi_max_date and \
-                        self.rsi_max_date - self.rsi_min_date < timedelta(minutes=5)
+            and 70 < self.rsi_max \
+            and self.rsi_min_date is not None and self.rsi_max_date is not None and \
+                self.rsi_min_date < self.rsi_max_date and \
+                    self.rsi_max_date - self.rsi_min_date < timedelta(minutes=10)
+
     
     def rsi_drop(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
-            and self.rsi_mom < 0 \
-                and self.rsi_min_date is not None and self.rsi_max_date is not None and \
-                    self.rsi_min_date > self.rsi_max_date and \
-                        self.rsi_max_date - self.rsi_min_date < timedelta(minutes=5)
-        # return self.rsi_max - self.rsi_min > self.rsi_change
+            and self.rsi_min < 30 \
+            and self.rsi_min_date is not None and self.rsi_max_date is not None and \
+                self.rsi_min_date > self.rsi_max_date and \
+                    self.rsi_max_date - self.rsi_min_date < timedelta(minutes=10)
 
     def reset_rsi(self):
         self.rsi_min_date = None

@@ -81,3 +81,16 @@ class Trading_Session():
         logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
         logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
         logger.info("\n" + 100 * "-")
+
+    def to_excel(self, file_name):
+
+        import pandas as pd
+        df = pd.DataFrame(self.trades, columns = ["datetime", "transaction", "trade units", "price", "target", "trade cost", "trade p&l", "have units", "total p&l"])
+        df.to_excel(file_name, index=False)
+
+        return
+
+    def to_pickle(self, file_name):
+        import pandas as pd
+        df=pd.DataFrame(self.trades, columns = ["datetime", "transaction", "trade units", "price", "target", "trade cost", "trade p&l", "have units", "total p&l"])
+        df.to_pickle(file_name)

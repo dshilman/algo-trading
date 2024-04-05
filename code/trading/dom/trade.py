@@ -8,8 +8,8 @@ class Trade_Action():
         self.transaction = transaction
         self.open_trade = open_trade
         self.sl_trade = sl_trade
-        signal = 1 if units > 0 else -1
-        self.target = 0 if not open_trade else price * (1 + signal * tp)
+        signal = (1 if units > 0 else -1)
+        self.target = (0 if not open_trade else price * (1 + signal * tp))
         # self.target = price + signal * spread
 
 

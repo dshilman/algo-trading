@@ -50,7 +50,7 @@ class TradingStrategyBase():
         self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
         self.pause_start = config.get(self.instrument, 'pause_start')
         self.pause_end = config.get(self.instrument, 'pause_end')
-        
+        self.keep_trade_open_time = int(config.get(instrument, 'keep_trade_open_time'))
         self.data: pd.DataFrame = None
   
         self.rsi_min_date = None
