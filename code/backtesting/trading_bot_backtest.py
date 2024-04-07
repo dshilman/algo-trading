@@ -91,12 +91,13 @@ class TradingBacktester():
 
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
+
+            # logger.info("Savinf indicators to Excel...")
             # self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
-    
-            logger.info(f"Starting trading for {self.strategy.instrument}...")
 
             pause_trading = None
 
+            logger.info(f"Starting trading for {self.strategy.instrument}...")
             for index, row in self.strategy.data.iterrows():
 
                 from_dt = datetime.combine(index, datetime.strptime(self.start, '%H:%M:%S').time())
@@ -119,8 +120,9 @@ class TradingBacktester():
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()
 
-            # date_stamp = datetime.now().strftime("%d_%H_%M")
-            # self.strategy.trading_session.to_excel(f"../../data/backtest_results_{self.strategy.instrument}_{self.days}_{date_stamp}.xlsx")
+            logger.info("Saving trading report to Excel...")
+            date_stamp = datetime.now().strftime("%d_%H_%M")
+            self.strategy.trading_session.to_excel(f"../../data/backtest_results_{self.strategy.instrument}_{self.days}_{date_stamp}.xlsx")
 
         except Exception as e:
             logger.exception("Exception occurred")
