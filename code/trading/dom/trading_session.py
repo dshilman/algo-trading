@@ -26,12 +26,13 @@ class Trading_Session():
         self.trade_cost = 0
         self.trade_pl = 0
         self.have_units = 0
+        self.columns = ["datetime", "transaction", "price", "trade pl", "rsi", "rsi_min", "rsi_max", "total pl"]
 
         super().__init__()
 
 
 
-    def add_trade(self, trade_action: Trade_Action, date_time=None):
+    def add_trade(self, trade_action: Trade_Action, date_time=None, **kwargs):
 
         if date_time is None:
             date_time = datetime.utcnow()
@@ -69,15 +70,14 @@ class Trading_Session():
             # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         
         self.have_units = self.have_units + trade_action.units
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.units, trade_action.price, trade_action.target, '${:,.2f}'.format(self.trade_cost), '${:,.2f}'.format(self.trade_pl), self.have_units, '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.price, '${:,.2f}'.format(self.trade_pl), kwargs.get("rsi"), kwargs.get("rsi_min"), kwargs.get("rsi_max"), '${:,.2f}'.format(self.pl)])
 
         return
 
     def print_trades(self):
 
         logger.info("\n" + 100 * "-")        
-        columns = ["datetime", "transaction", "trade units", "price", "target", "trade cost", "trade p&l", "have units", "total p&l"]
-        logger.info("\n" + tabulate(self.trades, headers = columns))
+        logger.info("\n" + tabulate(self.trades, headers = self.columns))
         logger.info(f"Finished Trading Session with P&L: {'${:,.2f}'.format(self.pl)}, # of trades: {len(self.trades)}, have units: {self.have_units}")
         logger.info(f"go long: {self.go_long}, go short: {self.go_short}, close long: {self.close_long}, close short: {self.close_short}")
         logger.info("\n" + 100 * "-")
@@ -85,12 +85,12 @@ class Trading_Session():
     def to_excel(self, file_name):
 
         import pandas as pd
-        df = pd.DataFrame(self.trades, columns = ["datetime", "transaction", "trade units", "price", "target", "trade cost", "trade p&l", "have units", "total p&l"])
+        df = pd.DataFrame(self.trades, columns = self.columns)
         df.to_excel(file_name, index=False)
 
         return
 
     def to_pickle(self, file_name):
         import pandas as pd
-        df=pd.DataFrame(self.trades, columns = ["datetime", "transaction", "trade units", "price", "target", "trade cost", "trade p&l", "have units", "total p&l"])
+        df=pd.DataFrame(self.trades, columns = self.columns)
         df.to_pickle(file_name)

@@ -62,13 +62,13 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_max"] = df['RSI'].rolling(period).max()
         df["rsi_min"] = df['RSI'].rolling(period).min()
         
-        df["rsi_mom"] = df["RSI"].rolling(period).apply(lambda x: calculate_momentum(x, 1))
-        df["rsi_mom"] = df["rsi_mom"].shift()
+        # df["rsi_mom"] = df["RSI"].rolling(period).apply(lambda x: calculate_momentum(x, 1))
+        # df["rsi_mom"] = df["rsi_mom"].shift()
         # df["rsi_mom_min"] = df["rsi_mom"].rolling(period).min()
         # df["rsi_mom_max"] = df["rsi_mom"].rolling(period).max()
 
-        df["price_max"] = df [instrument].rolling(period).max()
-        df["price_min"] = df [instrument].rolling(period).min()
+        # df["price_max"] = df [instrument].rolling(period).max()
+        # df["price_min"] = df [instrument].rolling(period).min()
     
         logger.debug("\n" + df.tail().to_string(header=True))
 
@@ -92,13 +92,13 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
         
-        self.rsi_mom = round(row ['rsi_mom'], 4)
+        # self.rsi_mom = round(row ['rsi_mom'], 4)
         # self.rsi_mom_min = round(row ['rsi_mom_min'], 4)
         # self.rsi_mom_max = round(row ['rsi_mom_max'], 4)
 
-        self.price = row [self.instrument]
-        self.price_max = row ['price_max']
-        self.price_min = row ['price_min']
+        # self.price = row [self.instrument]
+        # self.price_max = row ['price_max']
+        # self.price_min = row ['price_min']
 
         self.ask = row ["ask"]
         self.bid = row ["bid"]
@@ -119,24 +119,13 @@ class TradingStrategyCalc(TradingStrategyBase):
         columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX"]
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
     
-
-    def get_close_trade_price(self):
-
-        have_units = self.trading_session.have_units
-
-        if have_units != 0 and len (self.trading_session.trades) > 0:
-            trade_close_target =  self.trading_session.trades[-1][4]
-
-            return trade_close_target
-
-        return self.sma
-
+   
     def get_open_trade_price(self):
 
         have_units = self.trading_session.have_units
 
         if have_units != 0 and len (self.trading_session.trades) > 0:
-            open_trade_price =  self.trading_session.trades[-1][3]
+            open_trade_price =  self.trading_session.trades[-1][2]
 
             return open_trade_price
 
@@ -168,6 +157,15 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         return date_time
 
+    def get_open_trade_rsi(self):
+
+        trade_rsi = None
+        
+        if len(self.trading_session.trades) > 0:
+            trade_rsi = self.trading_session.trades[-1][4]
+                    
+        return trade_rsi
+
      
     def reverse_rsi_up_open(self):
 
@@ -190,21 +188,19 @@ class TradingStrategyCalc(TradingStrategyBase):
     def rsi_spike(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
-            and 70 < self.rsi_max \
+            and 65 < self.rsi_max < 80 \
             and self.rsi_min_date is not None and self.rsi_max_date is not None \
                 and self.rsi_min_date < self.rsi_max_date \
-                    # and self.rsi_mom <= 1 \
-                    #   and self.rsi_max_date - self.rsi_min_date < timedelta(minutes=10)
+                    # and self.rsi_max_date - self.rsi_min_date < timedelta(minutes=10) \
 
     
     def rsi_drop(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
-            and self.rsi_min < 30 \
+            and 20 < self.rsi_min < 35 \
             and self.rsi_min_date is not None and self.rsi_max_date is not None \
                 and self.rsi_min_date > self.rsi_max_date \
-                    # and self.rsi_mom >= -1 \
-                    #   and self.rsi_max_date - self.rsi_min_date < timedelta(minutes=10)
+                    # and self.rsi_max_date - self.rsi_min_date < timedelta(minutes=10) \
 
     def reset_rsi(self):
         self.rsi_min_date = None
