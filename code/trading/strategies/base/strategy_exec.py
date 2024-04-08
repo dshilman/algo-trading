@@ -42,7 +42,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
             if order is not None:
                 self.submit_order(order)
-                self.trading_session.add_trade(trade_action=trade_action)
+                self.trading_session.add_trade(trade_action=trade_action, date_time=None, rsi=self.rsi_prev, rsi_min=self.rsi_min, rsi_max=self.rsi_max)
 
         if trade_action is not None and trade_action.sl_trade:
             raise PauseTradingException(2)
@@ -84,19 +84,39 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         spread = round(self.ask - self.bid, 4)
 
-        if self.long_trading and self.rsi_drop() and self.reverse_rsi_up_open():
+        strategy = None
+# --------------------------------------------------------------------------------------------------------------
+
+        if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and self.reverse_rsi_up_open():
+            if self.rsi_prev < 20:
+                strategy = "A"
+            elif self.rsi_prev < 35:
+                strategy = "B"
+            else:
+                return None
+            
             if not self.backtest:
                 logger.info(
                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
-            return Trade_Action(self.instrument, self.units_to_trade, self.ask, spread, "Go Long - Buy", True, False)
+            return Trade_Action(self.instrument, self.units_to_trade, self.ask, spread, "Go Long - Buy", True, False, strategy)
 
-        elif self.short_trading and self.rsi_spike() and self.reverse_rsi_down_open():
+# --------------------------------------------------------------------------------------------------------------
+        
+        elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and self.reverse_rsi_down_open():
+            if self.rsi_prev > 80:
+                strategy = "A"
+            elif self.rsi_prev > 65:
+                strategy = "B"
+            else:
+                return None
+
             if not self.backtest:
                 logger.info(
                     f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
-            return Trade_Action(self.instrument, -self.units_to_trade, self.bid, spread, "Go Short - Sell", True, False)
+            return Trade_Action(self.instrument, -self.units_to_trade, self.bid, spread, "Go Short - Sell", True, False, strategy)
 
-        return
+# --------------------------------------------------------------------------------------------------------------
+
 
     def check_if_need_close_trade(self, trading_time):
 
@@ -104,24 +124,25 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         close_trade = False
         open_trade_time = self.get_last_trade_time()
+        trade_strategy = self.get_trade_strategy() 
         open_trade_rsi = self.get_open_trade_rsi()
 
         if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or self.risk_time(trading_time):
             close_trade = True
 
         if have_units > 0:  # long position
-            if close_trade or (open_trade_rsi is not None and self.rsi_prev < open_trade_rsi + self.rsi_change) and self.reverse_rsi_down_close():
+            if close_trade or (self.rsi_prev > (45 if trade_strategy == "A" else 60)) and self.reverse_rsi_down_close():
                 if not self.backtest:
                     logger.info(
                         f"Close long position - Sell {-have_units} units at bid price: {self.bid}")
-                return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
+                return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False, trade_strategy)
 
         if have_units < 0:  # short position
-            if close_trade or (open_trade_rsi is not None and self.rsi_prev < open_trade_rsi - self.rsi_change) and self.reverse_rsi_up_close():
+            if close_trade or (self.rsi_prev < (55 if trade_strategy == "A" else 40)) and self.reverse_rsi_up_close():
                 if not self.backtest:
                     logger.info(
                         f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
+                return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False, trade_strategy)
 
         return None
 
@@ -133,6 +154,8 @@ class TradingStrategyExec(TradingStrategyCalc):
             return None
 
         open_trade_price = self.get_open_trade_price()
+        trade_strategy = self.get_trade_strategy() 
+
 
         if have_units < 0:
             # sl_price = transaction_price + 2 * (self.ask - self.bid)
@@ -145,7 +168,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                 if not self.backtest:
                     logger.info(
                         f"Close short position, - Stop Loss Buy, short price {open_trade_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
-                return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Short - Buy (SL)", False, True)
+                return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Short - Buy (SL)", False, True, trade_strategy)
 
         if have_units > 0:
 
@@ -158,7 +181,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                 if not self.backtest:
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
-                return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Long - Sell (SL)", False, True)
+                return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Long - Sell (SL)", False, True, trade_strategy)
 
         return None
 

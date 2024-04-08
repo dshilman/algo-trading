@@ -1,5 +1,5 @@
 class Trade_Action():
-    def __init__(self, instrument, units, price, spread, transaction, open_trade = False, sl_trade = False):
+    def __init__(self, instrument, units, price, spread, transaction, open_trade = False, sl_trade = False, strategy = None):
         super().__init__()
         self.instrument = instrument
         self.units = units
@@ -8,6 +8,7 @@ class Trade_Action():
         self.transaction = transaction
         self.open_trade = open_trade
         self.sl_trade = sl_trade
+        self.strategy = strategy
         # self.target = price + signal * spread
 
 

@@ -125,7 +125,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         have_units = self.trading_session.have_units
 
         if have_units != 0 and len (self.trading_session.trades) > 0:
-            open_trade_price =  self.trading_session.trades[-1][2]
+            open_trade_price =  self.trading_session.trades[-1][3]
 
             return open_trade_price
 
@@ -162,9 +162,18 @@ class TradingStrategyCalc(TradingStrategyBase):
         trade_rsi = None
         
         if len(self.trading_session.trades) > 0:
-            trade_rsi = self.trading_session.trades[-1][4]
+            trade_rsi = self.trading_session.trades[-1][5]
                     
         return trade_rsi
+
+    def get_trade_strategy(self):
+
+        strategy = None
+        
+        if len(self.trading_session.trades) > 0:
+            strategy = self.trading_session.trades[-1][2]
+                    
+        return strategy
 
      
     def reverse_rsi_up_open(self):
@@ -188,19 +197,15 @@ class TradingStrategyCalc(TradingStrategyBase):
     def rsi_spike(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
-            and 65 < self.rsi_max < 80 \
-            and self.rsi_min_date is not None and self.rsi_max_date is not None \
-                and self.rsi_min_date < self.rsi_max_date \
-                    # and self.rsi_max_date - self.rsi_min_date < timedelta(minutes=10) \
+                and self.rsi_min_date is not None and self.rsi_max_date is not None \
+                    and self.rsi_min_date < self.rsi_max_date \
 
     
     def rsi_drop(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
-            and 20 < self.rsi_min < 35 \
-            and self.rsi_min_date is not None and self.rsi_max_date is not None \
-                and self.rsi_min_date > self.rsi_max_date \
-                    # and self.rsi_max_date - self.rsi_min_date < timedelta(minutes=10) \
+                and self.rsi_min_date is not None and self.rsi_max_date is not None \
+                    and self.rsi_min_date > self.rsi_max_date \
 
     def reset_rsi(self):
         self.rsi_min_date = None

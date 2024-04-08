@@ -26,7 +26,7 @@ class Trading_Session():
         self.trade_cost = 0
         self.trade_pl = 0
         self.have_units = 0
-        self.columns = ["datetime", "transaction", "price", "trade pl", "rsi", "rsi_min", "rsi_max", "total pl"]
+        self.columns = ["datetime", "transaction", "strategy", "price", "trade pl", "rsi", "rsi_min", "rsi_max", "total pl"]
 
         super().__init__()
 
@@ -70,7 +70,7 @@ class Trading_Session():
             # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         
         self.have_units = self.have_units + trade_action.units
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.price, '${:,.2f}'.format(self.trade_pl), kwargs.get("rsi"), kwargs.get("rsi_min"), kwargs.get("rsi_max"), '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade_action.transaction, trade_action.strategy, trade_action.price, '${:,.2f}'.format(self.trade_pl), kwargs.get("rsi"), kwargs.get("rsi_min"), kwargs.get("rsi_max"), '${:,.2f}'.format(self.pl)])
 
         return
 

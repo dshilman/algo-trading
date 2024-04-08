@@ -120,9 +120,7 @@ class Trader():
 
             try:
                 logger.info ("Start Stream")
-                # self.api.stream_data(instrument=self.instrument, stop = stop_after, callback=self.new_price_tick)
                 self.api.stream_prices(instrument=self.instrument, stop = stop_after, callback=self.new_price_tick)
-
                 self.terminate = True
                 break
 
@@ -189,12 +187,10 @@ class Trader():
                 except PauseTradingException as e:
                     logger.error(f"Caught Stop Loss Error. Keep Traiding...")
                     self.stop_loss_count = self.stop_loss_count + 1
-                    time.sleep(5 * 60)
+                    # time.sleep(5 * 60)
                     if self.stop_loss_count > 2:
                         logger.error(f"Stop Loss Count > 2. Terminating Trading")
                         self.terminate = True
-                        time.sleep(60 * 60)
-
 
                 time.sleep(refresh)
 
