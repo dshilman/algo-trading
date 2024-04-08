@@ -40,17 +40,19 @@ class TradingStrategyBase():
 
         config = configparser.ConfigParser()  
         config.read(pair_file)
-        self.SMA = int(config.get(instrument, 'SMA'))
-        self.DEV = float(config.get(instrument, 'dev'))
+        self.SMA = config.getint(instrument, 'SMA')
+        self.DEV = config.getfloat(instrument, 'dev')
         # self.rsi_high = float(config.get(instrument, 'rsi_high'))
         # self.rsi_low = float(config.get(instrument, 'rsi_low'))
-        self.rsi_change = float(config.get(instrument, 'rsi_change'))
-        self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
-        self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
-        self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
+        self.rsi_change = config.getfloat(instrument, 'rsi_change')
+        self.units_to_trade = config.getint(instrument, 'units_to_trade')
+        self.sl_perc = config.getfloat(self.instrument, 'sl_perc')
+        self.tp_perc = config.getfloat(self.instrument, 'tp_perc')
         self.pause_start = config.get(self.instrument, 'pause_start')
         self.pause_end = config.get(self.instrument, 'pause_end')
-        
+        self.short_trading = config.getboolean(self.instrument, 'short_trading')
+        self.long_trading = config.getboolean(self.instrument, 'long_trading')
+        self.keep_trade_open_time = config.getint(instrument, 'keep_trade_open_time')
         self.data: pd.DataFrame = None
   
         self.rsi_min_date = None
