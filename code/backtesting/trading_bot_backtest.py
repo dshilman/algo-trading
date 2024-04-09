@@ -63,8 +63,6 @@ class TradingBacktester():
         
         df: pd.DataFrame = self.api.get_price_candles(self.strategy.instrument, self.days)
                
-        # df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-
         return df
 
     def get_data(self):

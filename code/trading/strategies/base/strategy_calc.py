@@ -115,9 +115,9 @@ class TradingStrategyCalc(TradingStrategyBase):
   
     def print_indicators(self):
 
-        indicators = [[self.ask, self.bid, self.sma, self.bb_low, self.bb_high, self.rsi, self.rsi_min, self.rsi_max]]
-        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX"]
-        logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
+        indicators = [[self.ask, self.bid, self.sma, self.bb_low, self.bb_high, self.rsi, self.rsi_prev, self.rsi_min, self.rsi_max]]
+        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI PREV", "RSI MIN", "RSI MAX"]
+        logger.debug("\n" + tabulate(indicators, headers = columns) + "\n")
     
    
     def get_open_trade_price(self):
