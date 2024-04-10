@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EUR_USD
+# EUR_USD
 if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD.sh' >/dev/null
 then
     echo $(date) " EUR_USD Trading bot is already running." 
