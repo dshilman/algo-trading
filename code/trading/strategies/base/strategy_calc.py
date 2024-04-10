@@ -112,7 +112,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         if not self.backtest:
             minute: int = time.minute
             seconds: int = time.second
-            if minute in [0, 5]:
+            if 0 <= seconds <= 15:
                 self.print_indicators()
 
   
