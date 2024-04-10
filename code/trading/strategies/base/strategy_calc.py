@@ -109,11 +109,11 @@ class TradingStrategyCalc(TradingStrategyBase):
             self.rsi_max_date = time
 
 
-        if not self.backtest:
-            minute: int = time.minute
-            seconds: int = time.second
-            if minute % 2 == 0 and seconds == 0:
-                self.print_indicators()
+        # if not self.backtest:
+        #     minute: int = time.minute
+        #     seconds: int = time.second
+        #     if minute % 2 == 0 and seconds == 0:
+        #         self.print_indicators()
 
   
     def print_indicators(self):
@@ -165,7 +165,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         trade_rsi = None
         
         if len(self.trading_session.trades) > 0:
-            trade_rsi = self.trading_session.trades[-1][5]
+            trade_rsi = self.trading_session.trades[-1][4]
                     
         return trade_rsi
 

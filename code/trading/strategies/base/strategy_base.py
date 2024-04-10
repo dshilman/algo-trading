@@ -30,7 +30,7 @@ class TradingStrategyBase():
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__()
 
-        self.trading_session = Trading_Session()
+        self.trading_session = Trading_Session(instrument)
 
         self.instrument = instrument
         self.api:OandaApi = api

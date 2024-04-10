@@ -42,7 +42,6 @@ class TradingStrategyExec(TradingStrategyCalc):
 
             if order is not None:
                 self.submit_order(order)
-                self.trading_session.add_trade(trade_action=trade_action, date_time=None, rsi=self.rsi_prev, rsi_min=self.rsi_min, rsi_max=self.rsi_max)
 
         if trade_action is not None and trade_action.sl_trade:
             raise PauseTradingException(2)
@@ -51,28 +50,32 @@ class TradingStrategyExec(TradingStrategyCalc):
 
     def determine_trade_action(self, trading_time) -> Trade_Action:
 
+        trade = None
         have_units = self.trading_session.have_units
 
-        if have_units != 0:  # if already have positions
-            logger.debug(f"Have {have_units} positions, checking if need to close")
-            trade = self.check_if_need_close_trade(trading_time)
-            if trade is not None:
-                return trade
-        else:
-            # if have_units == 0 or (abs(have_units / self.units_to_trade) < 2 and not self.is_too_soon(trading_time)):
-            logger.debug(f"Have {have_units} positions, checking if need to open")
-            trade = self.check_if_need_open_trade(trading_time)
-            if trade is not None:
-                self.reset_rsi()
-                return trade
+        try:
+            if have_units != 0:  # if already have positions
+                logger.debug(f"Have {have_units} positions, checking if need to close")
+                trade = self.check_if_need_close_trade(trading_time)
+                if trade is not None:
+                    return trade
+            else:
+                # if have_units == 0 or (abs(have_units / self.units_to_trade) < 2 and not self.is_too_soon(trading_time)):
+                logger.debug(f"Have {have_units} positions, checking if need to open")
+                trade = self.check_if_need_open_trade(trading_time)
+                if trade is not None:
+                    self.reset_rsi()
+                    return trade
 
-        if have_units != 0:  # if already have positions
-            logger.debug(f"Have {have_units} positions, checking for stop loss")
-            trade_action = self.check_for_sl(trading_time)
-            if trade_action is not None:
-                return trade_action
-
-        return None
+            if have_units != 0:  # if already have positions
+                logger.debug(f"Have {have_units} positions, checking for stop loss")
+                trade_action = self.check_for_sl(trading_time)
+                if trade_action is not None:
+                    return trade_action
+        finally:
+            if trade is not None:
+                self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi_prev)
+            
 
     def check_if_need_open_trade(self, trading_time):
 
