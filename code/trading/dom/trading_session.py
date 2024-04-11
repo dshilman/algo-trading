@@ -42,7 +42,7 @@ class Trading_Session():
             self.outstanding = self.outstanding + self.trade_cost      
             self.trade_pl = 0      
             self.go_long = self.go_long + 1
-            trade = "Open Long"
+            trade = "Open Long Trade"
             action = "Buy"
             # logger.info(f"Go Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         elif self.have_units <= 0 and trade_action.units < 0:
@@ -50,7 +50,7 @@ class Trading_Session():
             self.outstanding = self.outstanding + self.trade_cost      
             self.trade_pl = 0      
             self.go_short = self.go_short + 1
-            trade = "Open Short"
+            trade = "Open Short Trade"
             action = "Sell"
             # logger.info(f"Go Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         elif self.have_units > 0 and trade_action.units < 0:
@@ -59,7 +59,7 @@ class Trading_Session():
             self.pl = self.pl + self.trade_pl
             self.close_long = self.close_long + 1
             self.outstanding = 0
-            trade = " Close Long"
+            trade = " Close Long Trade"
             action = "Sell" if not trade_action.sl_trade else "Sell (SL)"
             transaction = "Close Long - Sell" if not trade_action.sl_trade else "Close Long - Sell (SL)"
             # logger.info(f"Close Long -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
@@ -69,7 +69,7 @@ class Trading_Session():
             self.pl = self.pl + self.trade_pl
             self.close_short = self.close_short + 1
             self.outstanding = 0
-            trade = " Close Short"
+            trade = " Close Short Trade"
             action = "Buy" if not trade_action.sl_trade else "Buy (SL)"
             # logger.info(f"Close Short -- shares: {trade_action.units}, at price: {trade_action.price}, P&L {'${:,.2f}'.format(self.pl)}")
         

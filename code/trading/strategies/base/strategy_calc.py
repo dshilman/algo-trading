@@ -169,15 +169,6 @@ class TradingStrategyCalc(TradingStrategyBase):
                     
         return trade_rsi
 
-    def get_trade_strategy(self):
-
-        strategy = None
-        
-        if len(self.trading_session.trades) > 0:
-            strategy = self.trading_session.trades[-1][2]
-                    
-        return strategy
-
      
     def reverse_rsi_up_open(self):
 
