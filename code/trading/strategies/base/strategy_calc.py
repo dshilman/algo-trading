@@ -11,8 +11,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.strategies.base.strategy_base import TradingStrategyBase
-from trading.utils.tech_indicators import (calculate_momentum, calculate_rsi,
-                                           calculate_slope)
+from trading.utils.tech_indicators import (calculate_momentum, calculate_rsi)
 
 logger = logging.getLogger()
 
@@ -61,7 +60,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         df["rsi_max"] = df['RSI'].rolling(period).max()
         df["rsi_min"] = df['RSI'].rolling(period).min()
-        
+
         # df["rsi_mom"] = df["RSI"].rolling(period).apply(lambda x: calculate_momentum(x, 1))
         # df["rsi_mom"] = df["rsi_mom"].shift()
         # df["rsi_mom_min"] = df["rsi_mom"].rolling(period).min()

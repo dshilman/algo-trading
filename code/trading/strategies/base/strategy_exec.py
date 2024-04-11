@@ -1,12 +1,6 @@
-from trading.utils.tech_indicators import (calculate_momentum, calculate_rsi,
-                                           calculate_slope)
 from trading.utils.errors import PauseTradingException
 from trading.strategies.base.strategy_calc import TradingStrategyCalc
-from trading.dom.trading_session import Trading_Session
 from trading.dom.trade import Trade_Action
-from trading.dom.order import Order
-from trading.api.oanda_api import OandaApi
-import configparser
 import json
 import logging
 import sys
