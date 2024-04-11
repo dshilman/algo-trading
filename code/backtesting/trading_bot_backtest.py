@@ -4,7 +4,6 @@ import logging
 import logging.handlers as handlers
 import os
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -15,8 +14,6 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.api.oanda_api import OandaApi
-from trading.utils.errors import PauseTradingException
-from trading.utils.tech_indicators import calculate_rsi, calculate_momentum
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 
 logger = logging.getLogger()

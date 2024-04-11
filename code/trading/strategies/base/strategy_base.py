@@ -15,8 +15,6 @@ from trading.api.oanda_api import OandaApi
 from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
 from trading.dom.trading_session import Trading_Session
-from trading.utils.tech_indicators import (calculate_momentum, calculate_rsi,
-                                     calculate_slope)
 
 logger = logging.getLogger()
 

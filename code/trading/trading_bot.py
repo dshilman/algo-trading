@@ -192,8 +192,6 @@ class Trader():
                         logger.error(f"Stop Loss Count > 2. Terminating Trading")
                         self.terminate = True
 
-                time.sleep(refresh)
-
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")
                 logger.exception(e)
@@ -201,7 +199,8 @@ class Trader():
                 if i > 20:
                     self.terminate = True
                     break
-                time.sleep(5)
+
+            time.sleep(refresh)
 
 
     def check_positions(self, refresh = 300): 

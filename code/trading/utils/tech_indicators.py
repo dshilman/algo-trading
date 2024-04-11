@@ -2,11 +2,6 @@ import numpy as np
 import pandas as pd
 
 
-def calculate_slope(S):
-    M = pd.Series(S)
-    poly = np.polyfit(M.index, M.values, deg=1)
-    return poly[0]
-
 def calculate_momentum(S: pd.Series, n):
 
     return (S - S.shift(n)).mean()
