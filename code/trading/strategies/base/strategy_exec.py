@@ -47,29 +47,24 @@ class TradingStrategyExec(TradingStrategyCalc):
         trade = None
         have_units = self.trading_session.have_units
 
-        try:
-            if have_units != 0:  # if already have positions
+        if have_units != 0:  # if already have positions
 
-                logger.debug(f"Have {have_units} positions, checking if need to close a trade")
-                trade = self.check_if_need_close_trade(trading_time)
-                if trade is not None:
-                    return trade
-
+            logger.debug(f"Have {have_units} positions, checking if need to close a trade")
+            trade = self.check_if_need_close_trade(trading_time)
+            if trade is None:
                 logger.debug(f"Have {have_units} positions, checking for stop loss")
-                trade_action = self.check_for_sl(trading_time)
-                if trade_action is not None:
-                    return trade_action
-
-            else:
-                logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
-                trade = self.check_if_need_open_trade(trading_time)
-                if trade is not None:
-                    self.reset_rsi()
-                    return trade
-             
-        finally:
+                trade = self.check_for_sl(trading_time)
+        
+        else:
+            logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
+            trade = self.check_if_need_open_trade(trading_time)
             if trade is not None:
-                self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi_prev)
+                self.reset_rsi()
+            
+        if trade is not None:
+            self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi_prev)
+        
+        return trade
             
 
     def check_if_need_open_trade(self, trading_time):
