@@ -47,29 +47,24 @@ class TradingStrategyExec(TradingStrategyCalc):
         trade = None
         have_units = self.trading_session.have_units
 
-        try:
-            if have_units != 0:  # if already have positions
+        if have_units != 0:  # if already have positions
 
-                logger.debug(f"Have {have_units} positions, checking if need to close a trade")
-                trade = self.check_if_need_close_trade(trading_time)
-                if trade is not None:
-                    return trade
-
+            logger.debug(f"Have {have_units} positions, checking if need to close a trade")
+            trade = self.check_if_need_close_trade(trading_time)
+            if trade is None:
                 logger.debug(f"Have {have_units} positions, checking for stop loss")
-                trade_action = self.check_for_sl(trading_time)
-                if trade_action is not None:
-                    return trade_action
-
-            else:
-                logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
-                trade = self.check_if_need_open_trade(trading_time)
-                if trade is not None:
-                    self.reset_rsi()
-                    return trade
-             
-        finally:
+                trade = self.check_for_sl(trading_time)
+        
+        else:
+            logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
+            trade = self.check_if_need_open_trade(trading_time)
             if trade is not None:
-                self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi_prev)
+                self.reset_rsi()
+            
+        if trade is not None:
+            self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi_prev)
+        
+        return trade
             
 
     def check_if_need_open_trade(self, trading_time):
@@ -108,7 +103,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
 # --------- Close Long Trade -----------------------------------------------------------------------------------------------------
         if have_units > 0:  # long position
-            if close_trade or (round(self.rsi_prev, 0) >= 60) and self.reverse_rsi_down_close():
+            if close_trade or (round(self.rsi_prev, 0) >= 65) and self.reverse_rsi_down_close():
                 if not self.backtest:
                     logger.info(
                         f"Close long position - Sell {-have_units} units at bid price: {self.bid}")
@@ -116,7 +111,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
 # ------------ Close Short Trade --------------------------------------------------------------------------------------------------
         elif have_units < 0:  # short position
-            if close_trade or (round(self.rsi_prev, 0) <= 40) and self.reverse_rsi_up_close():
+            if close_trade or (round(self.rsi_prev, 0) <= 35) and self.reverse_rsi_up_close():
                 if not self.backtest:
                     logger.info(
                         f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
