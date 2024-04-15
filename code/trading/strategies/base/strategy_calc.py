@@ -24,7 +24,8 @@ Go Short (sell) when the bid price is above the high Bollinger Band and close tr
 class TradingStrategyCalc(TradingStrategyBase):
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
-    
+        
+        self.print_indicators_flag = True    
 
     def add_tickers(self, ticker_df: pd.DataFrame):
 
@@ -92,12 +93,10 @@ class TradingStrategyCalc(TradingStrategyBase):
             self.rsi_max_date = time
 
 
-        # if not self.backtest:
-        #     minute: int = time.minute
-        #     seconds: int = time.second
-        #     if minute % 2 == 0 and seconds == 0:
-        #         self.print_indicators()
-
+        if not self.backtest:
+            if self.print_indicators_flag:
+                self.print_indicators()
+            self.print_indicators_flag = not self.print_indicators_flag
   
     def print_indicators(self):
 
