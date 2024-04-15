@@ -51,6 +51,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
             logger.debug(f"Have {have_units} positions, checking if need to close a trade")
             trade = self.check_if_need_close_trade(trading_time)
+            
             if trade is None:
                 logger.debug(f"Have {have_units} positions, checking for stop loss")
                 trade = self.check_for_sl(trading_time)
@@ -72,23 +73,17 @@ class TradingStrategyExec(TradingStrategyCalc):
         if self.risk_time(trading_time):
             return
 
-        spread = round(self.ask - self.bid, 4)
-
-# --------Open Long Trade ------------------------------------------------------------------------------------------------------
-        if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_prev, 0) <= 35 and self.reverse_rsi_up_open():
+        if self.long_trading and self.ask < self.bb_low and self.is_volatility() and self.rsi_drop() and round(self.rsi_prev, 0) <= 35 and self.reverse_rsi_up_open():
             if not self.backtest:
                 logger.info(
                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
-            return Trade_Action(self.instrument, self.units_to_trade, self.ask, spread, "Go Long - Buy", True, False)
+            return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-# -------- Open Short Trade ------------------------------------------------------------------------------------------------------
-        elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_prev, 0) >= 65 and self.reverse_rsi_down_open():
+        elif self.short_trading and self.bid > self.bb_high and self.is_volatility() and self.rsi_spike() and round(self.rsi_prev, 0) >= 65 and self.reverse_rsi_down_open():
             if not self.backtest:
                 logger.info(
                     f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
-            return Trade_Action(self.instrument, -self.units_to_trade, self.bid, spread, "Go Short - Sell", True, False)
-
-# --------------------------------------------------------------------------------------------------------------
+            return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
 
     def check_if_need_close_trade(self, trading_time):
@@ -101,23 +96,20 @@ class TradingStrategyExec(TradingStrategyCalc):
         if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or self.risk_time(trading_time):
             close_trade = True
 
-# --------- Close Long Trade -----------------------------------------------------------------------------------------------------
         if have_units > 0:  # long position
-            if close_trade or (round(self.rsi_prev, 0) >= 65) and self.reverse_rsi_down_close():
+            if close_trade or (round(self.rsi, 0) >= 65) and self.reverse_rsi_down_close():
                 if not self.backtest:
                     logger.info(
                         f"Close long position - Sell {-have_units} units at bid price: {self.bid}")
-                return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Long - Sell", False, False)
+                return Trade_Action(self.instrument, -have_units, self.ask, False, False)
 
-# ------------ Close Short Trade --------------------------------------------------------------------------------------------------
         elif have_units < 0:  # short position
-            if close_trade or (round(self.rsi_prev, 0) <= 35) and self.reverse_rsi_up_close():
+            if close_trade or (round(self.rsi, 0) <= 35) and self.reverse_rsi_up_close():
                 if not self.backtest:
                     logger.info(
                         f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Short - Buy", False, False)
+                return Trade_Action(self.instrument, -have_units, self.bid, False, False)
 
-# --------------------------------------------------------------------------------------------------------------
 
 
     def check_for_sl(self, trading_time):
@@ -129,25 +121,21 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         open_trade_price = self.get_open_trade_price()
 
-# -------- Stop Loss for Short Trade ------------------------------------------------------------------------------------------------------
         if have_units < 0:
             current_loss_perc = round((self.ask - open_trade_price)/open_trade_price, 4)
             if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc):
                 if not self.backtest:
                     logger.info(
                         f"Close short position, - Stop Loss Buy, short price {open_trade_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
-                return Trade_Action(self.instrument, -have_units, self.ask, (self.ask - self.bid), "Close Short - Buy (SL)", False, True)
+                return Trade_Action(self.instrument, -have_units, self.ask, False, True)
 
-# ---------- Stop Loss for Long Trade ----------------------------------------------------------------------------------------------------
         elif have_units > 0:
             current_loss_perc = round((open_trade_price - self.bid)/open_trade_price, 4)
             if current_loss_perc >= (self.sl_perc/2 if self.risk_time(trading_time) else self.sl_perc):
                 if not self.backtest:
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
-                return Trade_Action(self.instrument, -have_units, self.bid, (self.ask - self.bid), "Close Long - Sell (SL)", False, True)
-
-# --------------------------------------------------------------------------------------------------------------
+                return Trade_Action(self.instrument, -have_units, self.bid, False, True)
 
 
     def report_trade(self, order):
@@ -163,5 +151,4 @@ class TradingStrategyExec(TradingStrategyCalc):
 
     def terminate(self):
 
-        # add terminate logic here
         self.trading_session.print_trades()

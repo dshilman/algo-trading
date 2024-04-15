@@ -28,10 +28,16 @@ class Trading_Session():
         self.trade_cost: float = 0
         self.trade_pl: float = 0
         self.have_units: int = 0
-        self.columns = ["datetime", "trade", "action", "price", "rsi", "trade pl",  "total pl"]
+        self.trade_id: int = 0
+        self.columns = ["datetime", "trade_id", "trade", "action", "units", "price",  "rsi", "trade_pl", "pl"]
 
         super().__init__()
 
+
+    def __get_trade_new_id(self) -> int:
+        
+        self.trade_id = self.trade_id + 1
+        return self.trade_id
 
     def add_trade(self, trade_action: Trade_Action, date_time, **kwargs):
 
@@ -39,6 +45,7 @@ class Trading_Session():
         action = None
 
         if self.have_units >= 0 and trade_action.units > 0:
+            self.trade_id = self.__get_trade_new_id()
             self.trade_cost = abs(trade_action.units) * trade_action.price
             self.outstanding = self.outstanding + self.trade_cost      
             self.trade_pl = 0      
@@ -46,6 +53,7 @@ class Trading_Session():
             trade = "Open Long"
             action = "Buy"
         elif self.have_units <= 0 and trade_action.units < 0:
+            self.trade_id = self.__get_trade_new_id()
             self.trade_cost = abs(trade_action.units) * trade_action.price
             self.outstanding = self.outstanding + self.trade_cost      
             self.trade_pl = 0      
@@ -70,7 +78,8 @@ class Trading_Session():
             action = "Buy"
         
         self.have_units = self.have_units + trade_action.units
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), trade, action, trade_action.price, kwargs.get("rsi"), '${:,.2f}'.format(self.trade_pl), '${:,.2f}'.format(self.pl)])
+
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), self.trade_id, trade, action, trade_action.units, trade_action.price, kwargs.get("rsi"), '${:,.2f}'.format(self.trade_pl), '${:,.2f}'.format(self.pl)])
 
         return
 

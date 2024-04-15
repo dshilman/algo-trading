@@ -61,10 +61,6 @@ class TradingStrategyBase():
         tp_price = None
         sl_price = None
 
-        # if trade_action.open_trade:
-        if trade_action.spread / trade_action.price >= sl_perc:
-            logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
-            return None
         if trade_action.open_trade:
             
             """
