@@ -21,3 +21,18 @@ def calculate_rsi(S, period=14):
     rsi = 100 - (100 / (1 + rs))
     
     return rsi
+
+def calculate_rsi_new(S, period=14):
+    
+    prices = pd.Series(S)
+    delta = prices.diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    avg_gain = gain.mean()
+    avg_loss = loss.mean()
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    
+    return rsi

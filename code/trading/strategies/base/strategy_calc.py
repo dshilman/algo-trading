@@ -49,9 +49,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         DEV = self.DEV
 
         df["SMA"] = df[instrument].rolling(SMA).mean()
-        std = df[instrument].rolling(SMA).std() * DEV
-        df["Lower"] = df["SMA"] - std
-        df["Upper"] = df["SMA"] + std
+        std = df[instrument].rolling(SMA).std()
+        df["Lower"] = df["SMA"] - std * DEV
+        df["Upper"] = df["SMA"] + std * DEV
 
         period = 28
 
@@ -61,13 +61,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_max"] = df['RSI'].rolling(period).max()
         df["rsi_min"] = df['RSI'].rolling(period).min()
 
-        # df["rsi_mom"] = df["RSI"].rolling(period).apply(lambda x: calculate_momentum(x, 1))
-        # df["rsi_mom"] = df["rsi_mom"].shift()
-        # df["rsi_mom_min"] = df["rsi_mom"].rolling(period).min()
-        # df["rsi_mom_max"] = df["rsi_mom"].rolling(period).max()
-
-        # df["price_max"] = df [instrument].rolling(period).max()
-        # df["price_min"] = df [instrument].rolling(period).min()
     
         logger.debug("\n" + df.tail().to_string(header=True))
 
@@ -84,21 +77,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.sma = row ['SMA']
         self.bb_low = round(row ['Lower'], 4)
         self.bb_high =  round(row ['Upper'], 4)
-                
+
         self.rsi = round(row ['RSI'], 4)
         self.rsi_prev = round(row ['RSI_PREV'], 4)
-        # self.rsi_prev2 = round(row ['RSI_PREV2'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
         
-        # self.rsi_mom = round(row ['rsi_mom'], 4)
-        # self.rsi_mom_min = round(row ['rsi_mom_min'], 4)
-        # self.rsi_mom_max = round(row ['rsi_mom_max'], 4)
-
-        # self.price = row [self.instrument]
-        # self.price_max = row ['price_max']
-        # self.price_min = row ['price_min']
-
         self.ask = row ["ask"]
         self.bid = row ["bid"]
         
@@ -127,7 +111,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         have_units = self.trading_session.have_units
 
         if have_units != 0 and len (self.trading_session.trades) > 0:
-            open_trade_price =  self.trading_session.trades[-1][3]
+            open_trade_price =  self.trading_session.trades[-1][5]
 
             return open_trade_price
 
@@ -159,23 +143,16 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         return date_time
 
-    def get_open_trade_rsi(self):
-
-        trade_rsi = None
-        
-        if len(self.trading_session.trades) > 0:
-            trade_rsi = self.trading_session.trades[-1][4]
-                    
-        return trade_rsi
-
      
     def reverse_rsi_up_open(self):
 
-        return round(self.rsi, 0) > round(self.rsi_prev, 0) == round(self.rsi_min, 0)
+        return round(self.rsi, 0) > round(self.rsi_prev, 0) > round(self.rsi_min, 0)
+
+        # return round(self.rsi, 0) > round(self.rsi_prev, 0) == round(self.rsi_min, 0)
         
     def reverse_rsi_down_open(self):
 
-        return round(self.rsi, 0) < round(self.rsi_prev, 0) == round(self.rsi_max, 0)
+        return round(self.rsi, 0) < round(self.rsi_prev, 0) < round(self.rsi_max, 0)
         
 
     def reverse_rsi_up_close(self):
@@ -200,6 +177,10 @@ class TradingStrategyCalc(TradingStrategyBase):
                 and self.rsi_min_date is not None and self.rsi_max_date is not None \
                     and self.rsi_min_date > self.rsi_max_date \
 
+    
     def reset_rsi(self):
         self.rsi_min_date = None
         self.rsi_max_date = None
+
+    def is_volatility(self):
+        return True or self.std > self.std_mean

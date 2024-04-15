@@ -185,9 +185,10 @@ class Trader():
                 try:
                     self.strategy.execute_strategy()
                 except PauseTradingException as e:
-                    logger.error(f"Caught Stop Loss Error. Keep Traiding...")
+                    logger.info(f"Caught Stop Loss Error. Pause Traiding...")
                     self.stop_loss_count = self.stop_loss_count + 1
-                    # time.sleep(5 * 60)
+                    time.sleep(2 * 60 * 60)
+                    
                     if self.stop_loss_count > 2:
                         logger.error(f"Stop Loss Count > 2. Terminating Trading")
                         self.terminate = True

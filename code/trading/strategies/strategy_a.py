@@ -22,11 +22,11 @@ class TradingStrategy(TradingStrategyExec):
 
     def reverse_rsi_up_open(self):
 
-        return round(self.rsi, 0) > round(self.rsi_prev, 0) >= round(self.rsi_min, 0)
+        return round(self.rsi, 0) > round(self.rsi_prev, 0) > round(self.rsi_min, 0)
         
     def reverse_rsi_down_open(self):
 
-        return round(self.rsi, 0) < round(self.rsi_prev, 0) <= round(self.rsi_max, 0)
+        return round(self.rsi, 0) < round(self.rsi_prev, 0) < round(self.rsi_max, 0)
         
 
     def reverse_rsi_up_close(self):
