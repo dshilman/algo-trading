@@ -180,6 +180,3 @@ class TradingStrategyCalc(TradingStrategyBase):
     def reset_rsi(self):
         self.rsi_min_date = None
         self.rsi_max_date = None
-
-    def is_volatility(self):
-        return True or self.std > self.std_mean

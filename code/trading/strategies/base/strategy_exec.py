@@ -73,13 +73,13 @@ class TradingStrategyExec(TradingStrategyCalc):
         if self.risk_time(trading_time):
             return
 
-        if self.long_trading and self.ask < self.bb_low and self.is_volatility() and self.rsi_drop() and round(self.rsi_min, 0) <= 35 and self.reverse_rsi_up_open():
+        if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_min, 0) <= 35 and self.reverse_rsi_up_open():
             if not self.backtest:
                 logger.info(
                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        elif self.short_trading and self.bid > self.bb_high and self.is_volatility() and self.rsi_spike() and round(self.rsi_max, 0) >= 65 and self.reverse_rsi_down_open():
+        elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_max, 0) >= 65 and self.reverse_rsi_down_open():
             if not self.backtest:
                 logger.info(
                     f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
