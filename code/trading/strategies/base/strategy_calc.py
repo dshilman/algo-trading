@@ -25,7 +25,7 @@ class TradingStrategyCalc(TradingStrategyBase):
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
         
-        self.print_indicators_flag = True    
+        self.print_indicators_count = 0    
 
     def add_tickers(self, ticker_df: pd.DataFrame):
 
@@ -62,8 +62,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_max"] = df['RSI'].rolling(period).max()
         df["rsi_min"] = df['RSI'].rolling(period).min()
 
+
+        if not self.backtest and self.print_indicators_count % 20 == 0:
+            logger.info("\n" + df.tail().to_string(header=True))
+            
+        self.print_indicators_count = self.print_indicators_count + 1
     
-        logger.debug("\n" + df.tail().to_string(header=True))
 
         self.data = df
 
@@ -91,12 +95,6 @@ class TradingStrategyCalc(TradingStrategyBase):
             self.rsi_min_date = time
         elif self.rsi == self.rsi_max:
             self.rsi_max_date = time
-
-
-        if not self.backtest:
-            if self.print_indicators_flag:
-                self.print_indicators()
-            self.print_indicators_flag = not self.print_indicators_flag
   
     def print_indicators(self):
 
