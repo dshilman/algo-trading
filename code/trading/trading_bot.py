@@ -98,8 +98,8 @@ class Trader():
 
         treads = []
         treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
-        treads.append(threading.Thread(target=self.check_trading_time, args=(5 * 60,)))
-        treads.append(threading.Thread(target=self.refresh_strategy, args=(29,)))
+        treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
+        treads.append(threading.Thread(target=self.refresh_strategy, args=(10,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
         for t in treads:
@@ -172,7 +172,7 @@ class Trader():
 
               
                 if len(temp_tick_data) > 0:
-                    df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "ask"])
+                    df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "ask", "status"])
                     df.set_index('time', inplace=True)    
                     df = df.resample("30s").last()
                     logger.debug(f"Resampled Data: {df}")
@@ -234,27 +234,24 @@ class Trader():
                 time.sleep(5)
         
  
-    def new_price_tick(self, instrument, time, bid, ask):
+    def new_price_tick(self, instrument, time, bid, ask, status):
 
-        if not (instrument and time and bid and ask):
-            logger.error(f"Invalid values!!! instrument: {instrument} --- time: {time}  --- ask: {ask} --- bid: {bid}")
+        if not (instrument and time and bid and ask and status):
+            logger.error(f"Invalid values!!! instrument: {instrument} | time: {time}  | ask: {ask} | bid: {bid} | status: {status}")
             return
         
-        logger.debug(f"{instrument} --- time: {time}  --- ask: {ask} --- bid: {bid}")
+        logger.debug(f"{instrument} | time: {time} | ask: {ask} | bid: {bid} | status: {status}")
          # 2023-12-19T13:28:35.194571445Z
         date_time = pd.to_datetime(time).replace(tzinfo=None)
         
-        recent_tick = [date_time, (ask + bid)/2, bid, ask]
+        recent_tick = [date_time, (ask + bid)/2, bid, ask, status]
         self.tick_data.append(recent_tick)
 
         minute: int = date_time.minute
         second: int = date_time.second
 
         if minute in [0, 15, 30, 45] and second == 0:
-
-            logger.info(
-                f"Heartbeat --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}"
-            )
+            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {round(ask, 4)}, bid: {round(bid, 4)} | status: {status}")
  
   
         

@@ -140,8 +140,8 @@ class OandaApi:
         result = self.__handle_response(response, callback, stop)
 
         return result
-    def __on_success(self, instrument, time, bid, ask):
-        print(f"Instrument: {instrument} Time: {time} | Bid: {bid} | Ask: {ask}")
+    def __on_success(self, instrument, time, bid, ask, status):
+        print(f"Instrument: {instrument} Time: {time} | Bid: {bid} | Ask: {ask} | Status: {status}")
 
     def __handle_response(self, response, callback, stop):
 
@@ -156,10 +156,11 @@ class OandaApi:
                     time = data["time"]
                     bid = float(data["closeoutBid"])
                     ask = float(data["closeoutAsk"])
+                    status = data["status"]
                     if callback:
-                        callback(instrument=instrument, time=time, bid=bid, ask=ask)
+                        callback(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
                     else:
-                        self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask)
+                        self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
                 
                     if self.stop_stream or stop is not None and count >= stop:
                         break

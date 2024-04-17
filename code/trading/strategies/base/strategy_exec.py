@@ -26,6 +26,10 @@ class TradingStrategyExec(TradingStrategyCalc):
 
     def execute_strategy(self):
 
+        if not self.is_trading:
+            logger.debug("Trading is not active")
+            return
+
         trading_time = datetime.utcnow()
         trade_action = self.determine_trade_action(trading_time)
 

@@ -63,7 +63,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_min"] = df['RSI'].rolling(period).min()
 
 
-        if not self.backtest and self.print_indicators_count % 20 == 0:
+        if not self.backtest and self.print_indicators_count % 60 == 0:
             logger.info("\n" + df.tail().to_string(header=True))
             
         self.print_indicators_count = self.print_indicators_count + 1
@@ -90,6 +90,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         self.ask = row ["ask"]
         self.bid = row ["bid"]
+
+        self.is_trading = True
+        if "status" in row:
+            self.is_trading = row ["status"] == "tradeable"
         
         if self.rsi == self.rsi_min:
             self.rsi_min_date = time
