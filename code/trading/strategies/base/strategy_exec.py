@@ -73,13 +73,13 @@ class TradingStrategyExec(TradingStrategyCalc):
         if self.risk_time(trading_time):
             return
 
-        if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_min, 0) <= 35 and self.reverse_rsi_up_open():
+        if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_min, 0) <= 35 and self.reverse_rsi_up():
             if not self.backtest:
                 logger.info(
                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_max, 0) >= 65 and self.reverse_rsi_down_open():
+        elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_max, 0) >= 65 and self.reverse_rsi_down():
             if not self.backtest:
                 logger.info(
                     f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
@@ -97,14 +97,14 @@ class TradingStrategyExec(TradingStrategyCalc):
             close_trade = True
 
         if have_units > 0:  # long position
-            if close_trade or (round(self.rsi, 0) >= 65) and self.reverse_rsi_down_close():
+            if close_trade or (round(self.rsi, 0) >= 65) and self.reverse_rsi_down():
                 if not self.backtest:
                     logger.info(
                         f"Close long position - Sell {-have_units} units at bid price: {self.bid}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False)
 
         elif have_units < 0:  # short position
-            if close_trade or (round(self.rsi, 0) <= 35) and self.reverse_rsi_up_close():
+            if close_trade or (round(self.rsi, 0) <= 35) and self.reverse_rsi_up():
                 if not self.backtest:
                     logger.info(
                         f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
@@ -137,18 +137,3 @@ class TradingStrategyExec(TradingStrategyCalc):
                         f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, True)
 
-
-    def report_trade(self, order):
-
-        logger.info("\n" + 100 * "-" + "\n")
-        logger.info("")
-        logger.info("\n" + self.data[-8:].to_string(header=True))
-        logger.info("")
-        self.print_indicators()
-        logger.info("")
-        logger.info(json.dumps(order, indent=2))
-        logger.info("\n" + 100 * "-" + "\n")
-
-    def terminate(self):
-
-        self.trading_session.print_trades()

@@ -104,6 +104,22 @@ class TradingStrategyBase():
         
         return
 
+    def report_trade(self, order):
+
+        logger.info("\n" + 100 * "-" + "\n")
+        logger.info("")
+        logger.info("\n" + self.data[-8:].to_string(header=True))
+        logger.info("")
+        # # self.print_indicators()
+        # logger.info("")
+        logger.info(json.dumps(order, indent=2))
+        logger.info("\n" + 100 * "-" + "\n")
+
+    def terminate(self):
+
+        self.trading_session.print_trades()
+
+
     def __str__(self):
         return f"Strategy -- SMA: {self.SMA}, STD: {self.DEV}, stop loss: {self.sl_perc}"
 
