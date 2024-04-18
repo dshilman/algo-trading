@@ -170,13 +170,11 @@ class Trader():
                 temp_tick_data = self.tick_data.copy()
                 self.tick_data.clear()
 
-              
                 if len(temp_tick_data) > 0:
                     df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "ask", "status"])
                     df.set_index('time', inplace=True)    
                     df = df.resample("30s").last()
-                    logger.debug(f"Resampled Data: {df}")
-
+                    # logger.debug(f"Adding tickers length: {len(df)} | data: {df}")
                     self.strategy.add_tickers(ticker_df=df)
 
                 self.strategy.calc_indicators()                

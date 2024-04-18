@@ -95,20 +95,23 @@ class TradingStrategyExec(TradingStrategyCalc):
         have_units = self.trading_session.have_units
 
         close_trade = False
+        near_close_trade = False
         open_trade_time = self.get_last_trade_time()
 
-        if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or self.risk_time(trading_time):
+        if open_trade_time is None or (open_trade_time + timedelta(minutes=60)) <= trading_time:
+            near_close_trade = True
+        elif open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or self.risk_time(trading_time):
             close_trade = True
 
         if have_units > 0:  # long position
-            if close_trade or (round(self.rsi, 0) >= 65) and self.reverse_rsi_down():
+            if close_trade or (round(self.rsi, 0) >= 65 or near_close_trade and self.bid > self.sma) and self.reverse_rsi_down():
                 if not self.backtest:
                     logger.info(
                         f"Close long position - Sell {-have_units} units at bid price: {self.bid}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False)
 
         elif have_units < 0:  # short position
-            if close_trade or (round(self.rsi, 0) <= 35) and self.reverse_rsi_up():
+            if close_trade or (round(self.rsi, 0) <= 35 or near_close_trade and self.ask < self.sma) and self.reverse_rsi_up():
                 if not self.backtest:
                     logger.info(
                         f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")

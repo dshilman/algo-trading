@@ -35,7 +35,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df = pd.concat([df, ticker_df])
         df = df.tail(self.SMA * 2)
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-    
         self.data = df
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
@@ -63,11 +62,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_min"] = df['RSI'].rolling(period).min()
 
 
-        if not self.backtest and self.print_indicators_count % 60 == 0:
+        if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail().to_string(header=True))
             
         self.print_indicators_count = self.print_indicators_count + 1
-    
 
         self.data = df
 
