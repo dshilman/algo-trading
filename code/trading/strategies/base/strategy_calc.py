@@ -72,10 +72,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["high_price_count"] = df["high_price_count"].rolling(SMA).sum()
         
 
-        # df["price_max"] = df[instrument].rolling(period).max()
-        # df["price_min"] = df[instrument].rolling(period).min()
-        # df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
-        # df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
+        df["price_max"] = df[instrument].rolling(period).max()
+        df["price_min"] = df[instrument].rolling(period).min()
+        df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
+        df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail().to_string(header=True))
@@ -113,11 +113,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ask = row ["ask"]
         self.bid = row ["bid"]
 
-        # self.price_max = round(row ["price_max"], 2)
-        # self.price_min = round(row ["price_min"], 2)
+        self.price_max = round(row ["price_max"], 2)
+        self.price_min = round(row ["price_min"], 2)
 
-        # self.sma_price_max = round(row ["sma_price_max"], 2)
-        # self.sma_price_min = round(row ["sma_price_min"], 2)
+        self.sma_price_max = round(row ["sma_price_max"], 2)
+        self.sma_price_min = round(row ["sma_price_min"], 2)
 
         self.is_trading = True
         if "status" in row:
@@ -207,8 +207,8 @@ class TradingStrategyCalc(TradingStrategyBase):
     def low_volatility_long(self):
         return self.high_price_count == 0 and self.low_price_count <= 10
 
-    # def highest_price(self):    
-    #     return self.price_max == self.sma_price_max
+    def highest_price(self):    
+        return self.price_max == self.sma_price_max
 
-    # def lowest_price(self):    
-    #     return self.price_min == self.sma_price_max
+    def lowest_price(self):    
+        return self.price_min == self.sma_price_min
