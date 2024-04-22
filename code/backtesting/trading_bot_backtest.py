@@ -87,10 +87,11 @@ class TradingBacktester():
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
 
-            # logger.info("Savinf indicators to Excel...")
+            # logger.info("Saving indicators to Excel...")
             # self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
 
             pause_trading = None
+            week_day = None
 
             logger.info(f"Starting trading for {self.strategy.instrument}...")
             for index, row in self.strategy.data.iterrows():
@@ -100,7 +101,7 @@ class TradingBacktester():
 
                 if not from_dt <= index <= to_dt and self.strategy.trading_session.have_units == 0:
                     continue
-
+                
                 self.strategy.set_strategy_indicators(row=row, time=index)
                 
                 if pause_trading == None or index > pause_trading:

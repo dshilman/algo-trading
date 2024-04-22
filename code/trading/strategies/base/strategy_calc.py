@@ -25,7 +25,7 @@ class TradingStrategyCalc(TradingStrategyBase):
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
         
-        self.print_indicators_count = 0    
+        self.print_indicators_count = 0 
 
     def add_tickers(self, ticker_df: pd.DataFrame):
 
@@ -33,9 +33,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df = self.data.copy()
         df = pd.concat([df, ticker_df])
-        df = df.tail(self.SMA * 2)
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-        self.data = df
+        self.data = df.tail(self.SMA * 6)
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
      
@@ -52,6 +51,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         std = df[instrument].rolling(SMA).std()
         df["Lower"] = df["SMA"] - std * DEV
         df["Upper"] = df["SMA"] + std * DEV
+        
+        df["Lower_2"] = df["SMA"] - std * 2
+        df["Upper_2"] = df["SMA"] + std * 2
 
         period = 28
 
@@ -61,6 +63,19 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_max"] = df['RSI'].rolling(period).max()
         df["rsi_min"] = df['RSI'].rolling(period).min()
 
+        df["low_price_count"] = df["Lower_2"] - df[instrument]
+        df["low_price_count"] = df["low_price_count"].apply(lambda x: 1 if x > 0 else 0)
+        df["low_price_count"] = df["low_price_count"].rolling(SMA).sum()
+
+        df["high_price_count"] = df["Upper_2"] - df[instrument]
+        df["high_price_count"] = df["high_price_count"].apply(lambda x: 1 if x < 0 else 0)
+        df["high_price_count"] = df["high_price_count"].rolling(SMA).sum()
+        
+
+        # df["price_max"] = df[instrument].rolling(period).max()
+        # df["price_min"] = df[instrument].rolling(period).min()
+        # df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
+        # df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail().to_string(header=True))
@@ -68,6 +83,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.print_indicators_count = self.print_indicators_count + 1
 
         self.data = df
+
+    def low_price_count(self, instrument, lower):
+        return 1 if instrument < lower else 0
+
+    def high_price_count(self, instrument, higher):
+        return 1 if instrument > higher else 0
 
     def set_strategy_indicators(self, row: pd.Series=None, time = None):
 
@@ -81,6 +102,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_low = round(row ['Lower'], 4)
         self.bb_high =  round(row ['Upper'], 4)
 
+        self.low_price_count = row ['low_price_count']
+        self.high_price_count = row ['high_price_count']
+        
         self.rsi = round(row ['RSI'], 4)
         self.rsi_prev = round(row ['RSI_PREV'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
@@ -88,6 +112,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         self.ask = row ["ask"]
         self.bid = row ["bid"]
+
+        # self.price_max = round(row ["price_max"], 2)
+        # self.price_min = round(row ["price_min"], 2)
+
+        # self.sma_price_max = round(row ["sma_price_max"], 2)
+        # self.sma_price_min = round(row ["sma_price_min"], 2)
 
         self.is_trading = True
         if "status" in row:
@@ -169,3 +199,16 @@ class TradingStrategyCalc(TradingStrategyBase):
     def reset_rsi(self):
         self.rsi_min_date = None
         self.rsi_max_date = None
+
+
+    def low_volatility_short(self):
+        return self.low_price_count == 0 and self.high_price_count <= 10
+
+    def low_volatility_long(self):
+        return self.high_price_count == 0 and self.low_price_count <= 10
+
+    # def highest_price(self):    
+    #     return self.price_max == self.sma_price_max
+
+    # def lowest_price(self):    
+    #     return self.price_min == self.sma_price_max

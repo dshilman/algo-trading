@@ -24,6 +24,8 @@ class TradingStrategyExec(TradingStrategyCalc):
         super().__init__(instrument=instrument,
                          pair_file=pair_file, api=api, unit_test=unit_test)
 
+        self.stop_trading = False
+
     def execute_strategy(self):
 
         if not self.is_trading:
@@ -67,23 +69,23 @@ class TradingStrategyExec(TradingStrategyCalc):
                 self.reset_rsi()
             
         if trade is not None:
-            self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi_prev)
+            self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi_prev, low_price_count=self.low_price_count, high_price_count=self.high_price_count)
         
         return trade
             
 
     def check_if_need_open_trade(self, trading_time):
 
-        if self.risk_time(trading_time):
+        if self.risk_time(trading_time) or self.stop_trading:
             return
 
-        if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_min, 0) <= 35 and self.reverse_rsi_up():
+        if self.long_trading and not self.low_volatility_long() and self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_min, 0) <= 35 and self.reverse_rsi_up():
             if not self.backtest:
                 logger.info(
                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_max, 0) >= 65 and self.reverse_rsi_down():
+        elif self.short_trading and not self.low_volatility_short() and self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_max, 0) >= 65 and self.reverse_rsi_down():
             if not self.backtest:
                 logger.info(
                     f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
@@ -143,4 +145,4 @@ class TradingStrategyExec(TradingStrategyCalc):
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, True)
-
+        
