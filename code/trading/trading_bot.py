@@ -151,7 +151,7 @@ class Trader():
                 self.strategy.stop_trading = True
             
 
-            if self.from_dt - timedelta(minuts=90) <= now <= self.to_dt:
+            if self.from_dt - timedelta(minutes=90) <= now <= self.to_dt:
                self.strategy.stop_trading = True
             elif not self.from_dt <= now <= self.to_dt:
                 logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
