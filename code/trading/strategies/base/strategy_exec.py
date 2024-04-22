@@ -79,7 +79,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         if self.risk_time(trading_time) or self.stop_trading:
             return
 
-        if self.long_trading and not self.low_volatility_long() and \
+        if self.long_trading and not self.low_volatility_long() and self.lowest_price() and \
             self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_min, 0) <= 35 \
                 and self.reverse_rsi_up():
             if not self.backtest:
@@ -87,7 +87,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        elif self.short_trading and not self.low_volatility_short() and \
+        elif self.short_trading and not self.low_volatility_short() and self.highest_price() and \
             self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_max, 0) >= 65 \
                 and self.reverse_rsi_down():
             if not self.backtest:
@@ -104,10 +104,10 @@ class TradingStrategyExec(TradingStrategyCalc):
         near_close_trade = False
         open_trade_time = self.get_last_trade_time()
 
+        if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or self.risk_time(trading_time):
+            close_trade = True
         if open_trade_time is None or (open_trade_time + timedelta(minutes=60)) <= trading_time:
             near_close_trade = True
-        elif open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or self.risk_time(trading_time):
-            close_trade = True
 
         if have_units > 0:  # long position
             if close_trade or (round(self.rsi, 0) >= 65 or near_close_trade and self.bid > self.sma) and self.reverse_rsi_down():
