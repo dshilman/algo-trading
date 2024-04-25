@@ -58,11 +58,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         period = 28
 
         df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x.values, period))
-        df["rsi_slope"] = df["rsi"].rolling(SMA).apply(lambda x: calculate_slope(x))
         df["rsi_prev"] = df.rsi.shift()
-        
         df["rsi_max"] = df['rsi'].rolling(period).max()
         df["rsi_min"] = df['rsi'].rolling(period).min()
+        df["rsi_slope"] = df["rsi"].rolling(period).apply(lambda x: calculate_slope(x))
 
         df["low_price_count"] = df["Lower_2"] - df[instrument]
         df["low_price_count"] = df["low_price_count"].apply(lambda x: 1 if x > 0 else 0)
@@ -76,9 +75,9 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["price_max"] = df[instrument].rolling(period).max()
         df["price_min"] = df[instrument].rolling(period).min()
+        df["price_slope"] = df[instrument].rolling(period).apply(lambda x: calculate_slope(x))
         df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
         df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
-        df["price_slope"] = df[instrument].rolling(SMA).apply(lambda x: calculate_slope(x))
 
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
@@ -177,13 +176,15 @@ class TradingStrategyCalc(TradingStrategyBase):
         return date_time
 
      
-    def reverse_rsi_up(self):
+    def reverse_rsi_up(self, trading_time):
 
         return round(self.rsi, 0) > round(self.rsi_prev, 0) > round(self.rsi_min, 0)
+        #  and trading_time - self.rsi_min_date < timedelta(minutes=5)
 
-    def reverse_rsi_down(self):
+    def reverse_rsi_down(self, trading_time):
 
         return round(self.rsi, 0) < round(self.rsi_prev, 0) < round(self.rsi_max, 0)
+        #  and trading_time - self.rsi_max_date < timedelta(minutes=5)
         
 
     def rsi_spike(self):

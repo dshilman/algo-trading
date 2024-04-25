@@ -81,7 +81,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         if self.long_trading and not self.low_volatility_long() and \
             self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_min, 0) <= 35 \
-                and self.reverse_rsi_up():
+                and self.reverse_rsi_up(trading_time):
             if not self.backtest:
                 logger.info(
                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
@@ -89,7 +89,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         elif self.short_trading and not self.low_volatility_short() and \
             self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_max, 0) >= 65 \
-                and self.reverse_rsi_down():
+                and self.reverse_rsi_down(trading_time):
             if not self.backtest:
                 logger.info(
                     f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
@@ -110,13 +110,13 @@ class TradingStrategyExec(TradingStrategyCalc):
             near_close_trade = True
 
         if have_units > 0:  # long position
-            if close_trade or (round(self.rsi, 0) >= 65 and self.bid > self.sma) and self.reverse_rsi_down():
+            if close_trade or (round(self.rsi, 0) >= 65 and self.bid > self.sma) and self.reverse_rsi_down(trading_time):
                 if not self.backtest:
                     logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False)
 
         elif have_units < 0:  # short position
-            if close_trade or (round(self.rsi, 0) <= 35 and self.ask < self.sma) and self.reverse_rsi_up():
+            if close_trade or (round(self.rsi, 0) <= 35 and self.ask < self.sma) and self.reverse_rsi_up(trading_time):
                 if not self.backtest:
                     logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, False)
