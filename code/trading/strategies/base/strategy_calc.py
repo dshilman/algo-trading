@@ -82,7 +82,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
-            logger.info("\n" + df.tail().to_string(header=True))
+            logger.info("\n" + df.tail(10).to_string(header=True))
             
         self.print_indicators_count = self.print_indicators_count + 1
 
