@@ -146,19 +146,19 @@ class Trader():
             logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
             
             
-            if now.weekday() == 4 and now.hour() == 19 and now.minute() >= 30 and not self.strategy.stop_trading:
+            if now.weekday() == 4 and now.hour() <= 19 and not self.strategy.stop_trading:
                 logger.info("Friday after Trading Time - Terminating Trading")
                 self.strategy.stop_trading = True
             
 
-            if self.from_dt - timedelta(minutes=90) <= now <= self.to_dt:
-               self.strategy.stop_trading = True
-            elif not self.from_dt <= now <= self.to_dt:
-                logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
-                logger.info("Not Trading Time - Terminating Trading")
-                self.terminate = True
-                self.stop_streaming()
-                break
+            # if self.from_dt - timedelta(minutes=90) <= now <= self.to_dt:
+            #    self.strategy.stop_trading = True
+            # elif not self.from_dt <= now <= self.to_dt:
+            #     logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
+            #     logger.info("Not Trading Time - Terminating Trading")
+            #     self.terminate = True
+            #     self.stop_streaming()
+            #     break
 
             time.sleep(refresh)
 
