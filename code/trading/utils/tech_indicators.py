@@ -1,6 +1,17 @@
 import numpy as np
 import pandas as pd
+# from scipy.stats import linregress
 
+
+def calculate_slope(S: pd.Series):
+
+    X = np.arange(len(S))
+    Y = S.values
+
+    return ((X*Y).mean() - X.mean()*Y.mean()) / ((X**2).mean() - (X.mean())**2)
+
+    # slope, _, _, _, _ = linregress(X, Y)
+    # return slope
 
 def calculate_momentum(S: pd.Series, n):
 

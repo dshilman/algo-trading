@@ -11,7 +11,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.strategies.base.strategy_base import TradingStrategyBase
-from trading.utils.tech_indicators import (calculate_momentum, calculate_rsi)
+from trading.utils.tech_indicators import (calculate_slope, calculate_rsi)
 
 logger = logging.getLogger()
 
@@ -57,11 +57,12 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         period = 28
 
-        df["RSI"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x.values, period))
-        df["RSI_PREV"] = df.RSI.shift()
+        df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x.values, period))
+        df["rsi_slope"] = df["rsi"].rolling(SMA).apply(lambda x: calculate_slope(x))
+        df["rsi_prev"] = df.rsi.shift()
         
-        df["rsi_max"] = df['RSI'].rolling(period).max()
-        df["rsi_min"] = df['RSI'].rolling(period).min()
+        df["rsi_max"] = df['rsi'].rolling(period).max()
+        df["rsi_min"] = df['rsi'].rolling(period).min()
 
         df["low_price_count"] = df["Lower_2"] - df[instrument]
         df["low_price_count"] = df["low_price_count"].apply(lambda x: 1 if x > 0 else 0)
@@ -70,12 +71,15 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["high_price_count"] = df["Upper_2"] - df[instrument]
         df["high_price_count"] = df["high_price_count"].apply(lambda x: 1 if x < 0 else 0)
         df["high_price_count"] = df["high_price_count"].rolling(SMA).sum()
+
         
 
         df["price_max"] = df[instrument].rolling(period).max()
         df["price_min"] = df[instrument].rolling(period).min()
         df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
         df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
+        df["price_slope"] = df[instrument].rolling(SMA).apply(lambda x: calculate_slope(x))
+
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail().to_string(header=True))
@@ -105,8 +109,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.low_price_count = row ['low_price_count']
         self.high_price_count = row ['high_price_count']
         
-        self.rsi = round(row ['RSI'], 4)
-        self.rsi_prev = round(row ['RSI_PREV'], 4)
+        self.rsi = round(row ['rsi'], 4)
+        self.rsi_prev = round(row ['rsi_prev'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
         
