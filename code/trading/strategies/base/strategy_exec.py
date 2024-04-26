@@ -65,11 +65,11 @@ class TradingStrategyExec(TradingStrategyCalc):
         else:
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)
-            if trade is not None:
-                self.reset_rsi()
+            # if trade is not None:
+                # self.reset_rsi()
             
         if trade is not None:
-            self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi_prev, low_price_count=self.low_price_count, high_price_count=self.high_price_count)
+            self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi)
         
         return trade
             
@@ -101,13 +101,10 @@ class TradingStrategyExec(TradingStrategyCalc):
         have_units = self.trading_session.have_units
 
         close_trade = False
-        near_close_trade = False
         open_trade_time = self.get_last_trade_time()
 
         if open_trade_time is None or (open_trade_time + timedelta(minutes=60)) <= trading_time or self.risk_time(trading_time):
             close_trade = True
-        if (open_trade_time + timedelta(minutes=self.keep_trade_open_time - 30)) <= trading_time:
-            near_close_trade = True
 
         if have_units > 0:  # long position
             if close_trade or (round(self.rsi, 0) >= 65 and self.bid > self.sma) and self.reverse_rsi_down(trading_time):

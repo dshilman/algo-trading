@@ -31,7 +31,7 @@ def calculate_rsi(S, period=14):
     rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
     
-    return rsi
+    return round(rsi, 4)
 
 def calculate_rsi_new(S, period=14):
     

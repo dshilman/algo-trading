@@ -29,7 +29,7 @@ class Trading_Session():
         self.trade_pl: float = 0
         self.have_units: int = 0
         self.trade_id: int = 0
-        self.columns = ["datetime", "trade_id", "trade", "action", "units", "price",  "rsi", "low_price_count", "high_price_count", "trade_pl", "pl"]
+        self.columns = ["datetime", "trade_id", "trade", "action", "units", "price",  "rsi", "trade_pl", "pl"]
 
         super().__init__()
 
@@ -79,7 +79,7 @@ class Trading_Session():
         
         self.have_units = self.have_units + trade_action.units
 
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), self.trade_id, trade, action, trade_action.units, trade_action.price, kwargs.get("rsi"), kwargs.get("low_price_count"), kwargs.get("high_price_count"), '${:,.2f}'.format(self.trade_pl), '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), self.trade_id, trade, action, trade_action.units, trade_action.price, kwargs.get("rsi"), '${:,.2f}'.format(self.trade_pl), '${:,.2f}'.format(self.pl)])
 
         return
 

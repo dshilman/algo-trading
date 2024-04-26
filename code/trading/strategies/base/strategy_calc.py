@@ -61,24 +61,32 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_prev"] = df.rsi.shift()
         df["rsi_max"] = df['rsi'].rolling(period).max()
         df["rsi_min"] = df['rsi'].rolling(period).min()
-        df["rsi_slope"] = df["rsi"].rolling(period).apply(lambda x: calculate_slope(x))
+        # df["rsi_slope"] = df["rsi"].rolling(period).apply(lambda x: calculate_slope(x))
 
-        df["low_price_count"] = df["Lower_2"] - df[instrument]
-        df["low_price_count"] = df["low_price_count"].apply(lambda x: 1 if x > 0 else 0)
-        df["low_price_count"] = df["low_price_count"].rolling(SMA).sum()
+        df["less_sma"] = df["SMA"] - df[instrument]
+        df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x > 0 else 0)
+        df["less_sma"] = df["less_sma"].rolling(SMA).sum()
 
-        df["high_price_count"] = df["Upper_2"] - df[instrument]
-        df["high_price_count"] = df["high_price_count"].apply(lambda x: 1 if x < 0 else 0)
-        df["high_price_count"] = df["high_price_count"].rolling(SMA).sum()
+        df["greater_sma"] = df["SMA"] - df[instrument]
+        df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x < 0 else 0)
+        df["greater_sma"] = df["greater_sma"].rolling(SMA).sum()
 
+        df["less_bb_low"] = df["Lower_2"] - df[instrument]
+        df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
+        df["less_bb_low"] = df["less_bb_low"].rolling(SMA).sum()
+
+        df["greater_bb_high"] = df["Upper_2"] - df[instrument]
+        df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
+        df["greater_bb_high"] = df["greater_bb_high"].rolling(SMA).sum()
         
 
-        df["price_max"] = df[instrument].rolling(period).max()
-        df["price_min"] = df[instrument].rolling(period).min()
-        df["price_slope"] = df[instrument].rolling(period).apply(lambda x: calculate_slope(x))
-        df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
-        df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
+        # df["price_max"] = df[instrument].rolling(period).max()
+        # df["price_min"] = df[instrument].rolling(period).min()
+        # df["price_slope"] = df[instrument].rolling(period).apply(lambda x: calculate_slope(x))
+        # df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
+        # df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
 
+        df.drop(columns= ["Lower_2", "Upper_2"], inplace=True)
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
@@ -87,11 +95,6 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.data = df
 
-    def low_price_count(self, instrument, lower):
-        return 1 if instrument < lower else 0
-
-    def high_price_count(self, instrument, higher):
-        return 1 if instrument > higher else 0
 
     def set_strategy_indicators(self, row: pd.Series=None, time = None):
 
@@ -105,22 +108,24 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_low = round(row ['Lower'], 4)
         self.bb_high =  round(row ['Upper'], 4)
 
-        self.low_price_count = row ['low_price_count']
-        self.high_price_count = row ['high_price_count']
+        self.less_bb_low = row ['less_bb_low']
+        self.greater_bb_high = row ['greater_bb_high']
         
         self.rsi = round(row ['rsi'], 4)
         self.rsi_prev = round(row ['rsi_prev'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
+        # self.rsi_slope = round(row ['rsi_slope'], 4)
         
         self.ask = row ["ask"]
         self.bid = row ["bid"]
 
-        self.price_max = round(row ["price_max"], 2)
-        self.price_min = round(row ["price_min"], 2)
+        # self.price_max = round(row ["price_max"], 4)
+        # self.price_min = round(row ["price_min"], 4)
+        # self.price_slope = round(row ["price_slope"], 4)
 
-        self.sma_price_max = round(row ["sma_price_max"], 2)
-        self.sma_price_min = round(row ["sma_price_min"], 2)
+        # self.sma_price_max = round(row ["sma_price_max"], 4)
+        # self.sma_price_min = round(row ["sma_price_min"], 4)
 
         self.is_trading = True
         if "status" in row:
@@ -175,6 +180,15 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         return date_time
 
+    def get_trade_rsi(self):
+
+        rsi = None
+        
+        if len(self.trading_session.trades) > 0:
+            rsi = self.trading_session.trades[-1][6]
+        
+        return rsi
+
      
     def reverse_rsi_up(self, trading_time):
 
@@ -205,15 +219,14 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_min_date = None
         self.rsi_max_date = None
 
-
     def low_volatility_short(self):
-        return self.low_price_count == 0 and self.high_price_count <= 10
+        return self.less_bb_low == 0 and self.greater_bb_high <= 10
 
     def low_volatility_long(self):
-        return self.high_price_count == 0 and self.low_price_count <= 10
+        return self.greater_bb_high == 0 and self.less_bb_low <= 10
 
-    def highest_price(self):    
-        return self.price_max == self.sma_price_max
+    # def highest_price(self):    
+    #     return self.price_max == self.sma_price_max
 
-    def lowest_price(self):    
-        return self.price_min == self.sma_price_min
+    # def lowest_price(self):    
+    #     return self.price_min == self.sma_price_min

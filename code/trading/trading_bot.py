@@ -145,8 +145,9 @@ class Trader():
             now = datetime.utcnow()
             logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
             
-            
-            if now.weekday() == 4 and now.hour() >= 19 and not self.strategy.stop_trading:
+            day = now.weekday()
+            hour = now.hour
+            if day == 4 and hour >= 19 and not self.strategy.stop_trading:
                 logger.info("Friday after Trading Time - Terminating Trading")
                 self.strategy.stop_trading = True
             
