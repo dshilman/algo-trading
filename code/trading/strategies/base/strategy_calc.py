@@ -71,11 +71,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x < 0 else 0)
         df["greater_sma"] = df["greater_sma"].rolling(SMA).sum()
 
-        df["less_bb_low"] = df["Lower_2"] - df[instrument]
+        df["less_bb_low"] = df["Lower"] - df[instrument]
         df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
         df["less_bb_low"] = df["less_bb_low"].rolling(SMA).sum()
 
-        df["greater_bb_high"] = df["Upper_2"] - df[instrument]
+        df["greater_bb_high"] = df["Upper"] - df[instrument]
         df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
         df["greater_bb_high"] = df["greater_bb_high"].rolling(SMA).sum()
         
