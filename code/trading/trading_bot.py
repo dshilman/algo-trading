@@ -256,7 +256,7 @@ class Trader():
         second: int = date_time.second
 
         if minute in [0, 15, 30, 45] and second == 0:
-            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {round(ask, 4)}, bid: {round(bid, 4)} | status: {status}")
+            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {ask}, bid: {bid} | status: {status}")
  
   
         

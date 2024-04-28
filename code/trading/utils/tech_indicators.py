@@ -18,9 +18,8 @@ def calculate_momentum(S: pd.Series, n):
     return (S - S.shift(n)).mean()
 
 # Calculate RSI
-def calculate_rsi(S, period=14):
+def calculate_rsi(prices: pd.Series, period=14):
     
-    prices = pd.Series(S)
     delta = prices.diff()
     gain = delta.where(delta > 0, 0)
     loss = -delta.where(delta < 0, 0)
