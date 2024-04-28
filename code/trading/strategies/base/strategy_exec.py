@@ -65,8 +65,6 @@ class TradingStrategyExec(TradingStrategyCalc):
         else:
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)
-            # if trade is not None:
-                # self.reset_rsi()
             
         if trade is not None:
             self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi)
@@ -79,17 +77,17 @@ class TradingStrategyExec(TradingStrategyCalc):
         if self.risk_time(trading_time) or self.stop_trading:
             return
 
-        if self.long_trading and not self.low_volatility_long() and \
-            self.ask < self.bb_low and self.rsi_drop() and round(self.rsi_min, 0) <= 35 \
-                and self.reverse_rsi_up(trading_time):
+        if self.long_trading and self.volatility_long() and \
+            self.ask <= self.bb_low and self.rsi_drop() and round(self.rsi, 0) <= 20 \
+                and self.rsi > self.rsi_min:
             if not self.backtest:
                 logger.info(
                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        elif self.short_trading and not self.low_volatility_short() and \
-            self.bid > self.bb_high and self.rsi_spike() and round(self.rsi_max, 0) >= 65 \
-                and self.reverse_rsi_down(trading_time):
+        elif self.short_trading and self.volatility_short() and \
+            self.bid >= self.bb_high and self.rsi_spike() and round(self.rsi, 0) >= 80 \
+                and self.rsi < self.rsi_max:
             if not self.backtest:
                 logger.info(
                     f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
@@ -107,13 +105,13 @@ class TradingStrategyExec(TradingStrategyCalc):
             close_trade = True
 
         if have_units > 0:  # long position
-            if close_trade or (round(self.rsi, 0) >= 65 and self.bid > self.sma) and self.reverse_rsi_down(trading_time):
+            if close_trade or self.price > self.sma and self.rsi < self.rsi_max:
                 if not self.backtest:
                     logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False)
 
         elif have_units < 0:  # short position
-            if close_trade or (round(self.rsi, 0) <= 35 and self.ask < self.sma) and self.reverse_rsi_up(trading_time):
+            if close_trade or self.price < self.sma and self.rsi > self.rsi_min:
                 if not self.backtest:
                     logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, False)
