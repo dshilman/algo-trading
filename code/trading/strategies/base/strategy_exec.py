@@ -105,13 +105,13 @@ class TradingStrategyExec(TradingStrategyCalc):
             close_trade = True
 
         if have_units > 0:  # long position
-            if close_trade or self.price > self.sma and self.rsi < self.rsi_max:
+            if close_trade or self.price > self.sma and self.rsi < self.rsi_max or self.bid > (self.bb_low + self.sma)/2 and self.reverse_rsi_down():
                 if not self.backtest:
                     logger.info(f"Close long position - Sell {-have_units} units at bid price: {self.bid}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False)
 
         elif have_units < 0:  # short position
-            if close_trade or self.price < self.sma and self.rsi > self.rsi_min:
+            if close_trade or self.price < self.sma and self.rsi > self.rsi_min or self.ask < (self.bb_high + self.sma)/2 and self.reverse_rsi_up():
                 if not self.backtest:
                     logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, False)

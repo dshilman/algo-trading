@@ -195,12 +195,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         return rsi
 
      
-    def reverse_rsi_up(self, trading_time):
+    def reverse_rsi_up(self, trading_time=None):
 
         return round(self.rsi, 0) > round(self.rsi_prev, 0) > round(self.rsi_min, 0)
         #  and trading_time - self.rsi_min_date < timedelta(minutes=5)
 
-    def reverse_rsi_down(self, trading_time):
+    def reverse_rsi_down(self, trading_time=None):
 
         return round(self.rsi, 0) < round(self.rsi_prev, 0) < round(self.rsi_max, 0)
         #  and trading_time - self.rsi_max_date < timedelta(minutes=5)
@@ -221,10 +221,10 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
     def volatility_short(self):
-        return self.less_bb_low > 5 and self.greater_bb_high > 10
+        return self.less_bb_low > 1 and self.greater_bb_high > 10
 
     def volatility_long(self):
-        return self.greater_bb_high > 5 and self.less_bb_low > 10
+        return self.greater_bb_high > 1 and self.less_bb_low > 10
 
     # def highest_price(self):    
     #     return self.price_max == self.sma_price_max
