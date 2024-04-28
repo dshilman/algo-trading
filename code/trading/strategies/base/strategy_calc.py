@@ -52,8 +52,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["Lower"] = df["SMA"] - std * DEV
         df["Upper"] = df["SMA"] + std * DEV
         
-        df["Lower_2"] = df["SMA"] - std * 2
-        df["Upper_2"] = df["SMA"] + std * 2
+        # df["Lower_2"] = df["SMA"] - std * 2
+        # df["Upper_2"] = df["SMA"] + std * 2
 
         period = 56
         df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x, period))
@@ -87,7 +87,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
         
 
-        df.drop(columns= ["Lower_2", "Upper_2"], inplace=True)
+        # df.drop(columns= ["Lower_2", "Upper_2"], inplace=True)
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
@@ -111,7 +111,10 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.less_bb_low = row ['less_bb_low']
         self.greater_bb_high = row ['greater_bb_high']
-        
+
+        self.less_sma = row ['less_sma']
+        self.greater_sma = row ['greater_sma']
+
         self.rsi = round(row ['rsi'], 4)
         self.rsi_prev = round(row ['rsi_prev'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
@@ -125,8 +128,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.price_min = row ["price_min"]
         # self.price_slope = round(row ["price_slope"], 4)
 
-        self.less_sma = row ['less_sma']
-        self.greater_sma = row ['greater_sma']
 
         
         # self.sma_price_max = round(row ["sma_price_max"], 4)
