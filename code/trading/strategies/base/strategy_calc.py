@@ -62,29 +62,29 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_min"] = df['rsi'].rolling(period).min()
         # df["rsi_slope"] = df["rsi"].rolling(period).apply(lambda x: calculate_slope(x))
 
-        df["price_max"] = df[instrument].rolling(period).max()
-        df["price_min"] = df[instrument].rolling(period).min()
+        # df["price_max"] = df[instrument].rolling(period).max()
+        # df["price_min"] = df[instrument].rolling(period).min()
         # df["price_slope"] = df[instrument].rolling(period).apply(lambda x: calculate_slope(x))
         # df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
         # df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
 
 
-        period = SMA
-        df["less_sma"] = df["SMA"] - df[instrument]
-        df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x > 0 else 0)
-        df["less_sma"] = df["less_sma"].rolling(period).sum()
+        # period = SMA
+        # df["less_sma"] = df["SMA"] - df[instrument]
+        # df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x > 0 else 0)
+        # df["less_sma"] = df["less_sma"].rolling(period).sum()
 
-        df["greater_sma"] = df["SMA"] - df[instrument]
-        df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x < 0 else 0)
-        df["greater_sma"] = df["greater_sma"].rolling(period).sum()
+        # df["greater_sma"] = df["SMA"] - df[instrument]
+        # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x < 0 else 0)
+        # df["greater_sma"] = df["greater_sma"].rolling(period).sum()
 
-        df["less_bb_low"] = df["Lower"] - df[instrument]
-        df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
-        df["less_bb_low"] = df["less_bb_low"].rolling(period).sum()
+        # df["less_bb_low"] = df["Lower"] - df[instrument]
+        # df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
+        # df["less_bb_low"] = df["less_bb_low"].rolling(period).sum()
 
-        df["greater_bb_high"] = df["Upper"] - df[instrument]
-        df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
-        df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
+        # df["greater_bb_high"] = df["Upper"] - df[instrument]
+        # df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
+        # df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
         
 
         # df.drop(columns= ["Lower_2", "Upper_2"], inplace=True)
@@ -109,11 +109,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_low = row ['Lower']
         self.bb_high =  row ['Upper']
 
-        self.less_bb_low = row ['less_bb_low']
-        self.greater_bb_high = row ['greater_bb_high']
+        # self.less_bb_low = row ['less_bb_low']
+        # self.greater_bb_high = row ['greater_bb_high']
 
-        self.less_sma = row ['less_sma']
-        self.greater_sma = row ['greater_sma']
+        # self.less_sma = row ['less_sma']
+        # self.greater_sma = row ['greater_sma']
 
         self.rsi = round(row ['rsi'], 4)
         self.rsi_prev = round(row ['rsi_prev'], 4)
@@ -124,8 +124,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ask = row ["ask"]
         self.bid = row ["bid"]
         self.price = row [self.instrument]
-        self.price_max = row ["price_max"]
-        self.price_min = row ["price_min"]
+        # self.price_max = row ["price_max"]
+        # self.price_min = row ["price_min"]
         # self.price_slope = round(row ["price_slope"], 4)
 
 
@@ -219,16 +219,3 @@ class TradingStrategyCalc(TradingStrategyBase):
         return self.rsi_max - self.rsi_min > self.rsi_change \
                 and self.rsi_min_date is not None and self.rsi_max_date is not None \
                     and self.rsi_min_date > self.rsi_max_date \
-
-
-    def volatility_short(self):
-        return self.less_bb_low > 1 and self.greater_bb_high > 10
-
-    def volatility_long(self):
-        return self.greater_bb_high > 1 and self.less_bb_low > 10
-
-    # def highest_price(self):    
-    #     return self.price_max == self.sma_price_max
-
-    # def lowest_price(self):    
-    #     return self.price_min == self.sma_price_min
