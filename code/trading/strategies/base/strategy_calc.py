@@ -211,11 +211,11 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
                 and self.rsi_min_date is not None and self.rsi_max_date is not None \
-                    and self.rsi_min_date < self.rsi_max_date \
+                    and self.rsi_min_date < self.rsi_max_date
 
     
     def rsi_drop(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
                 and self.rsi_min_date is not None and self.rsi_max_date is not None \
-                    and self.rsi_min_date > self.rsi_max_date \
+                    and self.rsi_min_date > self.rsi_max_date
