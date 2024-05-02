@@ -13,6 +13,22 @@ def calculate_slope(S: pd.Series):
     # slope, _, _, _, _ = linregress(X, Y)
     # return slope
 
+def count_sma_crossover(S: pd.Series):
+
+    count = 0
+    prev_value = None
+
+    for i in S:
+        if prev_value is not None and i * prev_value < 0:
+            count += 1
+        elif prev_value is not None and i * prev_value == 0:
+            continue
+        
+        prev_value = i
+
+    return count
+
+    
 def calculate_momentum(S: pd.Series, n):
 
     return (S - S.shift(n)).mean()

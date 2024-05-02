@@ -53,8 +53,11 @@ class TradingStrategyBase():
         self.keep_trade_open_time = config.getint(instrument, 'keep_trade_open_time')
         self.data: pd.DataFrame = None
   
-        self.rsi_min_date = None
-        self.rsi_max_date = None
+        self.rsi_min_price = None
+        self.rsi_max_price = None
+
+        self.rsi_min_time = None
+        self.rsi_max_time = None
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
         

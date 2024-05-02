@@ -11,7 +11,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.strategies.base.strategy_base import TradingStrategyBase
-from trading.utils.tech_indicators import (calculate_slope, calculate_rsi)
+from trading.utils.tech_indicators import (count_sma_crossover, calculate_rsi)
 
 logger = logging.getLogger()
 
@@ -48,9 +48,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         DEV = self.DEV
 
         df["SMA"] = df[instrument].rolling(SMA).mean()
-        std = df[instrument].rolling(SMA).std()
-        df["Lower"] = df["SMA"] - std * DEV
-        df["Upper"] = df["SMA"] + std * DEV
+        df["std"] = df[instrument].rolling(SMA).std()
+        df["Lower"] = df["SMA"] - df["std"] * DEV
+        df["Upper"] = df["SMA"] + df["std"] * DEV
         
         # df["Lower_2"] = df["SMA"] - std * 2
         # df["Upper_2"] = df["SMA"] + std * 2
@@ -58,8 +58,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         period = 56
         df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x, period))
         df["rsi_prev"] = df.rsi.shift()
+        
+        period = 28
         df["rsi_max"] = df['rsi'].rolling(period).max()
         df["rsi_min"] = df['rsi'].rolling(period).min()
+        
         # df["rsi_slope"] = df["rsi"].rolling(period).apply(lambda x: calculate_slope(x))
 
         # df["price_max"] = df[instrument].rolling(period).max()
@@ -69,22 +72,22 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
 
 
-        # period = SMA
-        # df["less_sma"] = df["SMA"] - df[instrument]
-        # df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x > 0 else 0)
-        # df["less_sma"] = df["less_sma"].rolling(period).sum()
+        period = 60
+        df["less_sma"] = df["SMA"] - df[instrument]
+        df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x < 0 else -1 if x > 0 else 0)
 
-        # df["greater_sma"] = df["SMA"] - df[instrument]
-        # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x < 0 else 0)
-        # df["greater_sma"] = df["greater_sma"].rolling(period).sum()
+        df["greater_sma"] = df["SMA"] - df[instrument]
+        df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
 
-        # df["less_bb_low"] = df["Lower"] - df[instrument]
-        # df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
-        # df["less_bb_low"] = df["less_bb_low"].rolling(period).sum()
+        df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
 
-        # df["greater_bb_high"] = df["Upper"] - df[instrument]
-        # df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
-        # df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
+        df["less_bb_low"] = df["Lower"] - df[instrument]
+        df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
+        df["less_bb_low"] = df["less_bb_low"].rolling(period).sum()
+
+        df["greater_bb_high"] = df["Upper"] - df[instrument]
+        df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
+        df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
         
 
         # df.drop(columns= ["Lower_2", "Upper_2"], inplace=True)
@@ -109,8 +112,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_low = row ['Lower']
         self.bb_high =  row ['Upper']
 
-        # self.less_bb_low = row ['less_bb_low']
-        # self.greater_bb_high = row ['greater_bb_high']
+        self.less_bb_low = row ['less_bb_low']
+        self.greater_bb_high = row ['greater_bb_high']
+
+        self.sma_crossover = row ['sma_crossover']
 
         # self.less_sma = row ['less_sma']
         # self.greater_sma = row ['greater_sma']
@@ -138,9 +143,11 @@ class TradingStrategyCalc(TradingStrategyBase):
             self.is_trading = row ["status"] == "tradeable"
         
         if self.rsi == self.rsi_min:
-            self.rsi_min_date = time
+            self.rsi_min_price = self.price
+            self.rsi_min_time = time
         elif self.rsi == self.rsi_max:
-            self.rsi_max_date = time
+            self.rsi_max_price = self.price
+            self.rsi_max_time = time
   
     def print_indicators(self):
 
@@ -161,19 +168,26 @@ class TradingStrategyCalc(TradingStrategyBase):
      
         return None
 
-    def risk_time(self, date_time) -> bool:
-
+    def is_trading_time(self, date_time) -> bool:
 
         logger.debug(f"Date time: {date_time}")
+
+        day = date_time.weekday()
+        hour = date_time.hour
+
+        if day == 4 and hour >= 20:
+            return False
+
 
         pause_from_dt = datetime.combine(date_time, datetime.strptime(self.pause_start, '%H:%M:%S').time())
         pause_to_dt = datetime.combine(date_time, datetime.strptime(self.pause_end, '%H:%M:%S').time())
 
 
         if pause_from_dt < date_time < pause_to_dt:
-            return True
+            return False
+        
 
-        return False
+        return True
 
 
     def get_last_trade_time(self):
@@ -198,24 +212,24 @@ class TradingStrategyCalc(TradingStrategyBase):
      
     def reverse_rsi_up(self, trading_time=None):
 
-        return round(self.rsi, 0) > round(self.rsi_prev, 0) > round(self.rsi_min, 0)
-        #  and trading_time - self.rsi_min_date < timedelta(minutes=5)
+        return round(self.rsi, 0) > round(self.rsi_min, 0)
+        #   and trading_time - self.rsi_min_date < timedelta(minutes=10)
 
     def reverse_rsi_down(self, trading_time=None):
 
-        return round(self.rsi, 0) < round(self.rsi_prev, 0) < round(self.rsi_max, 0)
-        #  and trading_time - self.rsi_max_date < timedelta(minutes=5)
+        return round(self.rsi, 0) < round(self.rsi_max, 0)
+        #   and trading_time - self.rsi_max_date < timedelta(minutes=10)
         
 
     def rsi_spike(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
-                and self.rsi_min_date is not None and self.rsi_max_date is not None \
-                    and self.rsi_min_date < self.rsi_max_date
+                and self.rsi_min_time is not None and self.rsi_max_time is not None \
+                    and self.rsi_min_time < self.rsi_max_time
 
     
     def rsi_drop(self):
 
         return self.rsi_max - self.rsi_min > self.rsi_change \
-                and self.rsi_min_date is not None and self.rsi_max_date is not None \
-                    and self.rsi_min_date > self.rsi_max_date
+                and self.rsi_min_time is not None and self.rsi_max_time is not None \
+                    and self.rsi_min_time > self.rsi_max_time

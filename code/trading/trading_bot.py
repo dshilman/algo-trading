@@ -98,7 +98,7 @@ class Trader():
 
         treads = []
         treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
-        treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
+        # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
         treads.append(threading.Thread(target=self.refresh_strategy, args=(10,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
