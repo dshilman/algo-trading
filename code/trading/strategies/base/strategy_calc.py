@@ -49,17 +49,19 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["SMA"] = df[instrument].rolling(SMA).mean()
         df["std"] = df[instrument].rolling(SMA).std()
+        df["std_mean"] = df['std'].rolling(SMA).mean()
+
         df["Lower"] = df["SMA"] - df["std"] * DEV
         df["Upper"] = df["SMA"] + df["std"] * DEV
         
         # df["Lower_2"] = df["SMA"] - std * 2
         # df["Upper_2"] = df["SMA"] + std * 2
 
-        period = 56
+        period = 60
         df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x, period))
         df["rsi_prev"] = df.rsi.shift()
         
-        period = 28
+        period = 30
         df["rsi_max"] = df['rsi'].rolling(period).max()
         df["rsi_min"] = df['rsi'].rolling(period).min()
         
@@ -102,15 +104,18 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     def set_strategy_indicators(self, row: pd.Series=None, time = None):
 
+        trading_time = time
         if row is None:
             row = self.data.iloc[-1]
-            time = self.data.index[-1]
+            trading_time = self.data.index[-1]
         
         logger.debug(f"Setting strategy indicators for time: {time}")
 
         self.sma = row ['SMA']
         self.bb_low = row ['Lower']
         self.bb_high =  row ['Upper']
+        self.std = row ['std']
+        self.std_mean = row ['std_mean']
 
         self.less_bb_low = row ['less_bb_low']
         self.greater_bb_high = row ['greater_bb_high']
@@ -144,10 +149,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         if self.rsi == self.rsi_min:
             self.rsi_min_price = self.price
-            self.rsi_min_time = time
+            self.rsi_min_time = trading_time
+            self.rsi_min_sma = self.sma
         elif self.rsi == self.rsi_max:
             self.rsi_max_price = self.price
-            self.rsi_max_time = time
+            self.rsi_max_time = trading_time
+            self.rsi_max_sma = self.sma
   
     def print_indicators(self):
 
@@ -212,12 +219,12 @@ class TradingStrategyCalc(TradingStrategyBase):
      
     def reverse_rsi_up(self, trading_time=None):
 
-        return round(self.rsi, 0) > round(self.rsi_min, 0)
+        return round((self.rsi + self.rsi_prev)/2, 0) > round(self.rsi_min, 0)
         #   and trading_time - self.rsi_min_date < timedelta(minutes=10)
 
     def reverse_rsi_down(self, trading_time=None):
 
-        return round(self.rsi, 0) < round(self.rsi_max, 0)
+        return round((self.rsi + self.rsi_prev)/2, 0) < round(self.rsi_max, 0)
         #   and trading_time - self.rsi_max_date < timedelta(minutes=10)
         
 

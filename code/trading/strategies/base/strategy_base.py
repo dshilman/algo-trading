@@ -54,10 +54,13 @@ class TradingStrategyBase():
         self.data: pd.DataFrame = None
   
         self.rsi_min_price = None
-        self.rsi_max_price = None
+        self.rsi_min_price = None
+        self.rsi_min_sma = None
 
-        self.rsi_min_time = None
         self.rsi_max_time = None
+        self.rsi_max_time = None
+        self.rsi_max_sma = None
+
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
         
