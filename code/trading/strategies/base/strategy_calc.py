@@ -74,22 +74,22 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
 
 
-        period = 60
-        df["less_sma"] = df["SMA"] - df[instrument]
-        df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x < 0 else -1 if x > 0 else 0)
+        # period = 60
+        # df["less_sma"] = df["SMA"] - df[instrument]
+        # df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x < 0 else -1 if x > 0 else 0)
 
-        df["greater_sma"] = df["SMA"] - df[instrument]
-        df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+        # df["greater_sma"] = df["SMA"] - df[instrument]
+        # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
 
-        df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
+        # df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
 
-        df["less_bb_low"] = df["Lower"] - df[instrument]
-        df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
-        df["less_bb_low"] = df["less_bb_low"].rolling(period).sum()
+        # df["less_bb_low"] = df["Lower"] - df[instrument]
+        # df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
+        # df["less_bb_low"] = df["less_bb_low"].rolling(period).sum()
 
-        df["greater_bb_high"] = df["Upper"] - df[instrument]
-        df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
-        df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
+        # df["greater_bb_high"] = df["Upper"] - df[instrument]
+        # df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
+        # df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
         
 
         # df.drop(columns= ["Lower_2", "Upper_2"], inplace=True)
@@ -117,10 +117,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.std = row ['std']
         self.std_mean = row ['std_mean']
 
-        self.less_bb_low = row ['less_bb_low']
-        self.greater_bb_high = row ['greater_bb_high']
+        # self.less_bb_low = row ['less_bb_low']
+        # self.greater_bb_high = row ['greater_bb_high']
 
-        self.sma_crossover = row ['sma_crossover']
+        # self.sma_crossover = row ['sma_crossover']
 
         # self.less_sma = row ['less_sma']
         # self.greater_sma = row ['greater_sma']
