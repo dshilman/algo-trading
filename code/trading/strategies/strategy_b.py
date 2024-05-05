@@ -7,6 +7,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.strategies.base.strategy_exec import TradingStrategyExec
+from trading.dom.trade import Trade_Action
 
 logger = logging.getLogger()
 
@@ -24,16 +25,24 @@ class TradingStrategy(TradingStrategyExec):
 
         return round(self.rsi, 0) > round(self.rsi_prev, 0) == round(self.rsi_min, 0)
         
-    def reverse_rsi_down_open(self):
+    def check_if_need_open_trade(self, trading_time):
 
-        return round(self.rsi, 0) < round(self.rsi_prev, 0) == round(self.rsi_max, 0)
-        
 
-    def reverse_rsi_up_close(self):
+        if not self.is_trading_time(trading_time) or self.stop_trading:
+            return
 
-        return self.reverse_rsi_up_open()
-        
-    def reverse_rsi_down_close(self):
+        if self.long_trading and self.bid <= self.bb_low and self.rsi_drop() and 35 >= round(self.rsi, 0) \
+                    and self.std > self.std_mean * 1.25 \
+                        and self.reverse_rsi_up(trading_time):
+                            if not self.backtest:
+                                logger.info(
+                                    f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
+                            return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        return self.reverse_rsi_down_open()
-   
+        elif self.short_trading and self.ask >= self.bb_high and self.rsi_spike() and 65 <= round(self.rsi, 0) \
+                    and self.std > self.std_mean * 1.25 \
+                        and self.reverse_rsi_down(trading_time):
+                            if not self.backtest:
+                                logger.info(
+                                    f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
+                            return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False) 
