@@ -50,6 +50,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["SMA"] = df[instrument].rolling(SMA).mean()
         df["std"] = df[instrument].rolling(SMA).std()
         df["std_mean"] = df['std'].rolling(SMA).mean()
+        df["cv"] = df["std"] / df["SMA"]
 
         df["Lower"] = df["SMA"] - df["std"] * DEV
         df["Upper"] = df["SMA"] + df["std"] * DEV
@@ -116,6 +117,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_high =  row ['Upper']
         self.std = row ['std']
         self.std_mean = row ['std_mean']
+        self.cv = row ['cv']
 
         # self.less_bb_low = row ['less_bb_low']
         # self.greater_bb_high = row ['greater_bb_high']
