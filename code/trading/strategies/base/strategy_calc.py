@@ -11,8 +11,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.strategies.base.strategy_base import TradingStrategyBase
-from trading.utils.tech_indicators import (calculate_momentum, calculate_rsi,
-                                           calculate_slope)
+from trading.utils.tech_indicators import (count_sma_crossover, calculate_rsi)
 
 logger = logging.getLogger()
 
@@ -25,7 +24,8 @@ Go Short (sell) when the bid price is above the high Bollinger Band and close tr
 class TradingStrategyCalc(TradingStrategyBase):
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
-    
+        
+        self.print_indicators_count = 0 
 
     def add_tickers(self, ticker_df: pd.DataFrame):
 
@@ -33,9 +33,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df = self.data.copy()
         df = pd.concat([df, ticker_df])
-        df = df.tail(self.sma_value * 3)
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-        self.data = df.copy()
+        self.data = df.tail(self.SMA * 6)
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
      
@@ -45,130 +44,159 @@ class TradingStrategyCalc(TradingStrategyBase):
         df: pd.DataFrame = self.data.copy()
 
         instrument = self.instrument
-        SMA = self.sma_value
-        dev = self.dev
+        SMA = self.SMA
+        DEV = self.DEV
 
         df["SMA"] = df[instrument].rolling(SMA).mean()
+        df["std"] = df[instrument].rolling(SMA).std()
+        df["std_mean"] = df['std'].rolling(SMA).mean()
+        df["cv"] = df["std"] / df["SMA"]
 
-        std = df[instrument].rolling(SMA).std() * dev
+        df["Lower"] = df["SMA"] - df["std"] * DEV
+        df["Upper"] = df["SMA"] + df["std"] * DEV
         
-        df["Lower"] = df["SMA"] - std
-        df["Upper"] = df["SMA"] + std
+        # df["Lower_2"] = df["SMA"] - std * 2
+        # df["Upper_2"] = df["SMA"] + std * 2
 
-        period = 14
-        rsi_periods = int(SMA/2)
-        df["RSI"] = df[instrument].rolling(rsi_periods).apply(lambda x: calculate_rsi(x.values, rsi_periods))
-        df["rsi_momentum"] = df.RSI.rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))
-        df["rsi_momentum_prev"] = df ["rsi_momentum"].shift(1)
-        df["rsi_max"] = df ['RSI'].rolling(period).max()
-        df["rsi_min"] = df ['RSI'].rolling(period).min()
-        # df["rsi_mean"] = df ['RSI'].rolling(period).mean()
-        # df["rsi_mean_prev"] = df ['RSI'].shift(period)
+        period = 60
+        df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x, period))
+        df["rsi_prev"] = df.rsi.shift()
         
-        df["price_max"] = df [instrument].rolling(period).max()
-        df["price_min"] = df [instrument].rolling(period).min()
+        period = 30
+        df["rsi_max"] = df['rsi'].rolling(period).max()
+        df["rsi_min"] = df['rsi'].rolling(period).min()
+        
+        # df["rsi_slope"] = df["rsi"].rolling(period).apply(lambda x: calculate_slope(x))
 
-        df["momentum"] = df[instrument].rolling(period).apply(lambda x: calculate_momentum(x.iloc[0], x.iloc[-1]))        
-        df["momentum_prev"] = df["momentum"].shift(1)
-    
-        logger.debug("\n" + df.iloc[-period:].to_string(header=True))
+        # df["price_max"] = df[instrument].rolling(period).max()
+        # df["price_min"] = df[instrument].rolling(period).min()
+        # df["price_slope"] = df[instrument].rolling(period).apply(lambda x: calculate_slope(x))
+        # df["sma_price_max"] = df[instrument].rolling(SMA * 4).max()
+        # df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
 
-        self.data = df.copy()
 
-    def set_strategy_indicators(self, row: pd.Series=None, print=False):
+        # period = 60
+        # df["less_sma"] = df["SMA"] - df[instrument]
+        # df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x < 0 else -1 if x > 0 else 0)
 
+        # df["greater_sma"] = df["SMA"] - df[instrument]
+        # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+
+        # df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
+
+        # df["less_bb_low"] = df["Lower"] - df[instrument]
+        # df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
+        # df["less_bb_low"] = df["less_bb_low"].rolling(period).sum()
+
+        # df["greater_bb_high"] = df["Upper"] - df[instrument]
+        # df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
+        # df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
+        
+
+        # df.drop(columns= ["Lower_2", "Upper_2"], inplace=True)
+
+        if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
+            logger.info("\n" + df.tail(10).to_string(header=True))
+            
+        self.print_indicators_count = self.print_indicators_count + 1
+
+        self.data = df
+
+
+    def set_strategy_indicators(self, row: pd.Series=None, time = None):
+
+        trading_time = time
         if row is None:
             row = self.data.iloc[-1]
+            trading_time = self.data.index[-1]
+        
+        logger.debug(f"Setting strategy indicators for time: {time}")
 
         self.sma = row ['SMA']
+        self.bb_low = row ['Lower']
+        self.bb_high =  row ['Upper']
+        self.std = row ['std']
+        self.std_mean = row ['std_mean']
+        self.cv = row ['cv']
 
-        self.bb_lower = row ['Lower']
-        self.bb_upper =  row ['Upper']
-                
-        self.rsi = round(row ['RSI'], 4)
+        # self.less_bb_low = row ['less_bb_low']
+        # self.greater_bb_high = row ['greater_bb_high']
+
+        # self.sma_crossover = row ['sma_crossover']
+
+        # self.less_sma = row ['less_sma']
+        # self.greater_sma = row ['greater_sma']
+
+        self.rsi = round(row ['rsi'], 4)
+        self.rsi_prev = round(row ['rsi_prev'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
-        # self.rsi_mean = round(row ['rsi_mean'], 4)
-        # self.rsi_mean_prev = round(row ['rsi_mean_prev'], 4)
-                    
-        self.rsi_momentum = round(row ["rsi_momentum"], 6)
-        self.rsi_momentum_prev = round(row ["rsi_momentum_prev"], 6)
+        # self.rsi_slope = round(row ['rsi_slope'], 4)
         
-        self.price = row [self.instrument]
-        self.price_max = row ['price_max']
-        self.price_min = row ['price_min']
-
         self.ask = row ["ask"]
         self.bid = row ["bid"]
+        self.price = row [self.instrument]
+        # self.price_max = row ["price_max"]
+        # self.price_min = row ["price_min"]
+        # self.price_slope = round(row ["price_slope"], 4)
 
-        self.price_momentum = row ['momentum']
-        self.price_momentum_prev = row ['momentum_prev']
 
-        self.price_target = round(self.get_target_price(), 6)
+        
+        # self.sma_price_max = round(row ["sma_price_max"], 4)
+        # self.sma_price_min = round(row ["sma_price_min"], 4)
 
-        if print:
-            self.print_indicators()
-
+        self.is_trading = True
+        if "status" in row:
+            self.is_trading = row ["status"] == "tradeable"
+        
+        if self.rsi == self.rsi_min:
+            self.rsi_min_price = self.price
+            self.rsi_min_time = trading_time
+            self.rsi_min_sma = self.sma
+        elif self.rsi == self.rsi_max:
+            self.rsi_max_price = self.price
+            self.rsi_max_time = trading_time
+            self.rsi_max_sma = self.sma
+  
     def print_indicators(self):
 
-        indicators = [[self.ask, self.bid, self.sma, self.bb_lower, self.bb_upper, self.rsi, self.rsi_min, self.rsi_max, '{0:f}'.format(self.rsi_momentum), '{0:f}'.format(self.price), '{0:f}'.format(self.price_min), '{0:f}'.format(self.price_max), '{0:f}'.format(self.price_momentum), '{0:f}'.format(self.price_target)]]
-        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI MIN", "RSI MAX", "RSI MOMENTUM", "PRICE", "PRICE MIN", "PRICE MAX", "PRICE MOMENTUM", "TARGET PRICE"]
+        indicators = [[self.ask, self.bid, self.sma, self.bb_low, self.bb_high, self.rsi, self.rsi_prev, self.rsi_min, self.rsi_max]]
+        columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI PREV", "RSI MIN", "RSI MAX"]
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
-
-
-    def reverse_rsi_momentum(self):
-        # do not change this logic
-        if self.rsi_momentum > 0:
-            return  self.rsi < self.rsi_max
-        elif self.rsi_momentum < 0:
-            return self.rsi_min < self.rsi
-        elif self.rsi_momentum == 0:
-            return True
-
     
-    def reverse_rsi(self):
+   
+    def get_open_trade_price(self):
 
-        return round(self.rsi_min, self.rsi_round) < round(self.rsi, self.rsi_round) < round(self.rsi_max, self.rsi_round)
-
-
-    def get_target_price(self):
-
-        target = None
         have_units = self.trading_session.have_units
 
         if have_units != 0 and len (self.trading_session.trades) > 0:
-            transaction_price =  self.trading_session.trades[-1][3]
-            # traded_units = self.trading_session.trades[-1][2]
+            open_trade_price =  self.trading_session.trades[-1][5]
 
-            # target = round(transaction_price + (1 if have_units > 0 else -1) * transaction_price * self.tp_perc, 4)
+            return open_trade_price
 
-            if have_units > 0: # long position
-                target = min(self.sma,  transaction_price + self.target * (self.ask - self.bid))
-       
-            elif have_units < 0: # short position
-                target = max(self.sma,  transaction_price - self.target * (self.ask - self.bid))
-        else:
-            target = self.sma
+     
+        return None
 
-        return target
-
-    def risk_time(self, date_time) -> bool:
+    def is_trading_time(self, date_time) -> bool:
 
         logger.debug(f"Date time: {date_time}")
+
+        day = date_time.weekday()
+        hour = date_time.hour
+
+        if day == 4 and hour >= 20:
+            return False
+
 
         pause_from_dt = datetime.combine(date_time, datetime.strptime(self.pause_start, '%H:%M:%S').time())
         pause_to_dt = datetime.combine(date_time, datetime.strptime(self.pause_end, '%H:%M:%S').time())
 
 
         if pause_from_dt < date_time < pause_to_dt:
-            return True
+            return False
+        
 
-        return False
-
-    def too_soon(self, trading_time):
-
-        last_tran_time = self.get_last_trade_time()
-        return last_tran_time is None or (last_tran_time + timedelta(minutes=30)) > trading_time
+        return True
 
 
     def get_last_trade_time(self):
@@ -181,18 +209,36 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         return date_time
 
-    # def rsi_spike(self, trading_time):
+    def get_trade_rsi(self):
 
-    #     return (self.rsi_max - self.rsi_min > 5) and (self.rsi_max < self.high_rsi)
+        rsi = None
+        
+        if len(self.trading_session.trades) > 0:
+            rsi = self.trading_session.trades[-1][6]
+        
+        return rsi
 
-    # def rsi_drop(self, trading_time):
+     
+    def reverse_rsi_up(self, trading_time=None):
 
-    #     return (self.rsi_max - self.rsi_min > 5) and (self.rsi_min > self.low_rsi)
+        return round((self.rsi + self.rsi_prev)/2, 0) > round(self.rsi_min, 0)
+        #   and trading_time - self.rsi_min_date < timedelta(minutes=10)
+
+    def reverse_rsi_down(self, trading_time=None):
+
+        return round((self.rsi + self.rsi_prev)/2, 0) < round(self.rsi_max, 0)
+        #   and trading_time - self.rsi_max_date < timedelta(minutes=10)
+        
+
+    def rsi_spike(self):
+
+        return self.rsi_max - self.rsi_min > self.rsi_change \
+                and self.rsi_min_time is not None and self.rsi_max_time is not None \
+                    and self.rsi_min_time < self.rsi_max_time
+
     
-    def rsi_spike(self, trading_time):
+    def rsi_drop(self):
 
-        return (self.rsi_max - self.rsi_min > self.rsi_spike_int) and (self.rsi_max < self.high_rsi if not self.risk_time(trading_time) else self.rsi_max < self.high_rsi - 5)
-
-    def rsi_drop(self, trading_time):
-
-        return (self.rsi_max - self.rsi_min > self.rsi_spike_int) and (self.rsi_min > self.low_rsi if not self.risk_time(trading_time) else self.rsi_min > self.low_rsi + 5)
+        return self.rsi_max - self.rsi_min > self.rsi_change \
+                and self.rsi_min_time is not None and self.rsi_max_time is not None \
+                    and self.rsi_min_time > self.rsi_max_time

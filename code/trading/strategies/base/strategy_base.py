@@ -2,9 +2,7 @@ import configparser
 import json
 import logging
 import sys
-from datetime import datetime, time, timedelta
 from pathlib import Path
-from random import randint
 
 import pandas as pd
 from tabulate import tabulate
@@ -17,8 +15,6 @@ from trading.api.oanda_api import OandaApi
 from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
 from trading.dom.trading_session import Trading_Session
-from trading.utils.tech_indicators import (calculate_momentum, calculate_rsi,
-                                     calculate_slope)
 
 logger = logging.getLogger()
 
@@ -32,59 +28,47 @@ class TradingStrategyBase():
     def __init__(self, instrument, pair_file, api = None, unit_test = False):
         super().__init__()
 
-        self.trading_session = Trading_Session()
+        self.trading_session = Trading_Session(instrument)
 
         self.instrument = instrument
         self.api:OandaApi = api
         self.unit_test = unit_test
+        self.backtest = False
+
+
         config = configparser.ConfigParser()  
         config.read(pair_file)
-        self.sma_value = int(config.get(instrument, 'SMA'))
-        self.dev = float(config.get(instrument, 'dev'))
-        self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
-        self.sl_perc = float(config.get(self.instrument, 'sl_perc'))
-        self.tp_perc = float(config.get(self.instrument, 'tp_perc'))
-        self.low_rsi = float(config.get(self.instrument, 'low_rsi'))
-        self.high_rsi = float(config.get(self.instrument, 'high_rsi'))
+        self.SMA = config.getint(instrument, 'SMA')
+        self.DEV = config.getfloat(instrument, 'dev')
+        self.cv_value = config.getfloat(instrument, 'cv_value')
+        self.std_multiplier = config.getfloat(instrument, 'std_multiplier')
+        # self.rsi_high = float(config.get(instrument, 'rsi_high'))
+        # self.rsi_low = float(config.get(instrument, 'rsi_low'))
+        self.rsi_change = config.getint(instrument, 'rsi_change')
+        self.units_to_trade = config.getint(instrument, 'units_to_trade')
+        self.sl_perc = config.getfloat(self.instrument, 'sl_perc')
+        self.tp_perc = config.getfloat(self.instrument, 'tp_perc')
         self.pause_start = config.get(self.instrument, 'pause_start')
         self.pause_end = config.get(self.instrument, 'pause_end')
-        self.target = float(config.get(self.instrument, 'target'))
-        self.rsi_round = int(config.get(instrument, 'rsi_round'))
-        self.rsi_spike_int = int(config.get(instrument, 'rsi_spike'))
-
-        
-
+        self.short_trading = config.getboolean(self.instrument, 'short_trading')
+        self.long_trading = config.getboolean(self.instrument, 'long_trading')
+        self.keep_trade_open_time = config.getint(instrument, 'keep_trade_open_time')
         self.data: pd.DataFrame = None
-        # Caculated attributes
-        self.bb_upper =  None
-        self.bb_lower =  None
-        self.sma = None
+  
+        self.rsi_min_price = None
+        self.rsi_min_price = None
+        self.rsi_min_sma = None
 
-        self.price = None
-        self.price_max = None
-        self.price_min = None
-        self.price_momentum = None
-        self.price_momentum_prev = None
-        self.price_target = None
-        
-        self.rsi = None
-        self.rsi_min = None
-        self.rsi_max = None
-        self.rsi_mean = None
-        self.rsi_mean_prev = None
-        self.rsi_momentum = None
-        self.rsi_momentum_prev = None
-   
+        self.rsi_max_time = None
+        self.rsi_max_time = None
+        self.rsi_max_sma = None
+
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
         
         tp_price = None
         sl_price = None
 
-        # if trade_action.open_trade:
-        if trade_action.spread / trade_action.price >= sl_perc:
-            logger.warning(f"Current spread: {trade_action.spread} is too large for price: {trade_action.price} and sl_perc: {sl_perc}")
-            return None
         if trade_action.open_trade:
             
             """
@@ -134,13 +118,18 @@ class TradingStrategyBase():
         logger.info("")
         logger.info("\n" + self.data[-8:].to_string(header=True))
         logger.info("")
-        self.print_indicators()
-        logger.info("")
-        logger.info(json.dumps(order, indent = 2))
+        # # self.print_indicators()
+        # logger.info("")
+        logger.info(json.dumps(order, indent=2))
         logger.info("\n" + 100 * "-" + "\n")
 
+    def terminate(self):
+
+        self.trading_session.print_trades()
+
+
     def __str__(self):
-        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}, rsi high: {self.high_rsi}, rsi low: {self.low_rsi}, target: {self.target}"
+        return f"Strategy -- SMA: {self.SMA}, STD: {self.DEV}, stop loss: {self.sl_perc}"
 
     def __repr__(self):
-        return f"Strategy -- SMA: {self.sma_value}, STD: {self.dev}, stop loss: {self.sl_perc}, rsi high: {self.high_rsi}, rsi low: {self.low_rsi}, target: {self.target}"
+        return f"Strategy -- SMA: {self.SMA}, STD: {self.DEV}, stop loss: {self.sl_perc}"

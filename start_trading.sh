@@ -33,13 +33,13 @@ else
     ~/algo-trading/trader_oanda_EUR_GBP.sh &
 fi
 
-# USD_CAD
-if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_USD_CAD.sh' >/dev/null
+# GBP_USD
+if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_GBP_USD.sh' >/dev/null
 then
-    echo $(date) " USD_CAD Trading bot is already running." 
-    echo $(date) " USD_CAD Trading bot is already running." >>~/algo-trading/logs/trading/time_check.txt
+    echo $(date) " GBP_USD Trading bot is already running." 
+    echo $(date) " GBP_USD Trading bot is already running." >>~/algo-trading/logs/trading/time_check.txt
 else
-    echo $(date) " USD_CAD Trading bot is not running. Starting it now..." 
-    echo $(date) " USD_CAD Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
-    ~/algo-trading/trader_oanda_USD_CAD.sh &
+    echo $(date) " GBP_USD Trading bot is not running. Starting it now..." 
+    echo $(date) " GBP_USD Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
+    ~/algo-trading/trader_oanda_GBP_USD.sh &
 fi

@@ -7,6 +7,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.strategies.base.strategy_exec import TradingStrategyExec
+from trading.dom.trade import Trade_Action
 
 logger = logging.getLogger()
 
@@ -21,3 +22,6 @@ class TradingStrategy(TradingStrategyExec):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
 
 
+
+
+   
