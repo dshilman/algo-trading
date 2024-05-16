@@ -56,7 +56,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         if have_units != 0:  # if already have positions
 
             logger.debug(f"Have {have_units} positions, checking for stop loss")
-            trade, have_units = self.check_for_sl(trading_time)
+            have_units, trade = self.check_for_sl(trading_time)
 
             if trade is None:
                 logger.debug(f"Have {have_units} positions, checking if need to close a trade")
@@ -80,7 +80,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
          #and (self.std > self.std_mean * self.std_multiplier)#
         if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and 35 >= round(self.rsi, 0) \
-                    and (self.std_mean > self.cv_value) \
+                    and (self.std > self.std_mean * self.std_multiplier) \
                         and self.reverse_rsi_up(trading_time):
                             if not self.backtest:
                                 logger.info(
@@ -88,7 +88,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
         elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and 65 <= round(self.rsi, 0) \
-                    and (self.std_mean > self.cv_value) \
+                    and (self.std > self.std_mean * self.std_multiplier) \
                         and self.reverse_rsi_down(trading_time):
                             if not self.backtest:
                                 logger.info(
@@ -125,33 +125,35 @@ class TradingStrategyExec(TradingStrategyCalc):
         have_units = self.trading_session.have_units
 
         if len(self.trading_session.trades) == 0:
-            return None, have_units
+            return have_units, None
 
         open_trade_price = self.get_open_trade_price()
 
         if have_units < 0:
             current_loss_perc = round((self.ask - open_trade_price)/open_trade_price, 4)
             if current_loss_perc >= self.sl_perc:
-                have_units = self.api.get_position(self.instrument)
-                self.trading_session.have_units = have_units
-                if have_units == 0:
-                    return None, have_units
-                
                 if not self.backtest:
+                    have_units = self.api.get_position(self.instrument)
+                    self.trading_session.have_units = have_units
+                    if have_units == 0:
+                        return have_units, None
+ 
                     logger.info(
                         f"Close short position, - Stop Loss Buy, short price {open_trade_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
-                return Trade_Action(self.instrument, -have_units, self.ask, False, True), have_units
+                return have_units, Trade_Action(self.instrument, -have_units, self.ask, False, True)
 
         elif have_units > 0:
             current_loss_perc = round((open_trade_price - self.bid)/open_trade_price, 4)
             if current_loss_perc >= self.sl_perc:
-                have_units = self.api.get_position(self.instrument)
-                self.trading_session.have_units = have_units
-                if have_units == 0:
-                    return None, have_units
-                
                 if not self.backtest:
+                    have_units = self.api.get_position(self.instrument)
+                    self.trading_session.have_units = have_units
+                    if have_units == 0:
+                        return have_units, None
+                
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
-                return Trade_Action(self.instrument, -have_units, self.bid, False, True), have_units
+                return have_units, Trade_Action(self.instrument, -have_units, self.bid, False, True)
         
+        return have_units, None
+    

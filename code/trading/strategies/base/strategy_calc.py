@@ -75,14 +75,14 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["sma_price_min"] = df[instrument].rolling(SMA * 4).min()
 
 
-        # period = 60
-        # df["less_sma"] = df["SMA"] - df[instrument]
-        # df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x < 0 else -1 if x > 0 else 0)
+        period = 120
+        df["less_sma"] = df["SMA"] - df[instrument]
+        df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x < 0 else -1 if x > 0 else 0)
 
-        # df["greater_sma"] = df["SMA"] - df[instrument]
-        # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+        df["greater_sma"] = df["SMA"] - df[instrument]
+        df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
 
-        # df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
+        df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
 
         # df["less_bb_low"] = df["Lower"] - df[instrument]
         # df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
@@ -122,7 +122,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.less_bb_low = row ['less_bb_low']
         # self.greater_bb_high = row ['greater_bb_high']
 
-        # self.sma_crossover = row ['sma_crossover']
+        self.sma_crossover = row ['sma_crossover']
 
         # self.less_sma = row ['less_sma']
         # self.greater_sma = row ['greater_sma']
@@ -221,12 +221,12 @@ class TradingStrategyCalc(TradingStrategyBase):
      
     def reverse_rsi_up(self, trading_time=None):
 
-        return round((self.rsi + self.rsi_prev)/2, 0) > round(self.rsi_min, 0)
+        return self.rsi != self.rsi_min and self.rsi_prev != self.rsi_min and round((self.rsi + self.rsi_prev)/2, 0) > round(self.rsi_min, 0)
         #   and trading_time - self.rsi_min_date < timedelta(minutes=10)
 
     def reverse_rsi_down(self, trading_time=None):
 
-        return round((self.rsi + self.rsi_prev)/2, 0) < round(self.rsi_max, 0)
+        return self.rsi != self.rsi_max and self.rsi_prev != self.rsi_max and round((self.rsi + self.rsi_prev)/2, 0) < round(self.rsi_max, 0)
         #   and trading_time - self.rsi_max_date < timedelta(minutes=10)
         
 
