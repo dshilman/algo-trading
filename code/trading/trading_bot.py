@@ -58,7 +58,7 @@ class Trader():
         self.strategy: TradingStrategyExec  = class_(instrument=self.instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
         logger.info(f"Trading Strategy: {self.strategy}")
 
-        today = datetime.utcnow().date()
+        today = datetime.now(tz=timezone.utc).date()
 
         self.from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
         self.to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
@@ -80,7 +80,7 @@ class Trader():
 
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-        log_file = os.path.join("../../logs/trading", f"{self.instrument}_{datetime.utcnow().strftime('%m-%d')}_app.log")
+        log_file = os.path.join("../../logs/trading", f"{self.instrument}_{datetime.now(tz=timezone.utc).strftime('%m-%d')}_app.log")
         log_handler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         log_handler.setFormatter(formatter)
         logger.addHandler(log_handler)
@@ -142,7 +142,7 @@ class Trader():
 
         while not self.terminate:
 
-            now = datetime.utcnow()
+            now = datetime.now(tz=timezone.utc)
             logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
             
             day = now.weekday()

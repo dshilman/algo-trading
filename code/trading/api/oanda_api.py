@@ -46,7 +46,7 @@ class OandaApi:
 
     def get_price_candles(self, pair_name, days):
 
-        now = datetime.utcnow()
+        now = datetime.now(tz=timezone.utc)
         now = now - timedelta(microseconds=now.microsecond)
         past = now - timedelta(days=days)
 

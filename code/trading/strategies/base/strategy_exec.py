@@ -4,7 +4,7 @@ from trading.dom.trade import Trade_Action
 import json
 import logging
 import sys
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from random import randint
 
@@ -32,7 +32,7 @@ class TradingStrategyExec(TradingStrategyCalc):
             logger.debug("Trading is not active")
             return
 
-        trading_time = datetime.utcnow()
+        trading_time = datetime.now(tz=timezone.utc)
         trade_action = self.determine_trade_action(trading_time)
 
         if trade_action is not None:

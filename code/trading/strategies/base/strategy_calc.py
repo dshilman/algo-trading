@@ -110,7 +110,7 @@ class TradingStrategyCalc(TradingStrategyBase):
             row = self.data.iloc[-1]
             trading_time = self.data.index[-1]
         
-        logger.debug(f"Setting strategy indicators for time: {time}")
+        logger.debug("Setting strategy indicators")
 
         self.sma = row ['SMA']
         self.bb_low = row ['Lower']
