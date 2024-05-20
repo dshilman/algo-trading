@@ -35,8 +35,8 @@ class Trader():
         config.read(pair_file)
 
         self.days = int(config.get(self.instrument, 'days'))
-        self.start = config.get(self.instrument, 'start')
-        self.end = config.get(self.instrument, 'end')
+        # self.start = config.get(self.instrument, 'start')
+        # self.end = config.get(self.instrument, 'end')
 
         self.tick_data = []
         self.stop_loss_count = 0
@@ -60,10 +60,10 @@ class Trader():
 
         today = datetime.now(tz=timezone.utc).date()
 
-        self.from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
-        self.to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
-        if self.to_dt < self.from_dt:
-            self.to_dt = self.to_dt + timedelta(days=1)
+        # self.from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
+        # self.to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
+        # if self.to_dt < self.from_dt:
+        #     self.to_dt = self.to_dt + timedelta(days=1)
 
         self.terminate = False
 
@@ -139,17 +139,17 @@ class Trader():
 
 
     def check_trading_time(self, refresh = 60):
+        pass
+        # while not self.terminate:
 
-        while not self.terminate:
-
-            now = datetime.now(tz=timezone.utc)
-            logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
+        #     now = datetime.now(tz=timezone.utc)
+        #     logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
             
-            day = now.weekday()
-            hour = now.hour
-            if day == 4 and hour >= 19 and not self.strategy.stop_trading:
-                logger.info("Friday after Trading Time - Terminating Trading")
-                self.strategy.stop_trading = True
+        #     day = now.weekday()
+        #     hour = now.hour
+        #     if day == 4 and hour >= 19 and not self.strategy.stop_trading:
+        #         logger.info("Friday after Trading Time - Terminating Trading")
+        #         self.strategy.stop_trading = True
             
 
             # if self.from_dt - timedelta(minutes=90) <= now <= self.to_dt:
@@ -161,7 +161,7 @@ class Trader():
             #     self.stop_streaming()
             #     break
 
-            time.sleep(refresh)
+            # time.sleep(refresh)
 
 
     def refresh_strategy(self, refresh = 30):
