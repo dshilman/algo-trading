@@ -1,6 +1,6 @@
 import logging
 import sys
-from datetime import datetime, time, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -188,8 +188,8 @@ class TradingStrategyCalc(TradingStrategyBase):
             return False
 
 
-        pause_from_dt = datetime.combine(date_time, datetime.strptime(self.pause_start, '%H:%M:%S').time())
-        pause_to_dt = datetime.combine(date_time, datetime.strptime(self.pause_end, '%H:%M:%S').time())
+        pause_from_dt = datetime.combine(date_time, datetime.strptime(self.pause_start, '%H:%M:%S').time(), tz=timezone.utc)
+        pause_to_dt = datetime.combine(date_time, datetime.strptime(self.pause_end, '%H:%M:%S').time(), tz=timezone.utc)
 
 
         if pause_from_dt < date_time < pause_to_dt:
