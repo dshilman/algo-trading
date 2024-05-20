@@ -28,8 +28,6 @@ class TradingBacktester():
         config = configparser.ConfigParser()  
         config.read(pairs_file)
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
-        self.start = config.get(instrument, 'start')
-        self.end = config.get(instrument, 'end')
 
         logger.setLevel(logging.INFO)
         
@@ -96,12 +94,6 @@ class TradingBacktester():
             logger.info(f"Starting trading for {self.strategy.instrument}...")
             for index, row in self.strategy.data.iterrows():
 
-                from_dt = datetime.combine(index, datetime.strptime(self.start, '%H:%M:%S').time())
-                to_dt = datetime.combine(index, datetime.strptime(self.end, '%H:%M:%S').time())
-
-                if not from_dt <= index <= to_dt and self.strategy.trading_session.have_units == 0:
-                    continue
-                
                 self.strategy.set_strategy_indicators(row=row, time=index)
                 
                 if pause_trading == None or index > pause_trading:

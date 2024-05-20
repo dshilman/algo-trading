@@ -34,7 +34,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df = self.data.copy()
         df = pd.concat([df, ticker_df])
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-        self.data = df.tail(self.SMA * 6)
+        self.data = df.tail(self.SMA * 2)
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
      
