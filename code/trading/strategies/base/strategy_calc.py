@@ -50,7 +50,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["SMA"] = df[instrument].rolling(SMA).mean()
         df["std"] = df[instrument].rolling(SMA).std()
         df["std_mean"] = df['std'].rolling(SMA).mean()
-        df["cv"] = df["std"] / df["SMA"]
 
         df["Lower"] = df["SMA"] - df["std"] * DEV
         df["Upper"] = df["SMA"] + df["std"] * DEV
@@ -117,7 +116,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_high =  row ['Upper']
         self.std = row ['std']
         self.std_mean = row ['std_mean']
-        self.cv = row ['cv']
 
         # self.less_bb_low = row ['less_bb_low']
         # self.greater_bb_high = row ['greater_bb_high']
@@ -140,8 +138,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.price_min = row ["price_min"]
         # self.price_slope = round(row ["price_slope"], 4)
 
-
-        
         # self.sma_price_max = round(row ["sma_price_max"], 4)
         # self.sma_price_min = round(row ["sma_price_min"], 4)
 
@@ -229,17 +225,22 @@ class TradingStrategyCalc(TradingStrategyBase):
         return self.rsi != self.rsi_max and self.rsi_prev != self.rsi_max and round((self.rsi + self.rsi_prev) / 2, 0) < round(self.rsi_max, 0)
         # return self.rsi < self.rsi_prev < self.rsi_max
 
-        
+    
+    def rsi_jump(self, jump = None):
 
-    def rsi_spike(self):
+        if jump is None:
+            jump = self.rsi_change
 
-        return self.rsi_max - self.rsi_min > self.rsi_change \
+        return self.rsi_max - self.rsi_min > jump \
                 and self.rsi_min_time is not None and self.rsi_max_time is not None \
                     and self.rsi_min_time < self.rsi_max_time
 
     
-    def rsi_drop(self):
+    def rsi_drop(self, drop = None):
 
-        return self.rsi_max - self.rsi_min > self.rsi_change \
+        if drop is None:
+            drop = self.rsi_change
+
+        return self.rsi_max - self.rsi_min > drop \
                 and self.rsi_min_time is not None and self.rsi_max_time is not None \
                     and self.rsi_min_time > self.rsi_max_time
