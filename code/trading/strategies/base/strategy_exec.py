@@ -79,7 +79,7 @@ class TradingStrategyExec(TradingStrategyCalc):
             return
 
         if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and 35 >= round(self.rsi, 0) \
-                    and self.std > self.std_mean * self.std_multiplier \
+                    and self.std <= self.std_mean * self.std_multiplier \
                         and self.reverse_rsi_up():
                             if not self.backtest:
                                 logger.info(
@@ -87,7 +87,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
         elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and 65 <= round(self.rsi, 0) \
-                    and self.std > self.std_mean * self.std_multiplier \
+                    and self.std <= self.std_mean * self.std_multiplier \
                         and self.reverse_rsi_down():
                             if not self.backtest:
                                 logger.info(

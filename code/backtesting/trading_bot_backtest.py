@@ -51,6 +51,8 @@ class TradingBacktester():
             raise Exception(f"Strategy not found for {instrument}")
 
         logger.info(f"Running:{class_} strategy")
+        logger.info(f"Strategy Configuration \n + {config.items(instrument)}")
+
         self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
         self.strategy.backtest = True
     
