@@ -48,7 +48,7 @@ class OandaApi:
 
         now = datetime.now(tz=timezone.utc)
         now = now - timedelta(microseconds=now.microsecond)
-        past = now - timedelta(days=days, minutes=-1)
+        past = now - timedelta(days=days)
 
         df = pd.DataFrame()
 
