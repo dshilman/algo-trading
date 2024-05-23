@@ -24,6 +24,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         super().__init__(instrument=instrument,
                          pair_file=pair_file, api=api, unit_test=unit_test)
 
+        self.cvs = {"USD_CHF": 0.0003, "EUR_USD": 0.0003}
         self.stop_trading = False
 
     def execute_strategy(self):
@@ -68,7 +69,7 @@ class TradingStrategyExec(TradingStrategyCalc):
             trade = self.check_if_need_open_trade(trading_time)
             
         if trade is not None:
-            self.trading_session.add_trade(trade_action=trade, date_time=trading_time, rsi=self.rsi)
+            self.trading_session.add_trade(trade_action=trade, date_time=trading_time)
         
         return trade
             
@@ -78,21 +79,23 @@ class TradingStrategyExec(TradingStrategyCalc):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
-        if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and round(self.rsi, 0) <= 35 \
-                and self.std >= self.std_mean * self.std_factor \
-                    and self.reverse_rsi_up():
-                        if not self.backtest:
-                            logger.info(
-                                f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}")
-                        return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
+        if self.long_trading and self.ask < self.bb_low and round(self.rsi, 0) <= 35 \
+                and self.std > self.std_mean_v and self.std_mean > self.std_mean_v \
+                    and (self.std > self.std_mean and self.rsi_drop(self.rsi_change) or self.std < self.std_mean and self.rsi_drop(self.rsi_change - 5)) \
+                        and self.reverse_rsi_up():
+                            if not self.backtest:
+                                logger.info(
+                                    f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}")
+                            return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        elif self.short_trading and self.bid > self.bb_high and self.rsi_jump() and round(self.rsi, 0) >= 65 \
-                and self.std >= self.std_mean * self.std_factor \
-                    and self.reverse_rsi_down():
-                        if not self.backtest:
-                            logger.info(
-                                f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}")
-                        return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
+        elif self.short_trading and self.bid > self.bb_high and round(self.rsi, 0) >= 65 \
+                and self.std > self.std_mean_v and self.std_mean > self.std_mean_v \
+                    and (self.std > self.std_mean and self.rsi_jump(self.rsi_change) or self.std < self.std_mean and self.rsi_jump(self.rsi_change - 5)) \
+                        and self.reverse_rsi_down():
+                            if not self.backtest:
+                                logger.info(
+                                    f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}")
+                            return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
 
     def check_if_need_close_trade(self, trading_time):

@@ -26,22 +26,25 @@ class TradingStrategy(TradingStrategyExec):
         return round(self.rsi, 0) > round(self.rsi_prev, 0) == round(self.rsi_min, 0)
         
     def check_if_need_open_trade(self, trading_time):
-        
+
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
-        
-        if self.long_trading and self.ask < self.bb_low and self.rsi_drop() and 35 >= round(self.rsi, 0) \
-                    and self.cv > self.cv_value \
-                        and self.reverse_rsi_up(trading_time):
+
+        if self.long_trading and self.ask < self.bb_low and self.rsi_min > 34 \
+                and self.std > self.std_mean_v \
+                    and self.sma_crossover > 0 \
+                        and self.reverse_rsi_up():
                             if not self.backtest:
                                 logger.info(
-                                    f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}")
+                                    f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}")
                             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        elif self.short_trading and self.bid > self.bb_high and self.rsi_spike() and 65 <= round(self.rsi, 0) \
-                    and self.cv > self.cv_value \
-                        and self.reverse_rsi_down(trading_time):
+        elif self.short_trading and self.bid > self.bb_high and self.rsi_max < 66 \
+                and self.std > self.std_mean_v \
+                    and self.sma_crossover > 0 \
+                        and self.reverse_rsi_down():
                             if not self.backtest:
                                 logger.info(
-                                    f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}")
+                                    f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}")
                             return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
+

@@ -34,7 +34,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df = self.data.copy()
         df = pd.concat([df, ticker_df])
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-        self.data = df.tail(self.SMA * 2)
+        self.data = df.tail(self.SMA * 3)
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
      
@@ -217,12 +217,12 @@ class TradingStrategyCalc(TradingStrategyBase):
      
     def reverse_rsi_up(self, trading_time=None):
 
-        return self.rsi != self.rsi_min and self.rsi_prev != self.rsi_min and round((self.rsi + self.rsi_prev) / 2, 0) > round(self.rsi_min, 0)
+        return self.rsi != self.rsi_min and self.rsi_prev != self.rsi_min and round((self.rsi + self.rsi_prev - .5) / 2, 0) > round(self.rsi_min, 0)
         # return self.rsi > self.rsi_prev > self.rsi_min
 
     def reverse_rsi_down(self, trading_time=None):
 
-        return self.rsi != self.rsi_max and self.rsi_prev != self.rsi_max and round((self.rsi + self.rsi_prev) / 2, 0) < round(self.rsi_max, 0)
+        return self.rsi != self.rsi_max and self.rsi_prev != self.rsi_max and round((self.rsi + self.rsi_prev + .5) / 2, 0) < round(self.rsi_max, 0)
         # return self.rsi < self.rsi_prev < self.rsi_max
 
     
