@@ -31,7 +31,7 @@ class TradingStrategy(TradingStrategyExec):
             return
 
         if self.long_trading and self.ask < self.bb_low and self.rsi_min > 34 \
-                and self.std > self.std_mean_v \
+                and self.std > self.trading_std \
                     and self.sma_crossover > 0 \
                         and self.reverse_rsi_up():
                             if not self.backtest:
@@ -40,7 +40,7 @@ class TradingStrategy(TradingStrategyExec):
                             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
         elif self.short_trading and self.bid > self.bb_high and self.rsi_max < 66 \
-                and self.std > self.std_mean_v \
+                and self.std > self.trading_std \
                     and self.sma_crossover > 0 \
                         and self.reverse_rsi_down():
                             if not self.backtest:

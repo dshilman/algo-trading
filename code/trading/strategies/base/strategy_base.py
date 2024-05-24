@@ -40,7 +40,7 @@ class TradingStrategyBase():
         config.read(pair_file)
         self.SMA = config.getint(instrument, 'SMA')
         self.DEV = config.getfloat(instrument, 'dev')
-        self.std_mean_v = config.getfloat(instrument, 'std_mean')
+        self.trading_std = config.getfloat(instrument, 'trading_std')
         # self.rsi_high = float(config.get(instrument, 'rsi_high'))
         # self.rsi_low = float(config.get(instrument, 'rsi_low'))
         self.rsi_change = config.getint(instrument, 'rsi_change')

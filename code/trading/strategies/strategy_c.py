@@ -22,15 +22,14 @@ class TradingStrategy(TradingStrategyExec):
         super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
 
 
-
     def check_if_need_open_trade(self, trading_time):
 
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
         if self.long_trading and self.ask < self.bb_low and round(self.rsi, 0) <= 35 \
-                and self.std > self.trading_std and self.std_mean > self.trading_std \
-                    and (self.std > self.std_mean and self.rsi_drop(self.rsi_change) or self.std < self.std_mean and self.rsi_drop(self.rsi_change - 5)) \
+                and self.std > self.trading_std and self.std < self.std_mean \
+                    and self.rsi_drop(self.rsi_change) \
                         and self.reverse_rsi_up():
                             if not self.backtest:
                                 logger.info(
@@ -38,8 +37,8 @@ class TradingStrategy(TradingStrategyExec):
                             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
         elif self.short_trading and self.bid > self.bb_high and round(self.rsi, 0) >= 65 \
-                and self.std > self.trading_std and self.std_mean > self.trading_std \
-                    and (self.std > self.std_mean and self.rsi_jump(self.rsi_change) or self.std < self.std_mean and self.rsi_jump(self.rsi_change - 5)) \
+                and self.std > self.trading_std and self.std < self.std_mean \
+                    and self.rsi_jump(self.rsi_change) \
                         and self.reverse_rsi_down():
                             if not self.backtest:
                                 logger.info(
