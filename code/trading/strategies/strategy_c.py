@@ -27,22 +27,31 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
-        if self.long_trading and self.ask < self.bb_low and round(self.rsi, 0) <= 35 \
-                and self.std > self.trading_std and self.std < self.std_mean \
-                    and self.rsi_drop(self.rsi_change) \
-                        and self.reverse_rsi_up():
+        if self.long_trading and self.ask < self.bb_low and round(self.rsi, 0) <= 40 \
+                and self.std > self.trading_std \
+                    and self.rsi_drop(self.rsi_change) and self.sma_crossover > 0 \
+                        and self._reverse_rsi_up():
                             if not self.backtest:
                                 logger.info(
                                     f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}")
                             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
-        elif self.short_trading and self.bid > self.bb_high and round(self.rsi, 0) >= 65 \
-                and self.std > self.trading_std and self.std < self.std_mean \
-                    and self.rsi_jump(self.rsi_change) \
-                        and self.reverse_rsi_down():
+        elif self.short_trading and self.bid > self.bb_high and round(self.rsi, 0) >= 60 \
+                and self.std > self.trading_std \
+                    and self.rsi_jump(self.rsi_change) and self.sma_crossover > 0 \
+                        and self._reverse_rsi_down():
                             if not self.backtest:
                                 logger.info(
                                     f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}")
                             return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
    
+    def _reverse_rsi_up(self, trading_time=None):
+
+        # return self.rsi != self.rsi_min and self.rsi_prev != self.rsi_min and round((self.rsi + self.rsi_prev - .5) / 2, 0) > round(self.rsi_min, 0)
+        return self.rsi > self.rsi_prev > self.rsi_min or self.rsi - 1 > self.rsi_prev == self.rsi_min
+
+    def _reverse_rsi_down(self, trading_time=None):
+
+        # return self.rsi != self.rsi_max and self.rsi_prev != self.rsi_max and round((self.rsi + self.rsi_prev + .5) / 2, 0) < round(self.rsi_max, 0)
+        return self.rsi < self.rsi_prev < self.rsi_max or self.rsi + 1 < self.rsi_prev == self.rsi_max
