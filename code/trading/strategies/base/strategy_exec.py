@@ -85,7 +85,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         close_trade = False
         open_trade_time = self.get_last_trade_time()
 
-        if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time:
+        if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or not self.is_trading_time(trading_time):
             close_trade = True
 
         if have_units > 0:  # long position
