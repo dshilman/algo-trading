@@ -217,13 +217,13 @@ class TradingStrategyCalc(TradingStrategyBase):
      
     def reverse_rsi_up(self, trading_time=None):
 
-        return self.rsi != self.rsi_min and self.rsi_prev != self.rsi_min and round((self.rsi + self.rsi_prev - .5) / 2, 0) > round(self.rsi_min, 0)
-        # return self.rsi > self.rsi_prev > self.rsi_min
+        # return self.rsi != self.rsi_min and self.rsi_prev != self.rsi_min and round((self.rsi + self.rsi_prev - .5) / 2, 0) > round(self.rsi_min, 0)
+        return self.rsi > self.rsi_prev > self.rsi_min or self.rsi - 1 > self.rsi_prev == self.rsi_min
 
     def reverse_rsi_down(self, trading_time=None):
 
-        return self.rsi != self.rsi_max and self.rsi_prev != self.rsi_max and round((self.rsi + self.rsi_prev + .5) / 2, 0) < round(self.rsi_max, 0)
-        # return self.rsi < self.rsi_prev < self.rsi_max
+        # return self.rsi != self.rsi_max and self.rsi_prev != self.rsi_max and round((self.rsi + self.rsi_prev + .5) / 2, 0) < round(self.rsi_max, 0)
+        return self.rsi < self.rsi_prev < self.rsi_max or self.rsi + 1 < self.rsi_prev == self.rsi_max
 
     
     def rsi_jump(self, jump = None):
