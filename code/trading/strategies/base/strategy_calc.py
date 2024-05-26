@@ -11,7 +11,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.strategies.base.strategy_base import TradingStrategyBase
-from trading.utils.tech_indicators import (count_sma_crossover, calculate_rsi)
+from trading.utils.tech_indicators import (count_sma_crossover, calculate_rsi, calculate_slope)
 
 logger = logging.getLogger()
 
@@ -47,17 +47,20 @@ class TradingStrategyCalc(TradingStrategyBase):
         SMA = self.SMA
         DEV = self.DEV
 
-        df["SMA"] = df[instrument].rolling(SMA).mean()
+        period = 60
+
+        df["sma"] = df[instrument].rolling(SMA).mean()
+        df["sma_slope"] = df["sma"].rolling(period).apply(lambda x: calculate_slope(x))
+
         df["std"] = df[instrument].rolling(SMA).std()
         df["std_mean"] = df['std'].rolling(SMA).mean()
 
-        df["Lower"] = df["SMA"] - df["std"] * DEV
-        df["Upper"] = df["SMA"] + df["std"] * DEV
+        df["lower"] = df["sma"] - df["std"] * DEV
+        df["upper"] = df["sma"] + df["std"] * DEV
         
         # df["Lower_2"] = df["SMA"] - std * 2
         # df["Upper_2"] = df["SMA"] + std * 2
 
-        period = 60
         df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x, period))
         df["rsi_prev"] = df.rsi.shift()
         
@@ -75,10 +78,10 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
         period = 120
-        df["less_sma"] = df["SMA"] - df[instrument]
+        df["less_sma"] = df["sma"] - df[instrument]
         df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x < 0 else -1 if x > 0 else 0)
 
-        df["greater_sma"] = df["SMA"] - df[instrument]
+        df["greater_sma"] = df["sma"] - df[instrument]
         df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
 
         df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
@@ -111,9 +114,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         logger.debug("Setting strategy indicators")
 
-        self.sma = row ['SMA']
-        self.bb_low = row ['Lower']
-        self.bb_high =  row ['Upper']
+        self.sma = row ['sma']
+        self.sma_slope = row ['sma_slope']
+        
+        self.bb_low = row ['lower']
+        self.bb_high =  row ['upper']
         self.std = row ['std']
         self.std_mean = row ['std_mean']
 
@@ -129,7 +134,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_prev = round(row ['rsi_prev'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
-        # self.rsi_slope = round(row ['rsi_slope'], 4)
         
         self.ask = row ["ask"]
         self.bid = row ["bid"]

@@ -62,3 +62,11 @@ def calculate_rsi_new(S, period=14):
     rsi = 100 - (100 / (1 + rs))
     
     return rsi
+
+def calculate_slope(S: pd.Series):
+
+    x = np.arange(S.size)
+    fit = np.polyfit(x, S.values, deg=1)
+    slope = fit[0]
+    return slope
+
