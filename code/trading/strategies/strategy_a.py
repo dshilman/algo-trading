@@ -34,7 +34,7 @@ class TradingStrategy(TradingStrategyExec):
                         and self.reverse_rsi_up():
                             if not self.backtest:
                                 logger.info(
-                                    f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}, sma_slope: {self.sma_slope}")
+                                    f"Go Long - BUY at ask price: {self.ask}, bb low: {self.bb_low}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}, sma_short_slope: {self.sma_short_slope}")
                             return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
         elif self.short_trading and self.bid > self.bb_high and round(self.rsi, 0) >= 65 \
@@ -43,7 +43,7 @@ class TradingStrategy(TradingStrategyExec):
                         and self.reverse_rsi_down():
                             if not self.backtest:
                                 logger.info(
-                                    f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}, sma_slope: {self.sma_slope}")
+                                    f"Go Short - SELL at bid price: {self.bid}, bb high: {self.bb_high}, rsi: {self.rsi}, rsi_change: {(self.rsi_max - self.rsi_min)}, std: {self.std}, sma_short_slope: {self.sma_short_slope}")
                             return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
    

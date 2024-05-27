@@ -47,10 +47,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         SMA = self.SMA
         DEV = self.DEV
 
-        period = 60
-
+        period = 30
         df["sma"] = df[instrument].rolling(SMA).mean()
-        df["sma_slope"] = df["sma"].rolling(period).apply(lambda x: calculate_slope(x))
+        df["sma_short"] = df[instrument].rolling(period).mean()
+        df["sma_short_slope"] = df["sma_short"].rolling(period).apply(lambda x: calculate_slope(x))
 
         df["std"] = df[instrument].rolling(SMA).std()
         df["std_mean"] = df['std'].rolling(SMA).mean()
@@ -61,6 +61,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["Lower_2"] = df["SMA"] - std * 2
         # df["Upper_2"] = df["SMA"] + std * 2
 
+        period = 60
         df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x, period))
         df["rsi_prev"] = df.rsi.shift()
         
@@ -115,8 +116,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         logger.debug("Setting strategy indicators")
 
         self.sma = row ['sma']
-        self.sma_slope = row ['sma_slope']
-        
+        self.sma_short_slope = row ['sma_short_slope']
+                
         self.bb_low = row ['lower']
         self.bb_high =  row ['upper']
         self.std = row ['std']
