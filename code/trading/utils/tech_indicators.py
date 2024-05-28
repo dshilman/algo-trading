@@ -70,3 +70,7 @@ def calculate_slope(S: pd.Series):
     slope = fit[0]
     return slope
 
+def calculate_slope_ema(S: pd.Series, span=15):
+
+   return S.ewm(span=span, adjust=False).mean()
+

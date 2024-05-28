@@ -11,7 +11,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.strategies.base.strategy_base import TradingStrategyBase
-from trading.utils.tech_indicators import (count_sma_crossover, calculate_rsi, calculate_slope)
+from trading.utils.tech_indicators import (count_sma_crossover, calculate_rsi, calculate_slope, calculate_slope_ema)
 
 logger = logging.getLogger()
 
@@ -49,8 +49,10 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         period = 30
         df["sma"] = df[instrument].rolling(SMA).mean()
-        df["sma_short"] = df[instrument].rolling(period).mean()
-        df["sma_short_slope"] = df["sma_short"].rolling(period).apply(lambda x: calculate_slope(x))
+        df['ema_short'] = calculate_slope_ema(S = df[instrument], span = period)
+        df['ema_short_slope'] = df["ema_short"].rolling(period).apply(lambda x: calculate_slope(x))
+        df["ema_short_slope_max"] = df['ema_short_slope'].rolling(period).max()
+        df["ema_short_slope_min"] = df['ema_short_slope'].rolling(period).min()
 
         df["std"] = df[instrument].rolling(SMA).std()
         df["std_mean"] = df['std'].rolling(SMA).mean()
@@ -58,9 +60,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["lower"] = df["sma"] - df["std"] * DEV
         df["upper"] = df["sma"] + df["std"] * DEV
         
-        # df["Lower_2"] = df["SMA"] - std * 2
-        # df["Upper_2"] = df["SMA"] + std * 2
-
         period = 60
         df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x, period))
         df["rsi_prev"] = df.rsi.shift()
@@ -87,17 +86,6 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
 
-        # df["less_bb_low"] = df["Lower"] - df[instrument]
-        # df["less_bb_low"] = df["less_bb_low"].apply(lambda x: 1 if x > 0 else 0)
-        # df["less_bb_low"] = df["less_bb_low"].rolling(period).sum()
-
-        # df["greater_bb_high"] = df["Upper"] - df[instrument]
-        # df["greater_bb_high"] = df["greater_bb_high"].apply(lambda x: 1 if x < 0 else 0)
-        # df["greater_bb_high"] = df["greater_bb_high"].rolling(period).sum()
-        
-
-        # df.drop(columns= ["Lower_2", "Upper_2"], inplace=True)
-
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
             
@@ -116,20 +104,17 @@ class TradingStrategyCalc(TradingStrategyBase):
         logger.debug("Setting strategy indicators")
 
         self.sma = row ['sma']
-        self.sma_short_slope = row ['sma_short_slope']
-                
+        self.ema_short_slope = row ["ema_short_slope"]
+        self.ema_short_slope_max = row ["ema_short_slope_max"]
+        self.ema_short_slope_min = row ["ema_short_slope_min"]
+
+
         self.bb_low = row ['lower']
         self.bb_high =  row ['upper']
         self.std = row ['std']
         self.std_mean = row ['std_mean']
 
-        # self.less_bb_low = row ['less_bb_low']
-        # self.greater_bb_high = row ['greater_bb_high']
-
         self.sma_crossover = row ['sma_crossover']
-
-        # self.less_sma = row ['less_sma']
-        # self.greater_sma = row ['greater_sma']
 
         self.rsi = round(row ['rsi'], 4)
         self.rsi_prev = round(row ['rsi_prev'], 4)
@@ -142,9 +127,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.price_max = row ["price_max"]
         # self.price_min = row ["price_min"]
         # self.price_slope = round(row ["price_slope"], 4)
-
-        # self.sma_price_max = round(row ["sma_price_max"], 4)
-        # self.sma_price_min = round(row ["sma_price_min"], 4)
 
         self.is_trading = True
         if "status" in row:
