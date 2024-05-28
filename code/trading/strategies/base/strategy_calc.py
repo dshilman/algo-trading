@@ -78,13 +78,13 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
         period = 120
-        df["less_sma"] = df["sma"] - df[instrument]
-        df["less_sma"] = df["less_sma"].apply(lambda x: 1 if x < 0 else -1 if x > 0 else 0)
-
+ 
         df["greater_sma"] = df["sma"] - df[instrument]
         df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
 
         df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
+
+        df.drop(columns=["greater_sma"])
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
