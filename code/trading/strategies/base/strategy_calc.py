@@ -104,6 +104,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         logger.debug("Setting strategy indicators")
 
         self.sma = row ['sma']
+        self.ema_short = row ["ema_short"]
         self.ema_short_slope = row ["ema_short_slope"]
         self.ema_short_slope_max = row ["ema_short_slope_max"]
         self.ema_short_slope_min = row ["ema_short_slope_min"]
