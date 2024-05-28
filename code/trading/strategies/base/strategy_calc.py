@@ -84,7 +84,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
 
-        df.drop(columns=["greater_sma"])
+        df.drop(columns=["greater_sma"], inplace=True)
 
         if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
