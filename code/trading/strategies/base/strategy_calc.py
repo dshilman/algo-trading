@@ -105,9 +105,9 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.sma = row ['sma']
         self.ema_short = row ["ema_short"]
-        # self.ema_short_slope = row ["ema_short_slope"]
-        # self.ema_short_slope_max = row ["ema_short_slope_max"]
-        # self.ema_short_slope_min = row ["ema_short_slope_min"]
+        self.ema_short_slope = row ["ema_short_slope"]
+        self.ema_short_slope_max = row ["ema_short_slope_max"]
+        self.ema_short_slope_min = row ["ema_short_slope_min"]
 
         self.bb_low = row ['lower']
         self.bb_high =  row ['upper']
@@ -121,10 +121,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
         self.rsi_ema_slope = row ['rsi_ema_slope']
-        # self.rsi_ema = row ["rsi_ema"]
-        # self.rsi_ema_slope = row ["rsi_ema_slope"]
-        # self.rsi_ema_slope_max = row ["rsi_ema_slope_max"]
-        # self.rsi_ema_slope_min = row ["rsi_ema_slope_min"]
+        self.rsi_ema_slope_max = row ["rsi_ema_slope_max"]
+        self.rsi_ema_slope_min = row ["rsi_ema_slope_min"]
 
         
         self.ask = row ["ask"]
@@ -210,12 +208,14 @@ class TradingStrategyCalc(TradingStrategyBase):
      
     def reverse_rsi_up(self, trading_time=None):
 
-        return self.rsi_ema_slope > 0 or self.ema_short > 0 or self.rsi_ema_slope < 0 and (self.rsi + self.rsi_prev) / 2 > self.rsi_min and self.rsi - 1 > self.rsi_min
+        return (self.ema_short_slope < 0 and self.ema_short_slope > self.ema_short_slope_min) \
+            or (self.rsi + self.rsi_prev) / 2 > self.rsi_min and self.rsi - 1 > self.rsi_min
         # return (self.rsi + self.rsi_prev) / 2 > self.rsi_min and self.rsi_prev != self.rsi_min
 
     def reverse_rsi_down(self, trading_time=None):
 
-        return self.rsi_ema_slope < 0 or self.ema_short < 0 or self.rsi_ema_slope > 0 and (self.rsi + self.rsi_prev) / 2 < self.rsi_max and self.rsi + 1 < self.rsi_max
+        return  (self.ema_short_slope > 0 and self.ema_short_slope < self.ema_short_slope_max) \
+            or (self.rsi + self.rsi_prev) / 2 < self.rsi_max and self.rsi + 1 < self.rsi_max
         # return (self.rsi + self.rsi_prev) / 2 < self.rsi_max and self.rsi_prev != self.rsi_max
 
     
