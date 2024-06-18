@@ -44,3 +44,18 @@ class TradingStrategy(TradingStrategyExec):
                             return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
    
+    # def reverse_rsi_up(self, trading_time=None):
+
+    #     return (self.rsi + self.rsi_prev) / 2 > self.rsi_min and self.rsi_prev != self.rsi_min and self.rsi != self.rsi_min
+
+    # def reverse_rsi_down(self, trading_time=None):
+
+    #     return  (self.rsi + self.rsi_prev) / 2 < self.rsi_max and self.rsi_prev != self.rsi_max and self.rsi != self.rsi_max
+
+    def reverse_rsi_up(self, trading_time=None):
+
+        return self.rsi - 5 > self.rsi_min
+  
+    def reverse_rsi_down(self, trading_time=None):
+
+        return self.rsi + 5 < self.rsi_max

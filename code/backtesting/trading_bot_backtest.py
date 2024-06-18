@@ -108,9 +108,9 @@ class TradingBacktester():
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()
 
-            logger.info("Saving trading report to Excel...")
-            date_stamp = datetime.now().strftime("%d_%H_%M")
-            self.strategy.trading_session.to_excel(f"../../data/backtest_results_{self.strategy.instrument}_{self.days}_{date_stamp}.xlsx")
+            # logger.info("Saving trading report to Excel...")
+            # date_stamp = datetime.now().strftime("%d_%H_%M")
+            # self.strategy.trading_session.to_excel(f"../../data/backtest_results_{self.strategy.instrument}_{self.days}_{date_stamp}.xlsx")
 
         except Exception as e:
             logger.exception("Exception occurred")

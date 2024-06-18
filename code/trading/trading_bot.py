@@ -120,7 +120,7 @@ class Trader():
 
             try:
                 logger.info ("Start Stream")
-                self.api.stream_prices(instrument=self.instrument, stop = stop_after, callback=self.new_price_tick)
+                self.api.stream_prices(instrument=self.instrument, stop = stop_after, callback=self.new_price_ticker)
                 self.terminate = True
                 break
 
@@ -178,7 +178,7 @@ class Trader():
                 self.tick_data.clear()
 
                 if len(temp_tick_data) > 0:
-                    df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "ask", "status"])
+                    df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "bid_liquidity", "ask", "ask_liquidity", "status"])
                     df.set_index('time', inplace=True)    
                     df = df.resample("30s").last()
                     # logger.debug(f"Adding tickers length: {len(df)} | data: {df}")
@@ -190,9 +190,9 @@ class Trader():
                 try:
                     self.strategy.execute_strategy()
                 except PauseTradingException as e:
-                    logger.info(f"Caught Stop Loss Error. Pause Traiding...")
+                    logger.info(f"Caught Stop Loss Error. Continue Traiding...")
                     self.stop_loss_count = self.stop_loss_count + 1
-                    time.sleep(2 * 60 * 60)
+                    # time.sleep(2 * 60 * 60)
                     
                     if self.stop_loss_count > 2:
                         logger.error(f"Stop Loss Count > 2. Terminating Trading")
@@ -239,24 +239,37 @@ class Trader():
                 time.sleep(5)
         
  
-    def new_price_tick(self, instrument, time, bid, ask, status):
+    def new_price_ticker(self, **kwargs):
 
-        if not (instrument and time and bid and ask and status):
-            logger.error(f"Invalid values!!! instrument: {instrument} | time: {time}  | ask: {ask} | bid: {bid} | status: {status}")
-            return
+        instrument = kwargs.get('instrument')
+        date_time = kwargs.get('time')
+        ask = kwargs.get('ask')
+        ask_liquidity = kwargs.get('ask_liquidity')
+        bid = kwargs.get('bid')
+        bid_liquidity = kwargs.get('bid_liquidity')
+        status = kwargs.get('status')
+
+        if not (instrument is not None \
+                and time is not None and bid is not None \
+                    and ask is not None and status is not None):
+            
+                        logger.error(f"Invalid instrument price values!!!")
+                        logger.error(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Bid Liquidity: {bid_liquidity} | Ask: {ask} | Ask Liquidity: {ask_liquidity} | Status: {status}")
+                        return
         
-        logger.debug(f"{instrument} | time: {time} | ask: {ask} | bid: {bid} | status: {status}")
+        logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Bid Liquidity: {bid_liquidity} | Ask: {ask} | Ask Liquidity: {ask_liquidity} | Status: {status}")
+
          # 2023-12-19T13:28:35.194571445Z
-        date_time = pd.to_datetime(time).replace(tzinfo=None)
+        pd_timestamp: pd.Timestamp = pd.to_datetime(date_time).replace(tzinfo=None)
         
-        recent_tick = [date_time, (ask + bid)/2, bid, ask, status]
+        recent_tick = [pd_timestamp, (ask + bid)/2, bid, bid_liquidity, ask, ask_liquidity, status]
         self.tick_data.append(recent_tick)
 
-        minute: int = date_time.minute
-        second: int = date_time.second
+        minute: int = pd_timestamp.minute
+        second: int = pd_timestamp.second
 
         if minute in [0, 15, 30, 45] and second == 0:
-            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {ask}, bid: {bid} | status: {status}")
+            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {ask} | aks_liquidity: {ask_liquidity} | bid: {bid} | bid_liquidity: {bid_liquidity} | status: {status}")
  
   
         

@@ -47,8 +47,8 @@ class OandaApi:
     def get_price_candles(self, pair_name, days):
 
         now = datetime.now(tz=timezone.utc)
-        now = now - timedelta(microseconds=now.microsecond)
-        past = now - timedelta(days=days, seconds=30)
+        now = now - timedelta(seconds=now.second, microseconds=now.microsecond)
+        past = now - timedelta(days=days)
 
         df = pd.DataFrame()
 
@@ -97,15 +97,15 @@ class OandaApi:
             url, verb="post", data=data, code=201)
 
         if ok:
-            order = None
+            result = None
             if 'orderRejectTransaction' in response:
-                order = response.get('orderRejectTransaction')
+                result = response.get('orderRejectTransaction')
             elif 'orderFillTransaction' in response:
-                order = response.get('orderFillTransaction')
+                result = response.get('orderFillTransaction')
             elif 'orderCreateTransaction' in response:
-                order = response.get('orderCreateTransaction')
+                result = response.get('orderCreateTransaction')
             
-            return order
+            return result
         
         return None
 
@@ -116,8 +116,8 @@ class OandaApi:
         url = f"accounts/{self.account_id}/positions/{instrument}"
         ok, data = self.__make_request(url, verb="get", code=200)
         if ok and "position" in data:
-            long_units = data["position"]["long"]["units"]
-            short_units = data["position"]["short"]["units"]
+            long_units = data["position"]["long"]["units"] # type: ignore
+            short_units = data["position"]["short"]["units"] # type: ignore
             # logger.info (f"Currently have position: {instrument} | long_units: {long_units} | short_units: {short_units}")
             units = round(float(long_units) + float(short_units), 0)
 
@@ -140,8 +140,12 @@ class OandaApi:
         result = self.__handle_response(response, callback, stop)
 
         return result
-    def __on_success(self, instrument, time, bid, ask, status):
-        print(f"Instrument: {instrument} Time: {time} | Bid: {bid} | Ask: {ask} | Status: {status}")
+    def __on_success(self, **kwargs):
+        
+        print(f"Instrument: {kwargs.get('instrument')} | Time: {kwargs.get('time')} | \
+            Bid: {kwargs.get('bid')} | Bid Liquidity: {kwargs.get('bid_liquidity')} | \
+                Ask: {kwargs.get('ask')} | Ask Liquidity: {kwargs.get('ask_liquidity')} | \
+                    Status: {kwargs.get('status')}")
 
     def __handle_response(self, response, callback, stop):
 
@@ -154,13 +158,15 @@ class OandaApi:
                     count += 1
                     instrument = data["instrument"]
                     time = data["time"]
-                    bid = float(data["closeoutBid"])
-                    ask = float(data["closeoutAsk"])
+                    bid = float(data["bids"][0]["price"])
+                    bid_liquidity = int(data["bids"][0]["liquidity"])
+                    ask = float(data["asks"][0]["price"])
+                    ask_liquidity = int(data["asks"][0]["liquidity"])
                     status = data["status"]
                     if callback:
-                        callback(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
+                        callback(instrument=instrument, time=time, bid=bid, bid_liquidity=bid_liquidity, ask=ask, ask_liquidity=ask_liquidity, status=status)
                     else:
-                        self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
+                        self.__on_success(instrument=instrument, time=time, bid=bid, bid_liquidity=bid_liquidity, ask=ask, ask_liquidity=ask_liquidity, status=status)
                 
                     if self.stop_stream or stop is not None and count >= stop:
                         break
@@ -196,7 +202,7 @@ class OandaApi:
         except Exception as error:
             return False, {'Exception': error}
 
-    def __fetch_candles(self, pair_name, date_f, date_t, granularity="S30", price="MBA"):
+    def __fetch_candles(self, pair_name, date_f, date_t, granularity="S30", price="MBA") -> pd.DataFrame:
 
         url = f"instruments/{pair_name}/candles"
         params = dict(

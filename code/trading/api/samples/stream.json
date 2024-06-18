@@ -1,0 +1,2 @@
+{"type": "PRICE", "time": "2024-06-18T12:58:23.054370501Z", "bids": [{"price": "1.07277", "liquidity": 10000000}], "asks": [{"price": "1.07291", "liquidity": 10000000}],
+"closeoutBid": "1.07277", "closeoutAsk": "1.07291", "status": "tradeable", "tradeable": "True", "instrument": "EUR_USD"}

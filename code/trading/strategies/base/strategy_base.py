@@ -54,7 +54,7 @@ class TradingStrategyBase():
         self.keep_trade_open_time = config.getint(instrument, 'keep_trade_open_time')
         self.data: pd.DataFrame = None
   
-        self.rsi_min_price = None
+        self.rsi_min_time = None
         self.rsi_min_price = None
         self.rsi_min_sma = None
 

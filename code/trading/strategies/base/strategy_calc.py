@@ -34,7 +34,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df = self.data.copy()
         df = pd.concat([df, ticker_df])
         df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-        self.data = df.tail(self.SMA * 3)
+        self.data = df.tail(self.SMA * 4)
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
      
@@ -44,43 +44,49 @@ class TradingStrategyCalc(TradingStrategyBase):
         df: pd.DataFrame = self.data.copy()
 
         instrument = self.instrument
-        SMA = self.SMA
+
         DEV = self.DEV
+        period = self.SMA
+
+        df["std"] = df[instrument].rolling(period).std()
+        df["std_mean"] = df['std'].rolling(period).mean()
+        df["sma_long"] = df[instrument].rolling(period).mean()
+        df["sma_long_prev"] = df["sma_long"].shift()
+        df["ema_long"] = df[instrument].rolling(period).apply(lambda x: calculate_ema(S = x))
+        # df["ema_long"] = df[instrument].ewm(span=period, adjust=False).mean()
+        df["ema_long_prev"] = df["ema_long"].shift()
+        df['ema_long_slope'] = df["ema_long"].rolling(period).apply(lambda x: calculate_slope(x))
+
+        df["bb_lower"] = df["sma_long"] - df["std"] * DEV
+        df["bb_upper"] = df["sma_long"] + df["std"] * DEV
 
         period = 30
-        df["sma"] = df[instrument].rolling(SMA).mean()
-        df['ema_short'] = df[instrument].rolling(period).apply(lambda x: calculate_ema(S = x, span = period))
+        df['ema_short'] = df[instrument].rolling(period).apply(lambda x: calculate_ema(S = x))
         df['ema_short_slope'] = df["ema_short"].rolling(period).apply(lambda x: calculate_slope(x))
         df["ema_short_slope_max"] = df['ema_short_slope'].rolling(period).max()
         df["ema_short_slope_min"] = df['ema_short_slope'].rolling(period).min()
-        
-        df["std"] = df[instrument].rolling(SMA).std()
-        df["std_mean"] = df['std'].rolling(SMA).mean()
-
-        df["lower"] = df["sma"] - df["std"] * DEV
-        df["upper"] = df["sma"] + df["std"] * DEV
-        
-        period = 60
+       
+        period = 30
         df["rsi"] = df[instrument].rolling(period).apply(lambda x: calculate_rsi(x, period))
         df["rsi_prev"] = df.rsi.shift()
-        
-        period = 30
+
+        # df['rsi_ema'] = df["rsi"].rolling(period).apply(lambda x: calculate_ema(S = x, span = period))
+        # df['rsi_ema_slope'] = df["rsi_ema"].rolling(period).apply(lambda x: calculate_slope(x))
+        # df['rsi_ema_slope_prev'] = df["rsi_ema_slope"].shift()
+        # df["rsi_ema_slope_max"] = df['rsi_ema_slope'].rolling(period).max()
+        # df["rsi_ema_slope_min"] = df['rsi_ema_slope'].rolling(period).min()
+
+
+        period = 20
         df["rsi_max"] = df['rsi'].rolling(period).max()
         df["rsi_min"] = df['rsi'].rolling(period).min()
-        df['rsi_ema'] = df["rsi"].rolling(period).apply(lambda x: calculate_ema(S = x, span = period))
-        df['rsi_ema_slope'] = df["rsi_ema"].rolling(period).apply(lambda x: calculate_slope(x))
-        df["rsi_ema_slope_max"] = df['rsi_ema_slope'].rolling(period).max()
-        df["rsi_ema_slope_min"] = df['rsi_ema_slope'].rolling(period).min()
-
         
-
         # df["price_max"] = df[instrument].rolling(period).max()
         # df["price_min"] = df[instrument].rolling(period).min()
-        # df["price_slope"] = df[instrument].rolling(period).apply(lambda x: calculate_slope(x))
-
+        
         period = 120
  
-        df["greater_sma"] = df["sma"] - df[instrument]
+        df["greater_sma"] = df["sma_long"] - df[instrument]
         df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
         df["sma_crossover"] = df["greater_sma"].rolling(period).apply(lambda x: count_sma_crossover(x))
 
@@ -94,7 +100,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.data = df
 
 
-    def set_strategy_indicators(self, row: pd.Series=None, time = None):
+    def set_strategy_indicators(self, row: pd.Series=None, time = None): # type: ignore
 
         trading_time = time
         if row is None:
@@ -103,14 +109,20 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         logger.debug("Setting strategy indicators")
 
-        self.sma = row ['sma']
+        self.sma_long = row ["sma_long"]
+        self.sma_long_prev = row ["sma_long_prev"]
+
+        self.ema_long = row ['ema_long']
+        self.ema_long_prev = row ['ema_long_prev']
+
+        self.ema_long_slope = row ["ema_long_slope"]
         self.ema_short = row ["ema_short"]
         self.ema_short_slope = row ["ema_short_slope"]
         self.ema_short_slope_max = row ["ema_short_slope_max"]
         self.ema_short_slope_min = row ["ema_short_slope_min"]
 
-        self.bb_low = row ['lower']
-        self.bb_high =  row ['upper']
+        self.bb_low = row ['bb_lower']
+        self.bb_high =  row ['bb_upper']
         self.std = row ['std']
         self.std_mean = row ['std_mean']
 
@@ -120,9 +132,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_prev = round(row ['rsi_prev'], 4)
         self.rsi_max = round(row ['rsi_max'], 4)
         self.rsi_min = round(row ['rsi_min'], 4)
-        self.rsi_ema_slope = row ['rsi_ema_slope']
-        self.rsi_ema_slope_max = row ["rsi_ema_slope_max"]
-        self.rsi_ema_slope_min = row ["rsi_ema_slope_min"]
+        # self.rsi_ema_slope = row ['rsi_ema_slope']
+        # self.rsi_ema_slope_prev = row ['rsi_ema_slope_prev']
+        # self.rsi_ema_slope_max = row ["rsi_ema_slope_max"]
+        # self.rsi_ema_slope_min = row ["rsi_ema_slope_min"]
 
         
         self.ask = row ["ask"]
@@ -139,15 +152,13 @@ class TradingStrategyCalc(TradingStrategyBase):
         if self.rsi == self.rsi_min:
             self.rsi_min_price = self.price
             self.rsi_min_time = trading_time
-            self.rsi_min_sma = self.sma
         elif self.rsi == self.rsi_max:
             self.rsi_max_price = self.price
             self.rsi_max_time = trading_time
-            self.rsi_max_sma = self.sma
   
     def print_indicators(self):
 
-        indicators = [[self.ask, self.bid, self.sma, self.bb_low, self.bb_high, self.rsi, self.rsi_prev, self.rsi_min, self.rsi_max]]
+        indicators = [[self.ask, self.bid, self.sma_long, self.bb_low, self.bb_high, self.rsi, self.rsi_prev, self.rsi_min, self.rsi_max]]
         columns=["ASK PRICE", "BID PRICE", "SMA", "BB_LOW", "BB_HIGH", "RSI", "RSI PREV", "RSI MIN", "RSI MAX"]
         logger.info("\n" + tabulate(indicators, headers = columns) + "\n")
     
@@ -207,18 +218,11 @@ class TradingStrategyCalc(TradingStrategyBase):
 
      
     def reverse_rsi_up(self, trading_time=None):
-
-        return (self.ema_short_slope < 0 and self.ema_short_slope > self.ema_short_slope_min) \
-            or (self.rsi + self.rsi_prev) / 2 > self.rsi_min and self.rsi - 1 > self.rsi_min
-        # return (self.rsi + self.rsi_prev) / 2 > self.rsi_min and self.rsi_prev != self.rsi_min
-
+        pass
     def reverse_rsi_down(self, trading_time=None):
+        pass
 
-        return  (self.ema_short_slope > 0 and self.ema_short_slope < self.ema_short_slope_max) \
-            or (self.rsi + self.rsi_prev) / 2 < self.rsi_max and self.rsi + 1 < self.rsi_max
-        # return (self.rsi + self.rsi_prev) / 2 < self.rsi_max and self.rsi_prev != self.rsi_max
 
-    
     def rsi_jump(self, jump = None):
 
         if jump is None:
