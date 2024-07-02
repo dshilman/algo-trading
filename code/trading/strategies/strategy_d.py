@@ -30,20 +30,16 @@ class TradingStrategy(TradingStrategyExec):
 
         # less than sma, greater that bb low, rsi is less than 40, ema slope is negative and == min
 
-        if self.short_trading and self.sma_long < self.bid and round(self.rsi, 0) <= 50 \
-            and round(self.ema_short_slope, 5) <= -0.00002 and self.ema_short_slope == self.ema_short_slope_min \
-                and self.std > self.trading_std and self.std > self.std_mean:
+        if self.long_trading and self.ask < self.bb_low and self.rsi_min < self.rsi < 20:
                     if not self.backtest:
-                        logger.info(f"Go Short - Sell at ask price: {self.bid}")
-                    return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
+                        logger.info(f"Go Long - Buy at ask price: {self.ask}")
+                    return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
         # less than sma, greater that bb low, rsi is less than 40, ema slope is negative and == min
-        elif self.long_trading and self.ask < self.sma_long and round(self.rsi, 0) >= 50 \
-            and round(self.ema_short_slope, 5) >= 0.00002 and self.ema_short_slope == self.ema_short_slope_max \
-                and self.std > self.trading_std and self.std > self.std_mean:
+        elif self.short_trading and self.bid > self.bb_high and 80 < self.rsi < self.rsi_max:
                     if not self.backtest:
-                        logger.info(f"Go Long - Buy at bid price: {self.ask}")
-                    return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
+                        logger.info(f"Go Short - Sell at bid price: {self.bid}")
+                    return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
 
 
@@ -58,18 +54,14 @@ class TradingStrategy(TradingStrategyExec):
             close_trade = True
 
 
-#        price > bb low and ema is positive and rsi > 50
         if have_units < 0:  # long position
-            if close_trade or (self.ask < self.sma_long and self.ema_short_slope == self.ema_short_slope_max \
-                and self.rsi > self.rsi_prev > 50):
+            if close_trade or self.ask < self.price_sma_long and self.rsi_momentum_30 > 0:
                     if not self.backtest:
                         logger.info(f"Close Short position - Buy {-have_units} units at ask price: {self.ask}")
                     return Trade_Action(self.instrument, -have_units, self.ask, False, False)
 
-#        price > bb low and ema is positive and rsi > 50
         elif have_units > 0:  # short position
-            if close_trade or self.bid > self.sma_long and (self.ema_short_slope == self.ema_short_slope_min \
-                and self.rsi < self.rsi_prev < 60):
+            if close_trade or self.bid > self.price_sma_long and self.rsi_momentum_30 < 0:
                     if not self.backtest:
                         logger.info(f"Close Long position  - Sell {-have_units} units at bid price: {self.bid}")
                     return Trade_Action(self.instrument, -have_units, self.bid, False, False)

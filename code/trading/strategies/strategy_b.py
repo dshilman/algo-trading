@@ -29,13 +29,13 @@ class TradingStrategy(TradingStrategyExec):
             return
 
         if self.long_trading and self.bid > self.bb_high and self.rsi_max > 80 and self.reverse_rsi_down () \
-                and self.rsi_jump() and self.std > self.trading_std:
+                and self.rsi_jump() and self.price_std > self.trading_std:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell at ask price: {self.bid}")
                 return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
         elif self.short_trading and self.ask < self.bb_low and self.rsi_min < 20 and self.reverse_rsi_up() \
-                and self.rsi_drop() and self.std > self.trading_std:
+                and self.rsi_drop() and self.price_std > self.trading_std:
                     if not self.backtest:
                         logger.info(f"Go Long - Buy at bid price: {self.ask}")
                     return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
