@@ -54,8 +54,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         period_long = 200
         period_short = 30
 
+        # Volume Momentum
+        df["volume_pct_change"] = df["volume"].pct_change()
+        df["volume_max"] = df["volume"].rolling(period_short).max()
+
         df["price_std"] = df[instrument].rolling(period_long).std()
-        df["price_std_mean"] = df['price_std'].rolling(period_long).mean()
+        # df["price_std_mean"] = df['price_std'].rolling(period_long).mean()
 
         # Bollinger Band
         df["sma_long"] = df[instrument].rolling(period_long).mean()
@@ -63,39 +67,31 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_upper"] = df["sma_long"] + df["price_std"] * std_dev
 
         # MACD
-        df["ema_long"] = df[instrument].rolling(
-            period_long).apply(lambda x: calculate_ema(S=x))
-        df['ema_long_slope'] = df["ema_long"].rolling(
-            period_long).apply(lambda x: calculate_slope(x))
+        df["ema_long"] = df[instrument].rolling(period_long).apply(lambda x: calculate_ema(S=x))
+        # df['ema_long_slope'] = df["ema_long"].rolling(period_long).apply(lambda x: calculate_slope(x))
 
-        df['ema_short'] = df[instrument].rolling(
-            period_short).apply(lambda x: calculate_ema(S=x))
-        df['ema_short_slope'] = df["ema_short"].rolling(
-            period_short).apply(lambda x: calculate_slope(x))
+        df['ema_short'] = df[instrument].rolling(period_short).apply(lambda x: calculate_ema(S=x))
+        # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
 
         # Momentum
         df[instrument + "_diff"] = df[instrument].diff()
-        df["price_momentum_long"] = df[instrument +
-                                       "_diff"].rolling(period_long).sum()
-        df["price_momentum_long_mean"] = df['price_momentum_long'].rolling(
-            period_long).mean()
+        df["price_momentum_long"] = df[instrument + "_diff"].rolling(period_long).sum()
+        df["price_momentum_long_min"] = df['price_momentum_long'].rolling(period_long).min()
+        df["price_momentum_long_max"] = df['price_momentum_long'].rolling(period_long).max()
 
-        df["price_momentum_short"] = df[instrument +
-                                        "_diff"].rolling(period_short).sum()
-        df["price_momentum_short_mean"] = df["price_momentum_short"].rolling(
-            period_short).mean()
-        # df["price_momentum_short_slope"] = df["price_momentum_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
+        df["price_momentum_short"] = df[instrument + "_diff"].rolling(period_short).sum()
+        df["price_momentum_short_min"] = df["price_momentum_short"].rolling(period_short).min()
+        df["price_momentum_short_max"] = df["price_momentum_short"].rolling(period_short).max()
+
 
         # RSI
-        df["rsi_long"] = df[instrument].rolling(period_long).apply(
-            lambda x: calculate_rsi(x, period_long))
-        df["rsi_long_prev"] = df.rsi_long.shift()
-        df["rsi_long_max"] = df['rsi_long'].rolling(period_long).max()
-        df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
+        # df["rsi_long"] = df[instrument].rolling(period_long).apply(lambda x: calculate_rsi(x, period_long))
+        # df["rsi_long_prev"] = df.rsi_long.shift()
+        # df["rsi_long_max"] = df['rsi_long'].rolling(period_long).max()
+        # df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
 
-        df["rsi_short"] = df[instrument].rolling(period_short).apply(
-            lambda x: calculate_rsi(x, period_short))
-        df["rsi_short_prev"] = df.rsi_short.shift()
+        df["rsi_short"] = df[instrument].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
+        df["rsi_short_pct_change"] = df["rsi_short"].pct_change()
         df["rsi_short_max"] = df['rsi_short'].rolling(period_short).max()
         df["rsi_short_min"] = df['rsi_short'].rolling(period_short).min()
 
@@ -109,21 +105,22 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_ema_slope_max"] = df['rsi_ema_slope'].rolling(period).max()
         # df["rsi_ema_slope_min"] = df['rsi_ema_slope'].rolling(period).min()
 
-        df["price_max"] = df[instrument].rolling(period_long).max()
-        df["price_min"] = df[instrument].rolling(period_long).min()
+        # df["price_max"] = df[instrument].rolling(period_long).max()
+        # df["price_min"] = df[instrument].rolling(period_long).min()
 
-        df["greater_sma"] = df["sma_long"] - df[instrument]
-        df["greater_sma"] = df["greater_sma"].apply(
-            lambda x: 1 if x > 0 else -1 if x < 0 else 0)
-        df["sma_crossover"] = df["greater_sma"].rolling(
-            period_long).apply(lambda x: count_sma_crossover(x))
+        # df["greater_sma"] = df["sma_long"] - df[instrument]
+        # df["greater_sma"] = df["greater_sma"].apply(
+        #     lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+        # df["sma_crossover"] = df["greater_sma"].rolling(
+        #     period_long).apply(lambda x: count_sma_crossover(x))
 
-        df.drop(columns=["greater_sma"], inplace=True)
+        # df.drop(columns=["greater_sma"], inplace=True)
 
-        if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
-            logger.info("\n" + df.tail(10).to_string(header=True))
+        
+        # if (not self.backtest and self.print_indicators_count % 60 == 0) or self.unit_test:
+        #     logger.info("\n" + df.tail(10).to_string(header=True))
 
-        self.print_indicators_count = self.print_indicators_count + 1
+        # self.print_indicators_count = self.print_indicators_count + 1
 
         self.data = df
 
@@ -139,32 +136,35 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row[self.instrument]
-        self.price_max = row["price_max"]
-        self.price_min = row["price_min"]
+        # self.price_max = row["price_max"]
+        # self.price_min = row["price_min"]
         self.price_std = row['price_std']
-        self.price_std_mean = row['price_std_mean']
-        self.sma_crossover = row['sma_crossover']
 
         # MACD
-        self.ema_long = row["ema_long"]
-        self.ema_short = row['ema_short']
+        # self.ema_long = row["ema_long"]
+        # self.ema_short = row['ema_short']
 
         # Bollinger Band
         self.sma_long = row['sma_long']
         self.bb_low = row['bb_lower']
         self.bb_high = row['bb_upper']
 
-        self.price_ema_long_slope = row["ema_long_slope"]
-        self.price_ema_short = row["ema_short"]
-        self.price_ema_short_slope = row["ema_short_slope"]
-        self.price_ema_short_slope_max = row["ema_short_slope_max"]
-        self.price_ema_short_slope_min = row["ema_short_slope_min"]
+        # self.price_ema_long_slope = row["ema_long_slope"]
+        # self.price_ema_short = row["ema_short"]
+        # self.price_ema_short_slope = row["ema_short_slope"]
+        # self.price_ema_short_slope_max = row["ema_short_slope_max"]
+        # self.price_ema_short_slope_min = row["ema_short_slope_min"]
 
         # Momentum
         self.price_momentum_long = row["price_momentum_long"]
-        self.price_momentum_long_mean = row["price_momentum_long_mean"]
+        # self.price_momentum_long_mean = row["price_momentum_long_mean"]
+        self.price_momentum_long_max = row["price_momentum_long_max"]
+        
         self.price_momentum_short = row["price_momentum_short"]
-        self.price_momentum_short_mean = row["price_momentum_short_mean"]
+        self.price_momentum_short_max = row["price_momentum_short_max"]
+        
+        # self.price_momentum_short_mean = row["price_momentum_short_mean"]
+        
 
         # RSI
         self.rsi_long = round(row["rsi_long"], 4)
@@ -173,9 +173,20 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_long_min = round(row["rsi_long_min"], 4)
 
         self.rsi_short = round(row["rsi_short"], 4)
-        self.rsi_short_prev = round(row["rsi_short_prev"], 4)
+        self.rsi_short_pct_change = round(row["rsi_short_pct_change"], 4)
         self.rsi_short_max = round(row["rsi_short_max"], 4)
         self.rsi_short_min = round(row["rsi_short_min"], 4)
+
+        
+        # Volume Momentum
+        self.volume_momentum_short = row ["volume_momentum_short"]
+        self.volume_momentum_long = row ["volume_momentum_long"]
+        self.volume_pct_change = row ["volume_pct_change"]
+        self.volume_max = row ["volume_max"]
+
+
+        if not self.backtest:
+            self.print_indicators()
 
         self.is_trading = True
         if "status" in row:
@@ -206,10 +217,8 @@ class TradingStrategyCalc(TradingStrategyBase):
                     headers=macd_bb_headers) + "\n")
 
         logger.info("*********** MOMENTUM *************")
-        momentum_data = [[self.price_momentum_long, self.price_momentum_long_mean,
-                          self.price_momentum_short, self.price_momentum_short_mean]]
-        momentum_headers = ["EMA MOMENTUM LONG", "MOMENTUM LONG MEAN",
-                            "MOMENTUM SHORT", "MOMENTUM SHORT MEAN"]
+        momentum_data = [[self.price_momentum_long, self.price_momentum_short]]
+        momentum_headers = ["PRICE MOMENTUM LONG", "PRICE MOMENTUME SHORT"]
         logger.info("\n" + tabulate(momentum_data,
                     headers=momentum_headers) + "\n")
 
@@ -217,8 +226,14 @@ class TradingStrategyCalc(TradingStrategyBase):
         rsi_data = [[self.rsi_long, self.rsi_long_min, self.rsi_long_max,
                      self.rsi_short, self.rsi_short_min, self.rsi_short_max]]
         rsi_headers = ["RSI LONG", "RSI LONG MIN", "RSI LONG MAX",
-                       "RSI SHORT", "RSI SHORT MIN", "RSI LONG MAX"]
+                       "RSI SHORT", "RSI SHORT MIN", "RSI SHORT MAX"]
         logger.info("\n" + tabulate(rsi_data, headers=rsi_headers) + "\n")
+
+        logger.info("*********** VOLUME MOMENTUM *************")
+        volume_momentume_data = [[self.volume_momentum_long, self.volume_momentum_short]]
+        volume_momentume_headers = ["VOLUME MOMENTUM LONG", "VOLUME MOMENTUM SHORT"]
+        logger.info("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
+
 
     def get_open_trade_price(self):
 

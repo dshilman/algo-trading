@@ -44,24 +44,28 @@ class OandaApi:
         self.session.headers.update(self.SECURE_HEADER)
         self.stop_stream = False
 
-    def get_price_candles(self, pair_name, days):
+    def get_price_candles(self, pair_name, days = 0, hours = 0, minutes = 0, seconds = 0):
 
         now = datetime.now(tz=timezone.utc)
         now = now - timedelta(seconds=now.second, microseconds=now.microsecond)
-        past = now - timedelta(days=days)
+        past = now - timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
         df = pd.DataFrame()
 
-        for i in range(0, days):
+        if days == 0:
+            logger.info(f"Getting data from {past} to {now}")
+            data_t: pd.DataFrame = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity="S30", price="MBA")
+            df = self.__convert_to_df(data_t)
+        else:
+            for i in range(0, days):
 
-            start_d = past + timedelta(days=i)
-            end_d = start_d + timedelta(days=1)
+                start_d = past + timedelta(days=i)
+                end_d = start_d + timedelta(days=1)
 
-            logger.info(f"Getting data from {start_d} to {end_d}")
-            data_t: pd.DataFrame = self.__fetch_candles(
-                date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="S30", price="MBA")
-            df_t = self.__convert_to_df(data_t)
-            df = pd.concat([df, df_t])
+                logger.info(f"Getting data from {start_d} to {end_d}")
+                data_t: pd.DataFrame = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="S30", price="MBA")
+                df_t = self.__convert_to_df(data_t)
+                df = pd.concat([df, df_t])
 
         # df.sort_values(by='time', ascending=True, inplace=True)
         df = df.set_index('time')
@@ -143,8 +147,8 @@ class OandaApi:
     def __on_success(self, **kwargs):
         
         print(f"Instrument: {kwargs.get('instrument')} | Time: {kwargs.get('time')} | \
-            Bid: {kwargs.get('bid')} | Bid Liquidity: {kwargs.get('bid_liquidity')} | \
-                Ask: {kwargs.get('ask')} | Ask Liquidity: {kwargs.get('ask_liquidity')} | \
+            Bid: {kwargs.get('bid')} | \
+                Ask: {kwargs.get('ask')} | \
                     Status: {kwargs.get('status')}")
 
     def __handle_response(self, response, callback, stop):
@@ -158,15 +162,13 @@ class OandaApi:
                     count += 1
                     instrument = data["instrument"]
                     time = data["time"]
-                    bid = float(data["bids"][0]["price"])
-                    bid_liquidity = int(data["bids"][0]["liquidity"])
-                    ask = float(data["asks"][0]["price"])
-                    ask_liquidity = int(data["asks"][0]["liquidity"])
+                    bid = float(data["bicloseoutBidds"])
+                    ask = float(data["closeoutAsk"])
                     status = data["status"]
                     if callback:
-                        callback(instrument=instrument, time=time, bid=bid, bid_liquidity=bid_liquidity, ask=ask, ask_liquidity=ask_liquidity, status=status)
+                        callback(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
                     else:
-                        self.__on_success(instrument=instrument, time=time, bid=bid, bid_liquidity=bid_liquidity, ask=ask, ask_liquidity=ask_liquidity, status=status)
+                        self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
                 
                     if self.stop_stream or stop is not None and count >= stop:
                         break
@@ -217,6 +219,7 @@ class OandaApi:
         ok, data = self.__make_request(url, params=params)
 
         if ok and 'candles' in data:
+            # logger.info(f"Candles: {data['candles']}")
             return data['candles']
         else:
             print("ERROR fetch_candles()", params, data)
@@ -234,10 +237,10 @@ class OandaApi:
 
         final_data = []
         for candle in data:
-            if candle['complete'] == False:
-                continue
             new_dict = {}
             new_dict['time'] = parser.parse(candle['time'])
+            new_dict['volume'] = candle['volume']
+            
             for p in prices:
                 if p in candle:
                     new_dict[f"{p}"] = float(candle[p]["c"])

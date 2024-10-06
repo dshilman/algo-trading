@@ -92,15 +92,15 @@ class Trader():
         logger.info ("Started New Trading Session")
         self.terminate = False
 
-        logger.info (f"Getting  candles for: {self.instrument}")
-        self.strategy.data = self.api.get_price_candles(pair_name=self.instrument, days=self.days)
+        # logger.info (f"Getting  candles for: {self.instrument}")
+        # self.strategy.data = self.api.get_price_candles(pair_name=self.instrument, days=self.days)
 
 
         treads = []
         treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
         # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
-        treads.append(threading.Thread(target=self.refresh_strategy, args=(10,)))
-        treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
+        self.refresh_strategy(refresh=30)
+        # treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
         for t in treads:
             t.start()
@@ -174,16 +174,18 @@ class Trader():
 
             try:
 
-                temp_tick_data = self.tick_data.copy()
-                self.tick_data.clear()
+                # temp_tick_data = self.tick_data.copy()
+                # self.tick_data.clear()
 
-                if len(temp_tick_data) > 0:
-                    df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "bid_liquidity", "ask", "ask_liquidity", "status"])
-                    df.set_index('time', inplace=True)    
-                    df = df.resample("30s").last()
-                    # logger.debug(f"Adding tickers length: {len(df)} | data: {df}")
-                    self.strategy.add_tickers(ticker_df=df)
+                # if len(temp_tick_data) > 0:
+                #     df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "bid_liquidity", "ask", "ask_liquidity", "status"])
+                #     df.set_index('time', inplace=True)    
+                #     df = df.resample("30s").last()
+                #     # logger.debug(f"Adding tickers length: {len(df)} | data: {df}")
+                #     self.strategy.add_tickers(ticker_df=df)
 
+                tickers_df = self.api.get_price_candles(pair_name=self.instrument, minutes=300)
+                self.strategy.data=tickers_df
                 self.strategy.calc_indicators()                
                 self.strategy.set_strategy_indicators(row = None)
             
@@ -201,8 +203,8 @@ class Trader():
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")
                 logger.exception(e)
-                i = i + 1
-                if i > 20:
+                i = i + 1                
+                if i > 0:
                     self.terminate = True
                     break
 
