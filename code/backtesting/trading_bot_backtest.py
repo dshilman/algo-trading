@@ -87,8 +87,8 @@ class TradingBacktester():
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
 
-            logger.info("Saving indicators to Excel...")
-            self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
+            # logger.info("Saving indicators to Excel...")
+            # self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
 
             pause_trading = None
             week_day = None

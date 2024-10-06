@@ -142,7 +142,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # MACD
         # self.ema_long = row["ema_long"]
-        # self.ema_short = row['ema_short']
+        self.ema_short = row['ema_short']
 
         # Bollinger Band
         self.sma_long = row['sma_long']
@@ -150,7 +150,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bb_high = row['bb_upper']
 
         # self.price_ema_long_slope = row["ema_long_slope"]
-        # self.price_ema_short = row["ema_short"]
+        self.price_ema_short = row["ema_short"]
         # self.price_ema_short_slope = row["ema_short_slope"]
         # self.price_ema_short_slope_max = row["ema_short_slope_max"]
         # self.price_ema_short_slope_min = row["ema_short_slope_min"]
@@ -161,6 +161,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.price_momentum_long_max = row["price_momentum_long_max"]
         
         self.price_momentum_short = row["price_momentum_short"]
+        self.price_momentum_short_min = row["price_momentum_short_min"]
         self.price_momentum_short_max = row["price_momentum_short_max"]
         
         # self.price_momentum_short_mean = row["price_momentum_short_mean"]
@@ -181,6 +182,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Volume Momentum
         # self.volume_momentum_short = row ["volume_momentum_short"]
         # self.volume_momentum_long = row ["volume_momentum_long"]
+        self.volume = row ["volume"]
         self.volume_pct_change = row ["volume_pct_change"]
         self.volume_max = row ["volume_max"]
 
