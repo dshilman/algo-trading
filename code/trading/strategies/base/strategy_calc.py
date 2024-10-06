@@ -85,10 +85,10 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
         # RSI
-        # df["rsi_long"] = df[instrument].rolling(period_long).apply(lambda x: calculate_rsi(x, period_long))
-        # df["rsi_long_prev"] = df.rsi_long.shift()
-        # df["rsi_long_max"] = df['rsi_long'].rolling(period_long).max()
-        # df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
+        df["rsi_long"] = df[instrument].rolling(period_long).apply(lambda x: calculate_rsi(x, period_long))
+        df["rsi_long_prev"] = df.rsi_long.shift()
+        df["rsi_long_max"] = df['rsi_long'].rolling(period_long).max()
+        df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
 
         df["rsi_short"] = df[instrument].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change()
@@ -179,8 +179,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         
         # Volume Momentum
-        self.volume_momentum_short = row ["volume_momentum_short"]
-        self.volume_momentum_long = row ["volume_momentum_long"]
+        # self.volume_momentum_short = row ["volume_momentum_short"]
+        # self.volume_momentum_long = row ["volume_momentum_long"]
         self.volume_pct_change = row ["volume_pct_change"]
         self.volume_max = row ["volume_max"]
 
