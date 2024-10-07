@@ -34,7 +34,7 @@ class Trader():
         config = configparser.ConfigParser()  
         config.read(pair_file)
 
-        self.days = int(config.get(self.instrument, 'days'))
+        # self.days = int(config.get(self.instrument, 'days'))
         # self.start = config.get(self.instrument, 'start')
         # self.end = config.get(self.instrument, 'end')
 
