@@ -205,30 +205,30 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     def print_indicators(self):
 
-        logger.info("*********** PRICE *************")
+        logger.debug("*********** PRICE *************")
         price_data = [[self.ask, self.bid, self.price, self.price_std]]
         price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
-        logger.info("\n" + tabulate(price_data, headers=price_headers) + "\n")
+        logger.debug("\n" + tabulate(price_data, headers=price_headers) + "\n")
 
-        logger.info("*********** MACD and BOLLINGER *************")
+        logger.debug("*********** MACD and BOLLINGER *************")
         macd_bb_data = [[self.ema_short, self.sma_long, self.bb_low, self.bb_high]]
         macd_bb_headers = ["EMA SHORT", "SMA LONG", "BB_LOW", "BB_HIGH"]
-        logger.info("\n" + tabulate(macd_bb_data, headers=macd_bb_headers) + "\n")
+        logger.debug("\n" + tabulate(macd_bb_data, headers=macd_bb_headers) + "\n")
 
-        logger.info("*********** MOMENTUM *************")
+        logger.debug("*********** MOMENTUM *************")
         momentum_data = [[self.price_momentum_long, self.price_momentum_short]]
         momentum_headers = ["PRICE MOMENTUM LONG", "PRICE MOMENTUME SHORT"]
-        logger.info("\n" + tabulate(momentum_data, headers=momentum_headers) + "\n")
+        logger.debug("\n" + tabulate(momentum_data, headers=momentum_headers) + "\n")
 
-        logger.info("*********** RSI *************")
+        logger.debug("*********** RSI *************")
         rsi_data = [[self.rsi_short, self.rsi_short_min, self.rsi_short_max]]
         rsi_headers = ["RSI SHORT", "RSI SHORT MIN", "RSI SHORT MAX"]
-        logger.info("\n" + tabulate(rsi_data, headers=rsi_headers) + "\n")
+        logger.debug("\n" + tabulate(rsi_data, headers=rsi_headers) + "\n")
 
-        logger.info("*********** VOLUME *************")
+        logger.debug("*********** VOLUME *************")
         volume_momentume_data = [[self.volume, self.volume_pct_change, self.volume_max]]
         volume_momentume_headers = ["VOLUME", "VOLUME % CHANGE", "VOLUME MAX"]
-        logger.info("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
+        logger.debug("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
 
 
     def get_open_trade_price(self):
