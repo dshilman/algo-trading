@@ -33,7 +33,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         trading_time = datetime.now()
         self.trading_session.have_units = self.api.get_position(instrument = self.instrument)
-        logger.info(f"Have {self.trading_session.have_units} positions of {self.instrument}")
+        logger.debug(f"Have {self.trading_session.have_units} positions of {self.instrument}")
         trade_action = self.determine_trade_action(trading_time)
 
         if trade_action is not None:
