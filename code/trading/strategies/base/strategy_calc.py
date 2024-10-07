@@ -85,10 +85,10 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
         # RSI
-        df["rsi_long"] = df[instrument].rolling(period_long).apply(lambda x: calculate_rsi(x, period_long))
-        df["rsi_long_prev"] = df.rsi_long.shift()
-        df["rsi_long_max"] = df['rsi_long'].rolling(period_long).max()
-        df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
+        # df["rsi_long"] = df[instrument].rolling(period_long).apply(lambda x: calculate_rsi(x, period_long))
+        # df["rsi_long_prev"] = df.rsi_long.shift()
+        # df["rsi_long_max"] = df['rsi_long'].rolling(period_long).max()
+        # df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
 
         df["rsi_short"] = df[instrument].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change()
@@ -158,7 +158,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Momentum
         self.price_momentum_long = row["price_momentum_long"]
         # self.price_momentum_long_mean = row["price_momentum_long_mean"]
+        self.price_momentum_long_min = row["price_momentum_long_min"]
         self.price_momentum_long_max = row["price_momentum_long_max"]
+
         
         self.price_momentum_short = row["price_momentum_short"]
         self.price_momentum_short_min = row["price_momentum_short_min"]
@@ -168,10 +170,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         
 
         # RSI
-        self.rsi_long = round(row["rsi_long"], 4)
-        self.rsi_long_prev = round(row["rsi_long_prev"], 4)
-        self.rsi_long_max = round(row["rsi_long_max"], 4)
-        self.rsi_long_min = round(row["rsi_long_min"], 4)
+        # self.rsi_long = round(row["rsi_long"], 4)
+        # self.rsi_long_prev = round(row["rsi_long_prev"], 4)
+        # self.rsi_long_max = round(row["rsi_long_max"], 4)
+        # self.rsi_long_min = round(row["rsi_long_min"], 4)
 
         self.rsi_short = round(row["rsi_short"], 4)
         self.rsi_short_pct_change = round(row["rsi_short_pct_change"], 4)

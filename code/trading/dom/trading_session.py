@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timedelta, timezone
 from tabulate import tabulate
-
 from pathlib import Path
 import sys
 file = Path(__file__).resolve()
@@ -18,7 +17,7 @@ class Trading_Session():
         
         self.instrument = instrument
         self.trades = []
-        self.pl:float = 0
+        self.pl: float = 0
         self.outstanding: float = 0
         self.go_short: int = 0
         self.long_trades: int = 0
@@ -47,8 +46,8 @@ class Trading_Session():
 
         if self.have_units >= 0 and trade_action.units > 0:
             self.trade_id = self.__get_trade_new_id()
-            self.trade_cost = abs(trade_action.units) * trade_action.price
-            self.outstanding = self.outstanding + self.trade_cost      
+            self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
+            self.outstanding = (self.outstanding) + (self.trade_cost)      
             trade_pl = 0
             trade_pl_pct = 0        
             self.long_trades = self.long_trades + 1
@@ -56,16 +55,16 @@ class Trading_Session():
             action = "Buy"
         elif self.have_units <= 0 and trade_action.units < 0:
             self.trade_id = self.__get_trade_new_id()
-            self.trade_cost = abs(trade_action.units) * trade_action.price
-            self.outstanding = self.outstanding + self.trade_cost      
+            self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
+            self.outstanding = (self.outstanding) + (self.trade_cost)   
             trade_pl = 0
             trade_pl_pct = 0        
             self.short_trades = self.short_trades + 1
             trade = "Open Short"
             action = "Sell"
         elif self.have_units > 0 and trade_action.units < 0:
-            self.trade_cost = abs(trade_action.units) * trade_action.price
-            trade_pl = self.trade_cost - self.outstanding
+            self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
+            trade_pl = (self.trade_cost) - (self.outstanding)
             self.pl = self.pl + trade_pl
             trade_pl_pct = 0 if self.outstanding == 0 else trade_pl / self.outstanding * 100 
             self.long_trades_close = self.long_trades_close + 1
@@ -73,8 +72,8 @@ class Trading_Session():
             trade = "Close Long"  + (" (SL)" if trade_action.sl_trade else "")
             action = "Sell"
         elif self.have_units < 0 and trade_action.units > 0:
-            self.trade_cost = abs(trade_action.units) * trade_action.price
-            trade_pl = self.outstanding - self.trade_cost
+            self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
+            trade_pl = (self.outstanding) - (self.trade_cost)
             self.pl = self.pl + trade_pl
             trade_pl_pct = 0 if self.outstanding == 0 else trade_pl / self.outstanding * 100
             self.short_trades_close = self.short_trades_close + 1
