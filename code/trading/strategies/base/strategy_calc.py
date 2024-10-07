@@ -206,36 +206,28 @@ class TradingStrategyCalc(TradingStrategyBase):
     def print_indicators(self):
 
         logger.info("*********** PRICE *************")
-        price_data = [[self.ask, self.bid, self.price,
-                       self.price_min, self.price_max, self.price_std]]
-        price_headers = ["ASK PRICE", "BID PRICE",
-                         "MID PRICE", "PRICE MIN", "PRICE MAX", "PRICE STD"]
+        price_data = [[self.ask, self.bid, self.price, self.price_std]]
+        price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
         logger.info("\n" + tabulate(price_data, headers=price_headers) + "\n")
 
         logger.info("*********** MACD and BOLLINGER *************")
-        macd_bb_data = [[self.ema_short, self.ema_long, self.sma_long,
-                         self.bb_low, self.bb_high, self.sma_crossover]]
-        macd_bb_headers = ["EMA SHORT", "EMA LONG",
-                           "SMA LONG", "BB_LOW", "BB_HIGH", "SMA CROSSOVER"]
-        logger.info("\n" + tabulate(macd_bb_data,
-                    headers=macd_bb_headers) + "\n")
+        macd_bb_data = [[self.ema_short, self.sma_long, self.bb_low, self.bb_high]]
+        macd_bb_headers = ["EMA SHORT", "SMA LONG", "BB_LOW", "BB_HIGH"]
+        logger.info("\n" + tabulate(macd_bb_data, headers=macd_bb_headers) + "\n")
 
         logger.info("*********** MOMENTUM *************")
         momentum_data = [[self.price_momentum_long, self.price_momentum_short]]
         momentum_headers = ["PRICE MOMENTUM LONG", "PRICE MOMENTUME SHORT"]
-        logger.info("\n" + tabulate(momentum_data,
-                    headers=momentum_headers) + "\n")
+        logger.info("\n" + tabulate(momentum_data, headers=momentum_headers) + "\n")
 
         logger.info("*********** RSI *************")
-        rsi_data = [[self.rsi_long, self.rsi_long_min, self.rsi_long_max,
-                     self.rsi_short, self.rsi_short_min, self.rsi_short_max]]
-        rsi_headers = ["RSI LONG", "RSI LONG MIN", "RSI LONG MAX",
-                       "RSI SHORT", "RSI SHORT MIN", "RSI SHORT MAX"]
+        rsi_data = [[self.rsi_short, self.rsi_short_min, self.rsi_short_max]]
+        rsi_headers = ["RSI SHORT", "RSI SHORT MIN", "RSI SHORT MAX"]
         logger.info("\n" + tabulate(rsi_data, headers=rsi_headers) + "\n")
 
-        logger.info("*********** VOLUME MOMENTUM *************")
-        volume_momentume_data = [[self.volume_momentum_long, self.volume_momentum_short]]
-        volume_momentume_headers = ["VOLUME MOMENTUM LONG", "VOLUME MOMENTUM SHORT"]
+        logger.info("*********** VOLUME *************")
+        volume_momentume_data = [[self.volume, self.volume_pct_change, self.volume_max]]
+        volume_momentume_headers = ["VOLUME", "VOLUME % CHANGE", "VOLUME MAX"]
         logger.info("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
 
 
@@ -260,10 +252,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         if day == 4 and hour >= 20:
             return False
 
-        pause_from_dt = datetime.combine(
-            date_time, datetime.strptime(self.pause_start, '%H:%M:%S').time())
-        pause_to_dt = datetime.combine(
-            date_time, datetime.strptime(self.pause_end, '%H:%M:%S').time())
+        pause_from_dt = datetime.combine(date_time, datetime.strptime(self.pause_start, '%H:%M:%S').time())
+        pause_to_dt = datetime.combine(date_time, datetime.strptime(self.pause_end, '%H:%M:%S').time())
 
         if pause_from_dt < date_time < pause_to_dt:
             return False
