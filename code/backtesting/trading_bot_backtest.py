@@ -87,11 +87,13 @@ class TradingBacktester():
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
 
-            # logger.info("Saving indicators to Excel...")
-            # self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
-
+            # try:
+            #    logger.info("Saving indicators to Excel...")
+            #    self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
+            # except Exception as e:
+            #     logger.exception("Exception occurred")
+ 
             pause_trading = None
-            week_day = None
 
             logger.info(f"Starting trading for {self.strategy.instrument}...")
             for index, row in self.strategy.data.iterrows():
