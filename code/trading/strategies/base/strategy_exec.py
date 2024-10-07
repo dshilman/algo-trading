@@ -32,6 +32,8 @@ class TradingStrategyExec(TradingStrategyCalc):
             return
 
         trading_time = datetime.now()
+        self.trading_session.have_units = self.api.get_position(instrument = self.instrument)
+        logger.info(f"Have {self.trading_session.have_units} positions of {self.instrument}")
         trade_action = self.determine_trade_action(trading_time)
 
         if trade_action is not None:
@@ -42,8 +44,8 @@ class TradingStrategyExec(TradingStrategyCalc):
             if order is not None:
                 self.submit_order(order)
 
-        if trade_action is not None and trade_action.sl_trade:
-            raise PauseTradingException(2)
+        # if trade_action is not None and trade_action.sl_trade:
+        #     raise PauseTradingException(2)
 
         return
 

@@ -96,18 +96,18 @@ class Trader():
         # self.strategy.data = self.api.get_price_candles(pair_name=self.instrument, days=self.days)
 
 
-        treads = []
-        treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
-        # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
+        # treads = []
+        # treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
+        # # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
         self.refresh_strategy(refresh=15)
         # treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
-        for t in treads:
-            t.start()
-            time.sleep(1)
+        # for t in treads:
+        #     t.start()
+        #     time.sleep(1)
         
-        for t in treads:
-            t.join()
+        # for t in treads:
+        #     t.join()
 
         self.terminate_session("Finished Trading Session")
 
@@ -188,17 +188,18 @@ class Trader():
                 self.strategy.data=tickers_df
                 self.strategy.calc_indicators()                
                 self.strategy.set_strategy_indicators(row = None)
+                self.strategy.execute_strategy()
             
-                try:
-                    self.strategy.execute_strategy()
-                except PauseTradingException as e:
-                    logger.info(f"Caught Stop Loss Error. Continue Traiding...")
-                    self.stop_loss_count = self.stop_loss_count + 1
+                # try:
+                #     self.strategy.execute_strategy()
+                # except PauseTradingException as e:
+                #     logger.info(f"Caught Stop Loss Error. Continue Traiding...")
+                #     self.stop_loss_count = self.stop_loss_count + 1
                     # time.sleep(2 * 60 * 60)
                     
-                    if self.stop_loss_count > 2:
-                        logger.error(f"Stop Loss Count > 2. Terminating Trading")
-                        self.terminate = True
+                    # if self.stop_loss_count > 2:
+                    #     logger.error(f"Stop Loss Count > 2. Terminating Trading")
+                    #     self.terminate = True
 
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")
