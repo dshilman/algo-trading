@@ -4,8 +4,8 @@
 processes=(
     "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD.sh"
     "python3 trading_bot.py EUR_USD"
-    # "/bin/sh /home/ec2-user/algo-trading/trader_oanda_USD_CHF.sh"
-    # "python3 trading_bot.py USD_CHF"
+    "/bin/sh /home/ec2-user/algo-trading/trader_oanda_GBP_CHF.sh"
+    "python3 trading_bot.py GBP_CHF"
     # "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_GBP.sh"
     # "python3 trading_bot.py EUR_GBP"
     "/bin/sh /home/ec2-user/algo-trading/trader_oanda_GBP_USD.sh"

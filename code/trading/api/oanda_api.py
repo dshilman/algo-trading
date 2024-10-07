@@ -53,7 +53,7 @@ class OandaApi:
         df = pd.DataFrame()
 
         if days == 0:
-            logger.info(f"Getting data from {past} to {now}")
+            logger.debug(f"Getting price candles for {pair_name} from {past} to {now}")
             data_t: pd.DataFrame = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity="S30", price="MBA")
             df = self.__convert_to_df(data_t)
         else:
@@ -62,7 +62,7 @@ class OandaApi:
                 start_d = past + timedelta(days=i)
                 end_d = start_d + timedelta(days=1)
 
-                logger.info(f"Getting data from {start_d} to {end_d}")
+                logger.debug(f"Getting price candles for {pair_name} from {start_d} to {end_d}")
                 data_t: pd.DataFrame = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="S30", price="MBA")
                 df_t = self.__convert_to_df(data_t)
                 df = pd.concat([df, df_t])
