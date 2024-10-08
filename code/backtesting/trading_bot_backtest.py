@@ -87,11 +87,11 @@ class TradingBacktester():
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
 
-            # try:
-            #    logger.info("Saving indicators to Excel...")
-            #    self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
-            # except Exception as e:
-            #     logger.exception("Exception occurred")
+            try:
+               logger.info("Saving indicators to Excel...")
+               self.strategy.data.to_excel(f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx")
+            except Exception as e:
+                logger.error("Couldn't wtite to " + f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx." + " File is open")
  
  
             pause_trading = None
