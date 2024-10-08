@@ -166,7 +166,8 @@ class Trader():
 
     def refresh_strategy(self, refresh = 30):
 
-        i: int = 0
+        error_counter: int = 0
+        exec_counter: int = 0
 
         while not self.terminate:
 
@@ -189,6 +190,10 @@ class Trader():
                 self.strategy.calc_indicators()                
                 self.strategy.set_strategy_indicators(row = None)
                 self.strategy.execute_strategy()
+                exec_counter = exec_counter + 1
+
+                if exec_counter % 100 == 0:
+                    logger.info (f"Heartbeat... {exec_counter}")
             
                 # try:
                 #     self.strategy.execute_strategy()
@@ -204,8 +209,10 @@ class Trader():
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")
                 logger.exception(e)
-                i = i + 1                
-                if i > 0:
+                error_counter = error_counter + 1                
+                if error_counter > 10:
+                    logger.error(f"Too many errors: {error_counter}")
+                    # the next two lines are redundant, but I am leaving them in place
                     self.terminate = True
                     break
 

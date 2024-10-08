@@ -136,6 +136,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row[self.instrument]
+        self.price_open = row ["mid_o"]
         # self.price_max = row["price_max"]
         # self.price_min = row["price_min"]
         self.price_std = row['price_std']

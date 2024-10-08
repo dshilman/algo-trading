@@ -244,6 +244,9 @@ class OandaApi:
             for p in prices:
                 if p in candle:
                     new_dict[f"{p}"] = float(candle[p]["c"])
+                    if p == 'mid':
+                        new_dict[f"{p}_o"] = float(candle[p]["o"])
+
             final_data.append(new_dict)
 
         df = pd.DataFrame.from_dict(final_data)
