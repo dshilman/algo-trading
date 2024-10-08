@@ -93,6 +93,7 @@ class TradingBacktester():
             # except Exception as e:
             #     logger.exception("Exception occurred")
  
+ 
             pause_trading = None
 
             logger.info(f"Starting trading for {self.strategy.instrument}...")
