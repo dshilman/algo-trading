@@ -29,14 +29,14 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
-        if self.short_trading and self.volume > self.trading_volume and self.volume_pct_change > .5 and self.volume == self.volume_max \
+        if self.short_trading and self.volume == self.volume_max > self.trading_volume and self.volume_pct_change > .5 \
             and self.rsi_short_pct_change < -self.rsi_change and self.rsi_short == self.rsi_short_min and self.price - self.price_open < 0 \
                 and self.price_momentum_short == self.price_momentum_short_min:
                     if not self.backtest:
                         logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                     return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
-        elif self.long_trading and self.volume > self.trading_volume and self.volume_pct_change > .5 and self.volume == self.volume_max \
+        elif self.long_trading and self.volume == self.volume_max > self.trading_volume and self.volume_pct_change > .5 \
             and self.rsi_short_pct_change > self.rsi_change and self.rsi_short == self.rsi_short_max and  self.price - self.price_open > 0 \
                 and self.price_momentum_short == self.price_momentum_short_max:
                     if not self.backtest:

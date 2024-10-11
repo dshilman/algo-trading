@@ -237,6 +237,9 @@ class OandaApi:
 
         final_data = []
         for candle in data:
+            if not candle["complete"]:
+                continue
+            
             new_dict = {}
             new_dict['time'] = parser.parse(candle['time'])
             new_dict['volume'] = candle['volume']
