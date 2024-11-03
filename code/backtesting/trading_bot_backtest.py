@@ -4,7 +4,6 @@ import logging
 import logging.handlers as handlers
 import os
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -15,8 +14,6 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.api.oanda_api import OandaApi
-from trading.utils.errors import PauseTradingException
-from trading.utils.tech_indicators import calculate_rsi, calculate_momentum
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 
 logger = logging.getLogger()
@@ -31,11 +28,9 @@ class TradingBacktester():
         config = configparser.ConfigParser()  
         config.read(pairs_file)
         self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
-        self.start = config.get(instrument, 'start')
-        self.end = config.get(instrument, 'end')
 
         logger.setLevel(logging.INFO)
-
+        
         log_file = os.path.join("logs", f"{instrument}_{days}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -56,15 +51,15 @@ class TradingBacktester():
             raise Exception(f"Strategy not found for {instrument}")
 
         logger.info(f"Running:{class_} strategy")
+        logger.info(f"Strategy Configuration \n + {config.items(instrument)}")
+
         self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
-        
+        self.strategy.backtest = True
     
     def get_history_with_all_prices(self):
         
         df: pd.DataFrame = self.api.get_price_candles(self.strategy.instrument, self.days)
                
-        # df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
-
         return df
 
     def get_data(self):
@@ -91,33 +86,38 @@ class TradingBacktester():
 
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
-    
-            logger.info(f"Starting trading for {self.strategy.instrument}...")
 
+            try:
+                file_path = f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx"
+                if not os.path.exists(file_path):
+                   logger.info("Saving indicators to Excel...")
+                   self.strategy.data.to_excel(file_path)
+                else:
+                    logger.info(f"File: {file_path} already exists")
+            except Exception as e:
+                logger.error("Couldn't wtite to " + f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx." + " File is open")
+ 
+ 
             pause_trading = None
 
+            logger.info(f"Starting trading for {self.strategy.instrument}...")
             for index, row in self.strategy.data.iterrows():
 
-                self.strategy.set_strategy_indicators(row=row, print=False)
+                self.strategy.set_strategy_indicators(row=row, time=index)
                 
                 if pause_trading == None or index > pause_trading:
-                    trade_action = None
-                    try:
-                        trade_action = self.strategy.determine_trade_action(trading_time=index)
-                    except PauseTradingException as e:
-                        logger.info(f"Pausing trading for {e.hours} hour(s) at {index}")
-                        pause_trading = index + timedelta(hours = e.hours)
-                        continue
+                    trade_action = self.strategy.determine_trade_action(trading_time=index)
                                         
-                    if trade_action != None:
-                        # self.strategy.print_indicators()
-                        self.strategy.trading_session.add_trade(trade_action=trade_action, date_time=index, rsi=self.strategy.rsi)
-                        if trade_action.sl_trade:
-                            logger.info(f"Pausing trading for 5 minutes at {index}")
-                            pause_trading = index + timedelta(minutes = 5)                        
-            
+                    # if trade_action != None and trade_action.sl_trade:
+                    #     logger.debug(f"Pausing trading for 5 minutes at {index}")
+                    #     pause_trading = index + timedelta(hours = 2)                        
+        
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()
+
+            # logger.info("Saving trading report to Excel...")
+            # date_stamp = datetime.now().strftime("%d_%H_%M")
+            # self.strategy.trading_session.to_excel(f"../../data/backtest_results_{self.strategy.instrument}_{self.days}_{date_stamp}.xlsx")
 
         except Exception as e:
             logger.exception("Exception occurred")

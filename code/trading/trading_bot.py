@@ -34,9 +34,9 @@ class Trader():
         config = configparser.ConfigParser()  
         config.read(pair_file)
 
-        self.days = int(config.get(self.instrument, 'days'))
-        self.start = config.get(self.instrument, 'start')
-        self.end = config.get(self.instrument, 'end')
+        # self.days = int(config.get(self.instrument, 'days'))
+        # self.start = config.get(self.instrument, 'start')
+        # self.end = config.get(self.instrument, 'end')
 
         self.tick_data = []
         self.stop_loss_count = 0
@@ -55,15 +55,15 @@ class Trader():
             raise Exception(f"Strategy not found for {instrument}")
 
         logger.info(f"Running:{class_} strategy")
-        self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
+        self.strategy: TradingStrategyExec  = class_(instrument=self.instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
         logger.info(f"Trading Strategy: {self.strategy}")
 
-        today = datetime.utcnow().date()
+        today = datetime.now(tz=timezone.utc).date()
 
-        self.from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
-        self.to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
-        if self.to_dt < self.from_dt:
-            self.to_dt = self.to_dt + timedelta(days=1)
+        # self.from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
+        # self.to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
+        # if self.to_dt < self.from_dt:
+        #     self.to_dt = self.to_dt + timedelta(days=1)
 
         self.terminate = False
 
@@ -80,7 +80,7 @@ class Trader():
 
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-        log_file = os.path.join("../../logs/trading", f"{self.instrument}_{datetime.utcnow().strftime('%m-%d')}_app.log")
+        log_file = os.path.join("../../logs/trading", f"{self.instrument}_{datetime.now(tz=timezone.utc).strftime('%m-%d')}_app.log")
         log_handler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         log_handler.setFormatter(formatter)
         logger.addHandler(log_handler)
@@ -92,22 +92,22 @@ class Trader():
         logger.info ("Started New Trading Session")
         self.terminate = False
 
-        logger.info (f"Getting  candles for: {self.instrument}")
-        self.strategy.data = self.api.get_price_candles(pair_name=self.instrument, days=self.days)
+        # logger.info (f"Getting  candles for: {self.instrument}")
+        # self.strategy.data = self.api.get_price_candles(pair_name=self.instrument, days=self.days)
 
 
-        treads = []
-        treads.append(threading.Thread(target=self.check_positions, args=(5 * 60,)))
-        treads.append(threading.Thread(target=self.check_trading_time, args=(5 * 60,)))
-        treads.append(threading.Thread(target=self.refresh_strategy, args=(15,)))
-        treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
+        # treads = []
+        # treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
+        # # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
+        self.refresh_strategy(refresh=10)
+        # treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
 
-        for t in treads:
-            t.start()
-            time.sleep(1)
+        # for t in treads:
+        #     t.start()
+        #     time.sleep(1)
         
-        for t in treads:
-            t.join()
+        # for t in treads:
+        #     t.join()
 
         self.terminate_session("Finished Trading Session")
 
@@ -120,9 +120,7 @@ class Trader():
 
             try:
                 logger.info ("Start Stream")
-                # self.api.stream_data(instrument=self.instrument, stop = stop_after, callback=self.new_price_tick)
-                self.api.stream_prices(instrument=self.instrument, stop = stop_after, callback=self.new_price_tick)
-
+                self.api.stream_prices(instrument=self.instrument, stop = stop_after, callback=self.new_price_ticker)
                 self.terminate = True
                 break
 
@@ -141,27 +139,35 @@ class Trader():
 
 
     def check_trading_time(self, refresh = 60):
+        pass
+        # while not self.terminate:
 
-        while not self.terminate:
-
-            now = datetime.utcnow()
-            logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
+        #     now = datetime.now(tz=timezone.utc)
+        #     logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
             
+        #     day = now.weekday()
+        #     hour = now.hour
+        #     if day == 4 and hour >= 19 and not self.strategy.stop_trading:
+        #         logger.info("Friday after Trading Time - Terminating Trading")
+        #         self.strategy.stop_trading = True
             
-            if self.from_dt <= now <= self.to_dt:
-                time.sleep(refresh)
-            else:
-                logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
-                logger.info("Not Trading Time - Terminating Trading")
-                self.terminate = True
-                self.stop_streaming()
-                break
 
+            # if self.from_dt - timedelta(minutes=90) <= now <= self.to_dt:
+            #    self.strategy.stop_trading = True
+            # elif not self.from_dt <= now <= self.to_dt:
+            #     logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
+            #     logger.info("Not Trading Time - Terminating Trading")
+            #     self.terminate = True
+            #     self.stop_streaming()
+            #     break
+
+            # time.sleep(refresh)
 
 
     def refresh_strategy(self, refresh = 30):
 
-        i: int = 0
+        error_counter: int = 0
+        exec_counter: int = 0
 
         while not self.terminate:
 
@@ -169,48 +175,55 @@ class Trader():
 
             try:
 
-                temp_tick_data = self.tick_data.copy()
-                self.tick_data.clear()
+                # temp_tick_data = self.tick_data.copy()
+                # self.tick_data.clear()
 
-              
-                if len(temp_tick_data) > 0:
-                    df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "ask"])
-                    df.set_index('time', inplace=True)    
-                    df = df.resample("30s").last()
-                    logger.debug(f"Resampled Data: {df}")
+                # if len(temp_tick_data) > 0:
+                #     df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "bid_liquidity", "ask", "ask_liquidity", "status"])
+                #     df.set_index('time', inplace=True)    
+                #     df = df.resample("30s").last()
+                #     # logger.debug(f"Adding tickers length: {len(df)} | data: {df}")
+                #     self.strategy.add_tickers(ticker_df=df)
 
-                    self.strategy.add_tickers(ticker_df=df)
-
+                tickers_df = self.api.get_price_candles(pair_name=self.instrument, minutes=200)
+                self.strategy.data=tickers_df
                 self.strategy.calc_indicators()                
-                self.strategy.set_strategy_indicators(print=True)
+                self.strategy.set_strategy_indicators(row = None)
+                self.strategy.execute_strategy()
+                exec_counter = exec_counter + 1
+
+                if exec_counter % 100 == 0:
+                    logger.info (f"Heartbeat... {exec_counter}")
+                    self.strategy.print_indicators()
             
-                try:
-                    self.strategy.execute_strategy()
-                except PauseTradingException as e:
-                    logger.error(f"Caught Stop Loss Error. Keep Traiding...")
-                    self.stop_loss_count = self.stop_loss_count + 1
-                    time.sleep(5 * 60)
-                    if self.stop_loss_count > 2:
-                        logger.error(f"Stop Loss Count > 2. Terminating Trading")
-                        self.terminate = True
-                        time.sleep(60 * 60)
-
-
-                time.sleep(refresh)
+                # try:
+                #     self.strategy.execute_strategy()
+                # except PauseTradingException as e:
+                #     logger.info(f"Caught Stop Loss Error. Continue Traiding...")
+                #     self.stop_loss_count = self.stop_loss_count + 1
+                    # time.sleep(2 * 60 * 60)
+                    
+                    # if self.stop_loss_count > 2:
+                    #     logger.error(f"Stop Loss Count > 2. Terminating Trading")
+                    #     self.terminate = True
 
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")
                 logger.exception(e)
-                i = i + 1
-                if i > 20:
+                error_counter = error_counter + 1                
+                if error_counter > 10:
+                    logger.error(f"Too many errors: {error_counter}")
+                    # the next two lines are redundant, but I am leaving them in place
                     self.terminate = True
                     break
-                time.sleep(5)
+
+            time.sleep(refresh)
 
 
     def check_positions(self, refresh = 300): 
 
         i: int = 0
+        print_logs: int = 0
 
         while not self.terminate:
             try:
@@ -221,9 +234,10 @@ class Trader():
                 if not units == self.strategy.trading_session.have_units:
                     self.strategy.trading_session.have_units = units
 
-                logger.info(f"Instrument: {self.instrument}, Units: {units}")
+                if print_logs % 5 == 0:
+                    logger.info(f"Instrument: {self.instrument}, Units: {units}")
 
-
+                print_logs = print_logs + 1
                 time.sleep(refresh)
 
             except Exception as e:
@@ -236,27 +250,37 @@ class Trader():
                 time.sleep(5)
         
  
-    def new_price_tick(self, instrument, time, bid, ask):
+    def new_price_ticker(self, **kwargs):
 
-        if not (instrument and time and bid and ask):
-            logger.error(f"Invalid values!!! instrument: {instrument} --- time: {time}  --- ask: {ask} --- bid: {bid}")
-            return
+        instrument = kwargs.get('instrument')
+        date_time = kwargs.get('time')
+        ask = kwargs.get('ask')
+        ask_liquidity = kwargs.get('ask_liquidity')
+        bid = kwargs.get('bid')
+        bid_liquidity = kwargs.get('bid_liquidity')
+        status = kwargs.get('status')
+
+        if not (instrument is not None \
+                and time is not None and bid is not None \
+                    and ask is not None and status is not None):
+            
+                        logger.error(f"Invalid instrument price values!!!")
+                        logger.error(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Bid Liquidity: {bid_liquidity} | Ask: {ask} | Ask Liquidity: {ask_liquidity} | Status: {status}")
+                        return
         
-        logger.debug(f"{instrument} --- time: {time}  --- ask: {ask} --- bid: {bid}")
+        logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Bid Liquidity: {bid_liquidity} | Ask: {ask} | Ask Liquidity: {ask_liquidity} | Status: {status}")
+
          # 2023-12-19T13:28:35.194571445Z
-        date_time = pd.to_datetime(time).replace(tzinfo=None)
+        pd_timestamp: pd.Timestamp = pd.to_datetime(date_time).replace(tzinfo=None)
         
-        recent_tick = [date_time, (ask + bid)/2, bid, ask]
+        recent_tick = [pd_timestamp, (ask + bid)/2, bid, bid_liquidity, ask, ask_liquidity, status]
         self.tick_data.append(recent_tick)
 
-        minute: int = date_time.minute
-        second: int = date_time.second
+        minute: int = pd_timestamp.minute
+        second: int = pd_timestamp.second
 
         if minute in [0, 15, 30, 45] and second == 0:
-
-            logger.info(
-                f"Heartbeat --- instrument: {self.instrument}, ask: {round(ask, 4)}, bid: {round(bid, 4)}"
-            )
+            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {ask} | aks_liquidity: {ask_liquidity} | bid: {bid} | bid_liquidity: {bid_liquidity} | status: {status}")
  
   
         
@@ -264,7 +288,7 @@ class Trader():
         # self.stop_stream = True
         logger.info (cause)
 
-        self.strategy.trading_session.print_trades()
+        self.strategy.terminate()
 
 
     

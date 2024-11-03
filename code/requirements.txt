@@ -4,3 +4,5 @@ numpy
 boto3
 botocore
 tabulate
+openpyxl
+requests

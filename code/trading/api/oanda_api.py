@@ -44,24 +44,28 @@ class OandaApi:
         self.session.headers.update(self.SECURE_HEADER)
         self.stop_stream = False
 
-    def get_price_candles(self, pair_name, days):
+    def get_price_candles(self, pair_name, days = 0, hours = 0, minutes = 0, seconds = 0):
 
-        now = datetime.utcnow()
-        now = now - timedelta(microseconds=now.microsecond)
-        past = now - timedelta(days=days)
+        now = datetime.now(tz=timezone.utc)
+        now = now - timedelta(seconds=now.second, microseconds=now.microsecond)
+        past = now - timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
         df = pd.DataFrame()
 
-        for i in range(0, days):
+        if days == 0:
+            logger.debug(f"Getting price candles for {pair_name} from {past} to {now}")
+            data_t: pd.DataFrame = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity="S30", price="MBA")
+            df = self.__convert_to_df(data_t)
+        else:
+            for i in range(0, days):
 
-            start_d = past + timedelta(days=i)
-            end_d = start_d + timedelta(days=1)
+                start_d = past + timedelta(days=i)
+                end_d = start_d + timedelta(days=1)
 
-            logger.info(f"Getting data from {start_d} to {end_d}")
-            data_t: pd.DataFrame = self.__fetch_candles(
-                date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="S30", price="MBA")
-            df_t = self.__convert_to_df(data_t)
-            df = pd.concat([df, df_t])
+                logger.debug(f"Getting price candles for {pair_name} from {start_d} to {end_d}")
+                data_t: pd.DataFrame = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="S30", price="MBA")
+                df_t = self.__convert_to_df(data_t)
+                df = pd.concat([df, df_t])
 
         # df.sort_values(by='time', ascending=True, inplace=True)
         df = df.set_index('time')
@@ -97,15 +101,15 @@ class OandaApi:
             url, verb="post", data=data, code=201)
 
         if ok:
-            order = None
+            result = None
             if 'orderRejectTransaction' in response:
-                order = response.get('orderRejectTransaction')
+                result = response.get('orderRejectTransaction')
             elif 'orderFillTransaction' in response:
-                order = response.get('orderFillTransaction')
+                result = response.get('orderFillTransaction')
             elif 'orderCreateTransaction' in response:
-                order = response.get('orderCreateTransaction')
+                result = response.get('orderCreateTransaction')
             
-            return order
+            return result
         
         return None
 
@@ -116,9 +120,9 @@ class OandaApi:
         url = f"accounts/{self.account_id}/positions/{instrument}"
         ok, data = self.__make_request(url, verb="get", code=200)
         if ok and "position" in data:
-            long_units = data["position"]["long"]["units"]
-            short_units = data["position"]["short"]["units"]
-            logger.info (f"Currently have position: {instrument} | long_units: {long_units} | short_units: {short_units}")
+            long_units = data["position"]["long"]["units"] # type: ignore
+            short_units = data["position"]["short"]["units"] # type: ignore
+            # logger.info (f"Currently have position: {instrument} | long_units: {long_units} | short_units: {short_units}")
             units = round(float(long_units) + float(short_units), 0)
 
         return units
@@ -140,8 +144,12 @@ class OandaApi:
         result = self.__handle_response(response, callback, stop)
 
         return result
-    def __on_success(self, instrument, time, bid, ask):
-        print(f"Instrument: {instrument} Time: {time} | Bid: {bid} | Ask: {ask}")
+    def __on_success(self, **kwargs):
+        
+        print(f"Instrument: {kwargs.get('instrument')} | Time: {kwargs.get('time')} | \
+            Bid: {kwargs.get('bid')} | \
+                Ask: {kwargs.get('ask')} | \
+                    Status: {kwargs.get('status')}")
 
     def __handle_response(self, response, callback, stop):
 
@@ -154,12 +162,13 @@ class OandaApi:
                     count += 1
                     instrument = data["instrument"]
                     time = data["time"]
-                    bid = float(data["closeoutBid"])
+                    bid = float(data["bicloseoutBidds"])
                     ask = float(data["closeoutAsk"])
+                    status = data["status"]
                     if callback:
-                        callback(instrument=instrument, time=time, bid=bid, ask=ask)
+                        callback(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
                     else:
-                        self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask)
+                        self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
                 
                     if self.stop_stream or stop is not None and count >= stop:
                         break
@@ -195,7 +204,7 @@ class OandaApi:
         except Exception as error:
             return False, {'Exception': error}
 
-    def __fetch_candles(self, pair_name, date_f, date_t, granularity="S30", price="MBA"):
+    def __fetch_candles(self, pair_name, date_f, date_t, granularity="S30", price="MBA") -> pd.DataFrame:
 
         url = f"instruments/{pair_name}/candles"
         params = dict(
@@ -210,6 +219,7 @@ class OandaApi:
         ok, data = self.__make_request(url, params=params)
 
         if ok and 'candles' in data:
+            # logger.info(f"Candles: {data['candles']}")
             return data['candles']
         else:
             print("ERROR fetch_candles()", params, data)
@@ -227,13 +237,19 @@ class OandaApi:
 
         final_data = []
         for candle in data:
-            if candle['complete'] == False:
+            if not candle["complete"]:
                 continue
+            
             new_dict = {}
             new_dict['time'] = parser.parse(candle['time'])
+            new_dict['volume'] = candle['volume']
+            
             for p in prices:
                 if p in candle:
                     new_dict[f"{p}"] = float(candle[p]["c"])
+                    if p == 'mid':
+                        new_dict[f"{p}_o"] = float(candle[p]["o"])
+
             final_data.append(new_dict)
 
         df = pd.DataFrame.from_dict(final_data)
