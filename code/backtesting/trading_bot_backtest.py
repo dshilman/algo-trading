@@ -15,6 +15,7 @@ sys.path.append(str(root))
 
 from trading.api.oanda_api import OandaApi
 from trading.strategies.base.strategy_exec import TradingStrategyExec
+from trading.utils import utils
 
 logger = logging.getLogger()
 
@@ -33,7 +34,9 @@ class TradingBacktester():
         
         log_file = os.path.join("logs", f"{instrument}_{days}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', utils.date_format)
+
         logHandler.setFormatter(formatter)
         logger.addHandler(logHandler)
 
@@ -108,9 +111,9 @@ class TradingBacktester():
                 if pause_trading == None or index > pause_trading:
                     trade_action = self.strategy.determine_trade_action(trading_time=index)
                                         
-                    # if trade_action != None and trade_action.sl_trade:
-                    #     logger.debug(f"Pausing trading for 5 minutes at {index}")
-                    #     pause_trading = index + timedelta(hours = 2)                        
+                    if trade_action != None and trade_action.sl_trade:
+                        logger.debug(f"Pausing trading for 5 minutes at {index}")
+                        pause_trading = index + timedelta(minutes = 10)                        
         
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()

@@ -18,6 +18,7 @@ sys.path.append(str(root))
 from trading.api.oanda_api import OandaApi
 from trading.utils.errors import PauseTradingException
 from trading.strategies.base.strategy_exec import TradingStrategyExec
+from trading.utils import utils
 
 
 logger = logging.getLogger()
@@ -78,7 +79,7 @@ class Trader():
         else:
             logger.setLevel(logging.INFO)
 
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', utils.date_format)
 
         log_file = os.path.join("../../logs/trading", f"{self.instrument}_{datetime.now(tz=timezone.utc).strftime('%m-%d')}_app.log")
         log_handler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
