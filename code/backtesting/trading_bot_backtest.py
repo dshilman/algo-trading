@@ -94,7 +94,7 @@ class TradingBacktester():
                 file_path = f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx"
                 if not os.path.exists(file_path):
                    logger.info("Saving indicators to Excel...")
-                   self.strategy.data.to_excel(file_path)
+                #    self.strategy.data.to_excel(file_path)
                 else:
                     logger.info(f"File: {file_path} already exists")
             except Exception as e:
@@ -111,9 +111,9 @@ class TradingBacktester():
                 if pause_trading == None or index > pause_trading:
                     trade_action = self.strategy.determine_trade_action(trading_time=index)
                                         
-                    if trade_action != None and trade_action.sl_trade:
-                        logger.debug(f"Pausing trading for 5 minutes at {index}")
-                        pause_trading = index + timedelta(minutes = 10)                        
+                    # if trade_action != None and trade_action.sl_trade:
+                    #     logger.debug(f"Pausing trading for 5 minutes at {index}")
+                    #     pause_trading = index + timedelta(minutes = 10)                        
         
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()

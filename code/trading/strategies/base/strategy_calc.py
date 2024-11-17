@@ -132,8 +132,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         if self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
 
-        # self.print_indicators_count = self.print_indicators_count + 1
-
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series = None, time=None):  # type: ignore
@@ -209,8 +207,11 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # self.sma_crossover = row ["sma_crossover"]
 
-        if not self.backtest:
+        if not self.backtest and self.print_indicators_count % 100 == 0:
             self.print_indicators()
+
+        self.print_indicators_count = self.print_indicators_count + 1
+
 
         self.is_trading = True
         if "status" in row:
@@ -219,8 +220,8 @@ class TradingStrategyCalc(TradingStrategyBase):
     def print_indicators(self):
 
         logger.debug("*********** PRICE *************")
-        price_data = [[self.ask, self.bid, self.price, self.price_std]]
-        price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
+        price_data = [[self.ask, self.bid, self.price, self.price_std, self.volume]]
+        price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD, VOLUME"]
         logger.debug("\n" + tabulate(price_data, headers=price_headers) + "\n")
 
         # logger.debug("*********** MACD and BOLLINGER *************")
@@ -233,15 +234,15 @@ class TradingStrategyCalc(TradingStrategyBase):
         # momentum_headers = ["PRICE MOMENTUME SHORT"]
         # logger.debug("\n" + tabulate(momentum_data, headers=momentum_headers) + "\n")
 
-        logger.debug("*********** RSI *************")
-        rsi_data = [[self.rsi_short, self.rsi_short_min, self.rsi_short_max]]
-        rsi_headers = ["RSI SHORT", "RSI SHORT MIN", "RSI SHORT MAX"]
-        logger.debug("\n" + tabulate(rsi_data, headers=rsi_headers) + "\n")
+        # logger.debug("*********** RSI *************")
+        # rsi_data = [[self.rsi_short, self.rsi_short_min, self.rsi_short_max]]
+        # rsi_headers = ["RSI SHORT", "RSI SHORT MIN", "RSI SHORT MAX"]
+        # logger.debug("\n" + tabulate(rsi_data, headers=rsi_headers) + "\n")
 
-        logger.debug("*********** VOLUME *************")
-        volume_momentume_data = [[self.volume, self.volume_pct_change, self.volume_max]]
-        volume_momentume_headers = ["VOLUME", "VOLUME % CHANGE", "VOLUME MAX"]
-        logger.debug("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
+        # logger.debug("*********** VOLUME *************")
+        # volume_momentume_data = [[self.volume, self.volume_pct_change, self.volume_max]]
+        # volume_momentume_headers = ["VOLUME", "VOLUME % CHANGE", "VOLUME MAX"]
+        # logger.debug("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
 
 
     def get_open_trade_price(self):

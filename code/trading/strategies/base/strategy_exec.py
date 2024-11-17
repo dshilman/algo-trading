@@ -54,16 +54,16 @@ class TradingStrategyExec(TradingStrategyCalc):
         trade: Trade_Action = None
         have_units = self.trading_session.have_units
 
-        if have_units != 0:  # if already have positions
+        if have_units != 0:
 
             logger.debug(f"Have {have_units} positions, checking for stop loss")
-            have_units, trade = self.check_for_sl(trading_time)
+            trade = self.check_for_sl(trading_time, have_units)
 
             if trade is None:
                 logger.debug(f"Have {have_units} positions, checking if need to close a trade")
                 trade = self.check_if_need_close_trade(trading_time)
 
-        if trade is None and have_units == 0:  # if already have positions
+        if trade is None and have_units == 0:
 
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)
@@ -83,12 +83,11 @@ class TradingStrategyExec(TradingStrategyCalc):
 
 
 
-    def check_for_sl(self, trading_time):
+    def check_for_sl(self, trading_time, have_units):
 
-        have_units = self.trading_session.have_units
 
         if len(self.trading_session.trades) == 0:
-            return have_units, None
+            return None
 
         open_trade_price = self.get_open_trade_price()
 
@@ -96,27 +95,15 @@ class TradingStrategyExec(TradingStrategyCalc):
             current_loss_perc = round((self.ask - open_trade_price)/open_trade_price, 4)
             if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
-                    have_units = self.api.get_position(self.instrument)
-                    self.trading_session.have_units = have_units
-                    if have_units == 0:
-                        return have_units, None
- 
                     logger.info(
                         f"Close short position, - Stop Loss Buy, short price {open_trade_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
-                return have_units, Trade_Action(self.instrument, -have_units, self.ask, False, True)
+                return Trade_Action(self.instrument, -have_units, self.ask, False, True)
 
         elif have_units > 0:
             current_loss_perc = round((open_trade_price - self.bid)/open_trade_price, 4)
             if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
-                    have_units = self.api.get_position(self.instrument)
-                    self.trading_session.have_units = have_units
-                    if have_units == 0:
-                        return have_units, None
-                
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
-                return have_units, Trade_Action(self.instrument, -have_units, self.bid, False, True)
+                return Trade_Action(self.instrument, -have_units, self.bid, False, True)
         
-        return have_units, None
-    
