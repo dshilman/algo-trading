@@ -94,7 +94,7 @@ class TradingBacktester():
                 file_path = f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx"
                 if not os.path.exists(file_path):
                    logger.info("Saving indicators to Excel...")
-                #    self.strategy.data.to_excel(file_path)
+                   self.strategy.data.to_excel(file_path)
                 else:
                     logger.info(f"File: {file_path} already exists")
             except Exception as e:
