@@ -29,8 +29,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         super().__init__(instrument=instrument,
                          pair_file=pair_file, api=api, unit_test=unit_test)
 
-        self.print_indicators_count = 0
-
     def add_tickers(self, ticker_df: pd.DataFrame):
 
         # logger.debug(f"Adding tickers to dataframe: {ticker_df}")
@@ -64,18 +62,18 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_upper"] = df["sma_long"] + df["std_dev"] * std_dev
 
         # Price/Volume Momentum
-        df["volume_pct_change"] = df["volume"].pct_change()
-        df["volume_max"] = df["volume"].rolling(period_short).max()
-        df["price_pct_change"] = df[instrument].pct_change()
+        # df["volume_pct_change"] = df["volume"].pct_change()
+        # df["volume_max"] = df["volume"].rolling(period_short).max()
+        # df["price_pct_change"] = df[instrument].pct_change()
         # df["price_pct_max"] = df["price_pct_change"].rolling(period_short).max()
-        df ["trading_volatility"] = abs(df["price_pct_change"] / df["volume_pct_change"])
-        df['price_volatility'] =  abs(df['sma_long'] - df[instrument]) / df['std_dev']
+        # df ["trading_volatility"] = abs(df["price_pct_change"] / df["volume_pct_change"])
+        # df['price_volatility'] =  abs(df['sma_long'] - df[instrument]) / df['std_dev']
 
         # Lequidity
-        df["bid_ask_spread"] = (df["ask"] - df["bid"]) / df[instrument]
-        df["effective_spread"] = (df["ask"] - df["bid"]) / (df[instrument] * 2)
-        df["price_efficiency_short"] = df[instrument].rolling(period_short).var()
-        df["price_efficiency_long"] = df[instrument].rolling(period_long).var()
+        # df["bid_ask_spread"] = (df["ask"] - df["bid"]) / df[instrument]
+        # df["effective_spread"] = (df["ask"] - df["bid"]) / (df[instrument] * 2)
+        # df["price_efficiency_short"] = df[instrument].rolling(period_short).var()
+        # df["price_efficiency_long"] = df[instrument].rolling(period_long).var()
 
         # Volatility
         # df["price_diff"] = df[instrument].diff()
@@ -119,8 +117,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_ema_slope_max"] = df['rsi_ema_slope'].rolling(period).max()
         # df["rsi_ema_slope_min"] = df['rsi_ema_slope'].rolling(period).min()
 
-        # df["price_max"] = df[instrument].rolling(period_long).max()
-        # df["price_min"] = df[instrument].rolling(period_long).min()
+        df["price_max"] = df[instrument].rolling(period_long).max()
+        df["price_min"] = df[instrument].rolling(period_long).min()
 
         # df["greater_sma"] = df["sma_long"] - df[instrument]
         # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
@@ -145,11 +143,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bid = row["bid"]
         self.price = row[self.instrument]
         self.price_open = row ["mid_o"]
-        # self.price_max = row["price_max"]
-        # self.price_min = row["price_min"]
-        self.price_volatility = row['price_volatility']
-        self.trading_volatility = row['trading_volatility']
-        self.price_efficiency_long = row['price_efficiency_long']
+        self.price_max = row["price_max"]
+        self.price_min = row["price_min"]
+        # self.price_volatility = row['price_volatility']
+        # self.trading_volatility = row['trading_volatility']
+        # self.price_efficiency_long = row['price_efficiency_long']
         self.price_std = row['std_dev']
         # self.price_std_mean = row['price_std_mean']
 
@@ -200,15 +198,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.volume_momentum_long = row ["volume_momentum_long"]
         self.volume = row ["volume"]
         # self.volume_pct_change = row ["volume_pct_change"]
-        self.volume_max = row ["volume_max"]
+        # self.volume_max = row ["volume_max"]
 
 
         # self.sma_crossover = row ["sma_crossover"]
-
-        if not self.backtest and self.print_indicators_count % 100 == 0:
-            self.print_indicators()
-
-        self.print_indicators_count = self.print_indicators_count + 1
        
        
     def print_indicators(self):

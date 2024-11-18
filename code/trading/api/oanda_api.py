@@ -92,10 +92,8 @@ class OandaApi:
                 df_t = self.__convert_to_df(data_t)
                 df = pd.concat([df, df_t])
 
-        # df.sort_values(by='time', ascending=True, inplace=True)
         df = df.set_index('time')
         df.rename(columns={"mid": pair_name}, inplace=True)
-        # df.drop(columns = ["index"], inplace = True)
         df.index = df.index.tz_localize(None)
 
         return df
