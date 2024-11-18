@@ -31,9 +31,8 @@ class TradingStrategyExec(TradingStrategyCalc):
         
         if not self.backtest:
             last_candle_time = self.data.index[-1]
-            logger.debug(f"Trading and candle price dime difference: {(trading_time - last_candle_time)}")
             if (trading_time - last_candle_time) > timedelta(days = 0, hours = 0, minutes=0, seconds=30):
-                logger.info (f"Last pricing data for {last_candle_time}, while trading at: {trading_time}. Abort!!!")
+                logger.info (f"Last pricing data for: {last_candle_time}, while trading at: {trading_time}. Abort!!!")
                 return
 
         self.trading_session.have_units = self.api.get_position(instrument = self.instrument)
