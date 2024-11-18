@@ -134,15 +134,13 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.data = df
 
-    def set_strategy_indicators(self, row: pd.Series = None, time=None):  # type: ignore
-
-        trading_time = time
-        if row is None:
-            row = self.data.iloc[-1]
-            trading_time = self.data.index[-1]
+    def set_strategy_indicators(self, row: pd.Series = None):  # type: ignore
 
         logger.debug("Setting strategy indicators")
 
+        if row is None:
+            row = self.data.iloc[-1]
+    
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row[self.instrument]
@@ -211,15 +209,10 @@ class TradingStrategyCalc(TradingStrategyBase):
             self.print_indicators()
 
         self.print_indicators_count = self.print_indicators_count + 1
-
-
-        self.is_trading = True
-        if "status" in row:
-            self.is_trading = row["status"] == "tradeable"
-
+       
+       
     def print_indicators(self):
 
-        logger.info("*********** PRICE *************")
         price_data = [[self.volume, self.ask, self.bid, self.price, self.price_std, self.trading_volatility]]
         price_headers = ["VOLUME", "ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD", "VOLATILITY"]
         logger.info("\n" + tabulate(price_data, headers=price_headers) + "\n")

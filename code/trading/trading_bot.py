@@ -186,7 +186,7 @@ class Trader():
                 #     # logger.debug(f"Adding tickers length: {len(df)} | data: {df}")
                 #     self.strategy.add_tickers(ticker_df=df)
 
-                tickers_df = self.api.get_price_candles(pair_name=self.instrument, minutes=200)
+                tickers_df = self.api.get_latest_price_candles(pair_name=self.instrument)
                 self.strategy.data=tickers_df
                 self.strategy.calc_indicators()                
                 self.strategy.set_strategy_indicators(row = None)

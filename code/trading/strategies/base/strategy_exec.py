@@ -27,11 +27,15 @@ class TradingStrategyExec(TradingStrategyCalc):
 
     def execute_strategy(self):
 
-        if not self.is_trading:
-            logger.debug("Trading is not active")
-            return
+        trading_time = datetime.utcnow()
+        
+        if not self.backtest:
+            last_candle_time = self.data.index[-1]
+            logger.debug(f"Trading and candle price dime difference: {(trading_time - last_candle_time)}")
+            if (trading_time - last_candle_time) > timedelta(days = 0, hours = 0, minutes=0, seconds=30):
+                logger.info (f"Last pricing data for {last_candle_time}, while trading at: {trading_time}. Abort!!!")
+                return
 
-        trading_time = datetime.now()
         self.trading_session.have_units = self.api.get_position(instrument = self.instrument)
         logger.debug(f"Have {self.trading_session.have_units} positions of {self.instrument}")
         trade_action = self.determine_trade_action(trading_time)

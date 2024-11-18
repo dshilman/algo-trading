@@ -106,7 +106,7 @@ class TradingBacktester():
             logger.info(f"Starting trading for {self.strategy.instrument}...")
             for index, row in self.strategy.data.iterrows():
 
-                self.strategy.set_strategy_indicators(row=row, time=index)
+                self.strategy.set_strategy_indicators(row=row)
                 
                 if pause_trading == None or index > pause_trading:
                     trade_action = self.strategy.determine_trade_action(trading_time=index)

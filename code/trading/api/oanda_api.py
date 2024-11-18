@@ -44,6 +44,31 @@ class OandaApi:
         self.session.headers.update(self.SECURE_HEADER)
         self.stop_stream = False
 
+    def get_latest_price_candles(self, pair_name):
+
+        url = f"instruments/{pair_name}/candles"
+
+        params = dict(
+            granularity="S30",
+            price="MBA",
+            count=300
+        )
+
+        ok, data = self.__make_request(url, params=params)
+
+        if ok and 'candles' in data:
+            # logger.info(f"Candles: {data['candles']}")
+            df = self.__convert_to_df(data['candles'])
+            df = df.set_index('time')
+            df.rename(columns={"mid": pair_name}, inplace=True)
+            df.index = df.index.tz_localize(None)
+            return df
+        else:
+            print("ERROR fetch_candles()", params, data)
+            return None
+
+
+
     def get_price_candles(self, pair_name, days = 0, hours = 0, minutes = 0, seconds = 0):
 
         now = datetime.now(tz=timezone.utc)
