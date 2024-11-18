@@ -46,9 +46,9 @@ class OandaApi:
 
     def get_latest_price_candles(self, pair_name):
 
-        url = f"instruments/{pair_name}/candles"
-
+        url = f"accounts/{self.account_id}/candles/latest"
         params = dict(
+            instrument=pair_name,
             granularity="S30",
             price="MBA",
             count=300
