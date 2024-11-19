@@ -1,3 +1,4 @@
+from collections import deque
 import argparse
 import configparser
 import logging
@@ -8,15 +9,14 @@ import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-
 import pandas as pd
+
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from trading.api.oanda_api import OandaApi
-from trading.utils.errors import PauseTradingException
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 from trading.utils import utils
 
@@ -30,6 +30,7 @@ class Trader():
         self.init_logs(unit_test=unit_test)
 
         self.api = OandaApi(conf_file)
+        self.streaming = False
 
 
         config = configparser.ConfigParser()  
@@ -39,7 +40,7 @@ class Trader():
         # self.start = config.get(self.instrument, 'start')
         # self.end = config.get(self.instrument, 'end')
 
-        self.tick_data = []
+        self.ticker_data_deque = deque(maxlen=6000)
         self.stop_loss_count = 0
         
         class_ = None
@@ -93,28 +94,30 @@ class Trader():
         logger.info ("Started New Trading Session")
         self.terminate = False
 
-        # logger.info (f"Getting  candles for: {self.instrument}")
-        # self.strategy.data = self.api.get_price_candles(pair_name=self.instrument, days=self.days)
-
-
-        # treads = []
+        treads = []
         # treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
         # # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
-        self.refresh_strategy(refresh=10)
-        # treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
+        treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
+        treads.append(threading.Thread(target=self.refresh_strategy, args=(10,)))
 
-        # for t in treads:
-        #     t.start()
-        #     time.sleep(1)
+
+        for t in treads:
+            t.start()
+            time.sleep(5)
         
-        # for t in treads:
-        #     t.join()
+        for t in treads:
+            t.join()
 
         self.terminate_session("Finished Trading Session")
 
     
     def start_streaming(self, stop_after = None):
 
+        # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.instrument).drop(columns=["mid_o", "volume"]).to_records())
+        candles = self.api.get_latest_price_candles(pair_name=self.instrument).drop(columns=["mid_o", "volume"])
+        candles["status"] = "tradeable"
+        self.ticker_data_deque.extend(candles.reset_index().values.tolist())
+        self.streaming = True
         i: int = 0
 
         while not self.terminate:
@@ -165,29 +168,34 @@ class Trader():
             # time.sleep(refresh)
 
 
-    def refresh_strategy(self, refresh = 30):
+    def refresh_strategy(self, refresh = 10):
 
         error_counter: int = 0
         exec_counter: int = 0
 
         while not self.terminate:
+            time.sleep(refresh)
 
             logger.debug("Refreshing Strategy")
 
             try:
 
-                # temp_tick_data = self.tick_data.copy()
-                # self.tick_data.clear()
+                ticker_data_df = None
 
-                # if len(temp_tick_data) > 0:
-                #     df = pd.DataFrame(temp_tick_data, columns=["time", self.instrument, "bid", "bid_liquidity", "ask", "ask_liquidity", "status"])
-                #     df.set_index('time', inplace=True)    
-                #     df = df.resample("30s").last()
-                #     # logger.debug(f"Adding tickers length: {len(df)} | data: {df}")
-                #     self.strategy.add_tickers(ticker_df=df)
+                if self.streaming:
 
-                tickers_df = self.api.get_latest_price_candles(pair_name=self.instrument)
-                self.strategy.data=tickers_df
+                    ticker_data_list = list(self.ticker_data_deque)
+                    ticker_data_df = pd.DataFrame(ticker_data_list, columns=["time", self.instrument, "bid", "ask", "status"])
+                    ticker_data_df.set_index('time', inplace=True)    
+                    ticker_data_df = ticker_data_df.resample("30s").last()
+                else:
+                    ticker_data_df = self.api.get_latest_price_candles(pair_name=self.instrument)
+
+                if ticker_data_df.size < utils.ticker_data_size:
+                    logger.info(f"Skip strategy execution, {ticker_data_df.size} ticker data size is too small")
+                    continue
+
+                self.strategy.data=ticker_data_df
                 self.strategy.calc_indicators()                
                 self.strategy.set_strategy_indicators(row = None)
                 self.strategy.execute_strategy()
@@ -218,7 +226,7 @@ class Trader():
                     self.terminate = True
                     break
 
-            time.sleep(refresh)
+            # time.sleep(refresh)
 
 
     def check_positions(self, refresh = 300): 
@@ -256,32 +264,31 @@ class Trader():
         instrument = kwargs.get('instrument')
         date_time = kwargs.get('time')
         ask = kwargs.get('ask')
-        ask_liquidity = kwargs.get('ask_liquidity')
+        # ask_liquidity = kwargs.get('ask_liquidity')
         bid = kwargs.get('bid')
-        bid_liquidity = kwargs.get('bid_liquidity')
+        # bid_liquidity = kwargs.get('bid_liquidity')
         status = kwargs.get('status')
 
-        if not (instrument is not None \
-                and time is not None and bid is not None \
-                    and ask is not None and status is not None):
-            
-                        logger.error(f"Invalid instrument price values!!!")
-                        logger.error(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Bid Liquidity: {bid_liquidity} | Ask: {ask} | Ask Liquidity: {ask_liquidity} | Status: {status}")
-                        return
+        if not (instrument and time and bid and ask and status):
+            logger.error(f"Invalid instrument price values!!!")
+            logger.error(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask} | Status: {status}")
+            return
         
-        logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Bid Liquidity: {bid_liquidity} | Ask: {ask} | Ask Liquidity: {ask_liquidity} | Status: {status}")
+        logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask} | Status: {status}")
 
          # 2023-12-19T13:28:35.194571445Z
         pd_timestamp: pd.Timestamp = pd.to_datetime(date_time).replace(tzinfo=None)
         
-        recent_tick = [pd_timestamp, (ask + bid)/2, bid, bid_liquidity, ask, ask_liquidity, status]
-        self.tick_data.append(recent_tick)
+        recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask, status]
+        self.ticker_data_deque.append(recent_tick)
+        self.ticker_data_deque.popleft()
+
 
         minute: int = pd_timestamp.minute
         second: int = pd_timestamp.second
 
         if minute in [0, 15, 30, 45] and second == 0:
-            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {ask} | aks_liquidity: {ask_liquidity} | bid: {bid} | bid_liquidity: {bid_liquidity} | status: {status}")
+            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {ask} | bid: {bid} | status: {status}")
  
   
         

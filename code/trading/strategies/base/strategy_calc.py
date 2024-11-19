@@ -35,9 +35,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df = self.data.copy()
         df = pd.concat([df, ticker_df])
-        df = df.reset_index().drop_duplicates(
-            subset='time', keep='last').set_index('time')
-        self.data = df.tail(self.SMA * 4)
+        df = df.reset_index().drop_duplicates(subset='time', keep='last').set_index('time')
+        self.data = df.tail(self.SMA * 2)
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
 
@@ -142,7 +141,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row[self.instrument]
-        self.price_open = row ["mid_o"]
         self.price_max = row["price_max"]
         self.price_min = row["price_min"]
         # self.price_volatility = row['price_volatility']
@@ -196,12 +194,14 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Volume Momentum
         # self.volume_momentum_short = row ["volume_momentum_short"]
         # self.volume_momentum_long = row ["volume_momentum_long"]
-        self.volume = row ["volume"]
+        # self.volume = row ["volume"]
         # self.volume_pct_change = row ["volume_pct_change"]
         # self.volume_max = row ["volume_max"]
 
 
         # self.sma_crossover = row ["sma_crossover"]
+
+        # self.trading = True if row["status"] == "tradeable" else False
        
        
     def print_indicators(self):
@@ -270,35 +270,3 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         return date_time
 
-    def get_trade_rsi(self):
-
-        rsi = None
-
-        if len(self.trading_session.trades) > 0:
-            rsi = self.trading_session.trades[-1][6]
-
-        return rsi
-
-    # def reverse_rsi_up(self, trading_time=None):
-    #     pass
-
-    # def reverse_rsi_down(self, trading_time=None):
-    #     pass
-
-    # def rsi_jump(self, jump=None):
-
-    #     if jump is None:
-    #         jump = self.rsi_change
-
-    #     return self.rsi_max - self.rsi_min > jump \
-    #         and self.rsi_min_time is not None and self.rsi_max_time is not None \
-    #         and self.rsi_min_time < self.rsi_max_time
-
-    # def rsi_drop(self, drop=None):
-
-    #     if drop is None:
-    #         drop = self.rsi_change
-
-    #     return self.rsi_max - self.rsi_min > drop \
-    #         and self.rsi_min_time is not None and self.rsi_max_time is not None \
-    #         and self.rsi_min_time > self.rsi_max_time

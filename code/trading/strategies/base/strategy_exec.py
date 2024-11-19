@@ -22,7 +22,6 @@ class TradingStrategyExec(TradingStrategyCalc):
         super().__init__(instrument=instrument,
                          pair_file=pair_file, api=api, unit_test=unit_test)
 
-        self.cvs = {"USD_CHF": 0.0003, "EUR_USD": 0.0003}
         self.stop_trading = False
 
     def execute_strategy(self):
@@ -32,7 +31,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         if not self.backtest:
             last_candle_time = self.data.index[-1]
             if (trading_time - last_candle_time) > timedelta(days = 0, hours = 0, minutes=0, seconds=30):
-                logger.info (f"Last pricing data for: {last_candle_time}, while trading at: {trading_time}. Abort!!!")
+                logger.info(f"Skip strategy execution, ticker data is too stale: {last_candle_time}")
                 return
 
         self.trading_session.have_units = self.api.get_position(instrument = self.instrument)

@@ -14,6 +14,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from dom.order import Order
+from utils import utils
 
 logger = logging.getLogger()
 
@@ -44,14 +45,14 @@ class OandaApi:
         self.session.headers.update(self.SECURE_HEADER)
         self.stop_stream = False
 
-    def get_latest_price_candles(self, pair_name):
+    def get_latest_price_candles(self, pair_name) -> pd.DataFrame:
 
         url = f"accounts/{self.account_id}/candles/latest"
         params = dict(
             instrument=pair_name,
             granularity="S30",
             price="MBA",
-            count=300
+            count=utils.ticker_data_size
         )
 
         ok, data = self.__make_request(url, params=params)
@@ -185,7 +186,7 @@ class OandaApi:
                     count += 1
                     instrument = data["instrument"]
                     time = data["time"]
-                    bid = float(data["bicloseoutBidds"])
+                    bid = float(data["closeoutBid"])
                     ask = float(data["closeoutAsk"])
                     status = data["status"]
                     if callback:
