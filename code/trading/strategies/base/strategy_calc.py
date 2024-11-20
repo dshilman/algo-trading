@@ -104,7 +104,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_short_prev"] = df["rsi_short"].shift()
         df["rsi_short_max"] = df.rsi_short.rolling(period_short).max()
         df["rsi_short_min"] = df.rsi_short.rolling(period_short).min()
-        # df["rsi_short_pct_change"] = df.rsi_short.pct_change()
+        df["rsi_short_pct_change"] = df.rsi_short.pct_change()
         # df["rsi_short_pct_change_max"] = df.rsi_short_pct_change.rolling(period_short).max()
         # df["rsi_short_pct_change_min"] = df.rsi_short_pct_change.rolling(period_short).min()
    
@@ -188,7 +188,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.rsi_short = round(row["rsi_short"], 4)
         # self.rsi_short_prev = round(row["rsi_short_prev"], 4)
-        # self.rsi_short_pct_change = row["rsi_short_pct_change"]
+        self.rsi_short_pct_change = row["rsi_short_pct_change"]
         # self.rsi_short_pct_change_max = row["rsi_short_pct_change_max"]
         # self.rsi_short_pct_change_min = row["rsi_short_pct_change_min"]
         self.rsi_short_max = round(row["rsi_short_max"], 4)
