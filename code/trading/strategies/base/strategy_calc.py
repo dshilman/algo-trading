@@ -213,8 +213,8 @@ class TradingStrategyCalc(TradingStrategyBase):
        
     def print_indicators(self):
 
-        price_data = [[self.volume, self.ask, self.bid, self.price, round(self.price_std, 6)]]
-        price_headers = ["VOLUME", "ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
+        price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]
+        price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
         logger.info("\n" + tabulate(price_data, headers=price_headers) + "\n")
 
         # logger.debug("*********** MACD and BOLLINGER *************")

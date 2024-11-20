@@ -34,7 +34,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                 return
 
             last_candle_time = self.data.index[-1]
-            if (trading_time - last_candle_time) > timedelta(days = 0, hours = 0, minutes=0, seconds=30):
+            if (trading_time - last_candle_time) > timedelta(days = 0, hours = 0, minutes=0, seconds=45):
                 logger.info(f"Skip strategy execution, ticker data is too stale: {last_candle_time}")
                 return
 
