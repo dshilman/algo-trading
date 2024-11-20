@@ -40,7 +40,7 @@ class Trader():
         # self.start = config.get(self.instrument, 'start')
         # self.end = config.get(self.instrument, 'end')
 
-        self.ticker_data_deque = deque(maxlen=6000)
+        self.ticker_data_deque = None
         self.stop_loss_count = 0
         
         class_ = None
@@ -57,7 +57,7 @@ class Trader():
             raise Exception(f"Strategy not found for {instrument}")
 
         logger.info(f"Running:{class_} strategy")
-        self.strategy: TradingStrategyExec  = class_(instrument=self.instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
+        self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
         logger.info(f"Trading Strategy: {self.strategy}")
 
         today = datetime.now(tz=timezone.utc).date()
@@ -98,7 +98,7 @@ class Trader():
         # treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
         # # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
         treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
-        treads.append(threading.Thread(target=self.refresh_strategy, args=(10,)))
+        treads.append(threading.Thread(target=self.refresh_strategy, args=(10,stop_after)))
 
 
         for t in treads:
@@ -114,9 +114,10 @@ class Trader():
     def start_streaming(self, stop_after = None):
 
         # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.instrument).drop(columns=["mid_o", "volume"]).to_records())
-        candles = self.api.get_latest_price_candles(pair_name=self.instrument).drop(columns=["mid_o", "volume"])
-        candles["status"] = "tradeable"
-        self.ticker_data_deque.extend(candles.reset_index().values.tolist())
+        candles = self.api.get_latest_price_candles(pair_name=self.instrument)
+        candles.drop(columns=["mid_o", "volume"], inplace=True)
+        candles["status"] = pd.NA
+        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 200, iterable = candles.reset_index().values.tolist())
         self.streaming = True
         i: int = 0
 
@@ -168,7 +169,7 @@ class Trader():
             # time.sleep(refresh)
 
 
-    def refresh_strategy(self, refresh = 10):
+    def refresh_strategy(self, refresh = 10, stop_after=99999999999999999999999999):
 
         error_counter: int = 0
         exec_counter: int = 0
@@ -186,8 +187,10 @@ class Trader():
 
                     ticker_data_list = list(self.ticker_data_deque)
                     ticker_data_df = pd.DataFrame(ticker_data_list, columns=["time", self.instrument, "bid", "ask", "status"])
-                    ticker_data_df.set_index('time', inplace=True)    
+                    ticker_data_df = ticker_data_df.set_index('time')
+                    ticker_data_df.index = ticker_data_df.index.tz_localize(None)
                     ticker_data_df = ticker_data_df.resample("30s").last()
+                    ticker_data_df = ticker_data_df.tail(utils.ticker_data_size)
                 else:
                     ticker_data_df = self.api.get_latest_price_candles(pair_name=self.instrument)
 
@@ -195,9 +198,11 @@ class Trader():
                     logger.info(f"Skip strategy execution, {ticker_data_df.size} ticker data size is too small")
                     continue
 
-                self.strategy.data=ticker_data_df
+
+                logger.debug(f"Ticker data: {ticker_data_df}")
+                self.strategy.data = ticker_data_df
                 self.strategy.calc_indicators()                
-                self.strategy.set_strategy_indicators(row = None)
+                self.strategy.set_strategy_indicators()
                 self.strategy.execute_strategy()
                 exec_counter = exec_counter + 1
 
@@ -205,6 +210,9 @@ class Trader():
                     logger.info (f"Heartbeat... {exec_counter}")
                     self.strategy.print_indicators()
             
+                if stop_after is not None and exec_counter > stop_after:
+                    self.terminate = True
+                    break
                 # try:
                 #     self.strategy.execute_strategy()
                 # except PauseTradingException as e:
@@ -281,8 +289,6 @@ class Trader():
         
         recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask, status]
         self.ticker_data_deque.append(recent_tick)
-        self.ticker_data_deque.popleft()
-
 
         minute: int = pd_timestamp.minute
         second: int = pd_timestamp.second

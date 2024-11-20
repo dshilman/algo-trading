@@ -1,2 +1,2 @@
 date_format = "%Y-%m-%d %H:%M:%S"
-ticker_data_size=300
+ticker_data_size=500

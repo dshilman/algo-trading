@@ -42,7 +42,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     def calc_indicators(self):
 
-        df: pd.DataFrame = self.data.copy()
+        df: pd.DataFrame = self.data
 
         instrument = self.instrument
 
@@ -102,10 +102,12 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["rsi_short"] = df[instrument].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
         # df["rsi_short_prev"] = df["rsi_short"].shift()
-        df["rsi_short_pct_change"] = df["rsi_short"].pct_change()
-        df["rsi_short_max"] = df['rsi_short'].rolling(period_short).max()
-        df["rsi_short_min"] = df['rsi_short'].rolling(period_short).min()
-
+        df["rsi_short_max"] = df.rsi_short.rolling(period_short).max()
+        df["rsi_short_min"] = df.rsi_short.rolling(period_short).min()
+        # df["rsi_short_pct_change"] = df.rsi_short.pct_change()
+        # df["rsi_short_pct_change_max"] = df.rsi_short_pct_change.rolling(period_short).max()
+        # df["rsi_short_pct_change_min"] = df.rsi_short_pct_change.rolling(period_short).min()
+   
         # df["rsi_diff"] = df.rsi.diff()
         # df["rsi_momentum_" + str(period)] = df["rsi_diff"].rolling(period).sum()
         # df["rsi_momentum_" + str(period) + "_max"] = df["rsi_momentum_" + str(period)].rolling(period).max()
@@ -119,11 +121,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["price_max"] = df[instrument].rolling(period_long).max()
         df["price_min"] = df[instrument].rolling(period_long).min()
 
-        # df["greater_sma"] = df["sma_long"] - df[instrument]
-        # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
-        # df["sma_crossover"] = df["greater_sma"].rolling(period_short).apply(lambda x: count_sma_crossover(x))
+        df["greater_sma"] = df["sma_long"] - df[instrument]
+        df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+        df["sma_crossover"] = df["greater_sma"].rolling(period_short).apply(lambda x: count_sma_crossover(x))
 
-        # df.drop(columns=["greater_sma"], inplace=True)
+        df.drop(columns=["greater_sma"], inplace=True)
 
         
         if self.unit_test:
@@ -186,7 +188,9 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.rsi_short = round(row["rsi_short"], 4)
         # self.rsi_short_prev = round(row["rsi_short_prev"], 4)
-        self.rsi_short_pct_change = row["rsi_short_pct_change"]
+        # self.rsi_short_pct_change = row["rsi_short_pct_change"]
+        # self.rsi_short_pct_change_max = row["rsi_short_pct_change_max"]
+        # self.rsi_short_pct_change_min = row["rsi_short_pct_change_min"]
         self.rsi_short_max = round(row["rsi_short_max"], 4)
         self.rsi_short_min = round(row["rsi_short_min"], 4)
 
@@ -199,9 +203,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.volume_max = row ["volume_max"]
 
 
-        # self.sma_crossover = row ["sma_crossover"]
+        self.sma_crossover = row ["sma_crossover"]
 
-        # self.trading = True if row["status"] == "tradeable" else False
+        self.trading = True
+        if not self.backtest and "status" in row:
+            self.trading = row["status"] == "tradeable"
+
        
        
     def print_indicators(self):
