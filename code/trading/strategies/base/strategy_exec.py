@@ -87,8 +87,13 @@ class TradingStrategyExec(TradingStrategyCalc):
     def check_if_need_close_trade(self, trading_time):
         pass
 
+    def reverse_down(self):
+        return self.rsi_short_pct_change < 0 and (self.ema_short_slope < 0 or self.price < self.ema_short)
 
+    def reverse_up(self):
+        return self.rsi_short_pct_change > 0 and (self.ema_short_slope > 0 or self.price > self.ema_short) 
 
+    
     def check_for_sl(self, trading_time, have_units):
 
 
@@ -99,7 +104,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         if have_units < 0:
             current_loss_perc = round((self.ask - open_trade_price)/open_trade_price, 4)
-            if current_loss_perc >= self.sl_perc:
+            if current_loss_perc >= self.sl_perc and not self.reverse_down():
                 if not self.backtest:
                     logger.info(
                         f"Close short position, - Stop Loss Buy, short price {open_trade_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
@@ -107,7 +112,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         elif have_units > 0:
             current_loss_perc = round((open_trade_price - self.bid)/open_trade_price, 4)
-            if current_loss_perc >= self.sl_perc:
+            if current_loss_perc >= self.sl_perc and not self.reverse_up():
                 if not self.backtest:
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")

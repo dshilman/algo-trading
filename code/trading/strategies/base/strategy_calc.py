@@ -60,6 +60,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_lower"] = df["sma_long"] - df["std_dev"] * std_dev
         df["bb_upper"] = df["sma_long"] + df["std_dev"] * std_dev
 
+        df["price_max"] = df[instrument].rolling(period_short).max()
+        df["price_min"] = df[instrument].rolling(period_short).min()
+
         # Price/Volume Momentum
         # df["volume_pct_change"] = df["volume"].pct_change()
         # df["volume_max"] = df["volume"].rolling(period_short).max()
@@ -117,9 +120,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df['rsi_ema_slope'] = df["rsi_ema"].rolling(period).apply(lambda x: calculate_slope(x))
         # df["rsi_ema_slope_max"] = df['rsi_ema_slope'].rolling(period).max()
         # df["rsi_ema_slope_min"] = df['rsi_ema_slope'].rolling(period).min()
-
-        df["price_max"] = df[instrument].rolling(period_long).max()
-        df["price_min"] = df[instrument].rolling(period_long).min()
 
         df["greater_sma"] = df["sma_long"] - df[instrument]
         df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
