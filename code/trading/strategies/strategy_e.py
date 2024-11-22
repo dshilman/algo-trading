@@ -42,33 +42,3 @@ class TradingStrategy(TradingStrategyExec):
                         logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                     return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
-    def check_if_need_close_trade(self, trading_time):
-
-        have_units = self.trading_session.have_units
-
-        close_trade = False
-        open_trade_time = self.get_last_trade_time()
-        open_trade_price = self.get_open_trade_price()
-
-        if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or not self.is_trading_time(trading_time):
-            close_trade = True
-
-        if have_units > 0:  # long position
-            target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
-            if self.reverse_down() and (close_trade or target_price is not None and self.price > target_price):
-                    if not self.backtest:
-                        logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
-                    return Trade_Action(self.instrument, -have_units, self.bid, False, False)
- 
-        elif have_units < 0:  # short position
-            target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
-            if self.reverse_up() and (close_trade or target_price is not None and self.price < target_price):
-                    if not self.backtest:
-                        logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                    return Trade_Action(self.instrument, -have_units, self.ask, False, False)
-
-    def reverse_down(self):
-        return self.rsi_short_pct_change < 0 and (self.ema_short_slope < 0 or self.price < self.ema_short)
-
-    def reverse_up(self):
-        return self.rsi_short_pct_change > 0 and (self.ema_short_slope > 0 or self.price > self.ema_short) 

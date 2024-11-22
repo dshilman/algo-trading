@@ -67,8 +67,3 @@ class TradingStrategy(TradingStrategyExec):
                         logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                     return Trade_Action(self.instrument, -have_units, self.ask, False, False)
 
-    def reverse_down(self):
-        return self.rsi_short_pct_change < 0 and (self.ema_short_slope < 0 or self.price < self.ema_short)
-
-    def reverse_up(self):
-        return self.rsi_short_pct_change > 0 and (self.ema_short_slope > 0 or self.price > self.ema_short) 

@@ -84,16 +84,39 @@ class TradingStrategyExec(TradingStrategyCalc):
         pass
 
 
-    def check_if_need_close_trade(self, trading_time):
-        pass
-
     def reverse_down(self):
         return self.rsi_short_pct_change < 0 and (self.ema_short_slope < 0 or self.price < self.ema_short)
 
     def reverse_up(self):
         return self.rsi_short_pct_change > 0 and (self.ema_short_slope > 0 or self.price > self.ema_short) 
 
-    
+
+    def check_if_need_close_trade(self, trading_time):
+
+        have_units = self.trading_session.have_units
+
+        close_trade = False
+        open_trade_time = self.get_last_trade_time()
+        open_trade_price = self.get_open_trade_price()
+
+        if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or not self.is_trading_time(trading_time):
+            close_trade = True
+
+        if have_units > 0:  # long position
+            target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
+            if self.reverse_down() and (close_trade or target_price is not None and self.price > target_price):
+                    if not self.backtest:
+                        logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
+                    return Trade_Action(self.instrument, -have_units, self.bid, False, False)
+ 
+        elif have_units < 0:  # short position
+            target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
+            if self.reverse_up() and (close_trade or target_price is not None and self.price < target_price):
+                    if not self.backtest:
+                        logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
+                    return Trade_Action(self.instrument, -have_units, self.ask, False, False)
+
+
     def check_for_sl(self, trading_time, have_units):
 
 
@@ -104,7 +127,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         if have_units < 0:
             current_loss_perc = round((self.ask - open_trade_price)/open_trade_price, 4)
-            if current_loss_perc >= self.sl_perc and not self.reverse_down():
+            if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
                     logger.info(
                         f"Close short position, - Stop Loss Buy, short price {open_trade_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
@@ -112,7 +135,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         elif have_units > 0:
             current_loss_perc = round((open_trade_price - self.bid)/open_trade_price, 4)
-            if current_loss_perc >= self.sl_perc and not self.reverse_up():
+            if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")

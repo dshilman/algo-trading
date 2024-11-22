@@ -108,6 +108,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
         df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None)
+        df['rsi_short_ema'] = df["rsi_short"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
+
         # df["rsi_short_pct_change_max"] = df.rsi_short_pct_change.rolling(period_short).max()
         # df["rsi_short_pct_change_min"] = df.rsi_short_pct_change.rolling(period_short).min()
    
@@ -193,6 +195,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.rsi_short_pct_change_min = row["rsi_short_pct_change_min"]
         self.rsi_short_max = round(row["rsi_short_max"], 4)
         self.rsi_short_min = round(row["rsi_short_min"], 4)
+        self.rsi_short_ema = row["rsi_short_ema"]
 
         
         # Volume Momentum
