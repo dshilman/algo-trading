@@ -115,9 +115,8 @@ class Trader():
 
         # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.instrument).drop(columns=["mid_o", "volume"]).to_records())
         candles = self.api.get_latest_price_candles(pair_name=self.instrument)
-        candles.drop(columns=["mid_o", "volume"], inplace=True)
         candles["status"] = pd.NA
-        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 200, iterable = candles.reset_index().values.tolist())
+        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 500, iterable = candles.drop(columns={"volume"}).reset_index().values.tolist())
         self.streaming = True
         i: int = 0
 
@@ -186,7 +185,7 @@ class Trader():
                 if self.streaming:
 
                     ticker_data_list = list(self.ticker_data_deque)
-                    ticker_data_df = pd.DataFrame(ticker_data_list, columns=["time", self.instrument, "bid", "ask", "status"])
+                    ticker_data_df = pd.DataFrame(ticker_data_list, columns=["time", "close", "bid", "ask", "status"])
                     ticker_data_df = ticker_data_df.set_index('time')
                     ticker_data_df.index = ticker_data_df.index.tz_localize(None)
                     ticker_data_df = ticker_data_df.resample("30s").last()

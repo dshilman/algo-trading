@@ -52,37 +52,37 @@ class TradingStrategyCalc(TradingStrategyBase):
         period_short = 30
 
         # Bollinger Band
-        df["std_dev"] = df[instrument].rolling(period_long).std()
-        df["sma_long"] = df[instrument].rolling(period_long).mean()
-        df['ema_short'] = df[instrument].rolling(period_short).apply(lambda x: calculate_ema(S=x))
+        df["std_dev"] = df["close"].fillna(0).rolling(period_long).std(numeric_only=True)
+        df["sma_long"] = df["close"].fillna(0).rolling(period_long).mean(numeric_only=True)
+        df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
         df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
 
         df["bb_lower"] = df["sma_long"] - df["std_dev"] * std_dev
         df["bb_upper"] = df["sma_long"] + df["std_dev"] * std_dev
 
-        df["price_max"] = df[instrument].rolling(period_short).max()
-        df["price_min"] = df[instrument].rolling(period_short).min()
+        df["price_max"] = df["close"].rolling(period_short).max()
+        df["price_min"] = df["close"].rolling(period_short).min()
 
         # Price/Volume Momentum
         # df["volume_pct_change"] = df["volume"].pct_change()
         # df["volume_max"] = df["volume"].rolling(period_short).max()
-        # df["price_pct_change"] = df[instrument].pct_change()
+        # df["price_pct_change"] = df["close"].pct_change()
         # df["price_pct_max"] = df["price_pct_change"].rolling(period_short).max()
         # df ["trading_volatility"] = abs(df["price_pct_change"] / df["volume_pct_change"])
-        # df['price_volatility'] =  abs(df['sma_long'] - df[instrument]) / df['std_dev']
+        # df['price_volatility'] =  abs(df['sma_long'] - df["close"]) / df['std_dev']
 
         # Lequidity
-        # df["bid_ask_spread"] = (df["ask"] - df["bid"]) / df[instrument]
-        # df["effective_spread"] = (df["ask"] - df["bid"]) / (df[instrument] * 2)
-        # df["price_efficiency_short"] = df[instrument].rolling(period_short).var()
-        # df["price_efficiency_long"] = df[instrument].rolling(period_long).var()
+        # df["bid_ask_spread"] = (df["ask"] - df["bid"]) / df["close"]
+        # df["effective_spread"] = (df["ask"] - df["bid"]) / (df["close"] * 2)
+        # df["price_efficiency_short"] = df["close"].rolling(period_short).var()
+        # df["price_efficiency_long"] = df["close"].rolling(period_long).var()
 
         # Volatility
-        # df["price_diff"] = df[instrument].diff()
+        # df["price_diff"] = df["close"].diff()
         # df['volatility'] = df['price_diff'].rolling(window=period_short).std()
 
         # MACD
-        # df["ema_long"] = df[instrument].rolling(period_long).apply(lambda x: calculate_ema(S=x))
+        # df["ema_long"] = df["close"].rolling(period_long).apply(lambda x: calculate_ema(S=x))
         # df['ema_long_slope'] = df["ema_long"].rolling(period_long).apply(lambda x: calculate_slope(x))
 
         # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
@@ -98,12 +98,12 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
         # RSI
-        # df["rsi_long"] = df[instrument].rolling(period_long).apply(lambda x: calculate_rsi(x, period_long))
+        # df["rsi_long"] = df["close"].rolling(period_long).apply(lambda x: calculate_rsi(x, period_long))
         # df["rsi_long_prev"] = df.rsi_long.shift()
         # df["rsi_long_max"] = df['rsi_long'].rolling(period_long).max()
         # df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
 
-        df["rsi_short"] = df[instrument].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
+        df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
         # df["rsi_short_prev"] = df["rsi_short"].shift()
         df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
         df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
@@ -123,7 +123,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_ema_slope_max"] = df['rsi_ema_slope'].rolling(period).max()
         # df["rsi_ema_slope_min"] = df['rsi_ema_slope'].rolling(period).min()
 
-        df["greater_sma"] = df["sma_long"] - df[instrument]
+        df["greater_sma"] = df["sma_long"] - df["close"]
         df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
         df["sma_crossover"] = df["greater_sma"].rolling(period_short).apply(lambda x: count_sma_crossover(x))
 
@@ -144,7 +144,7 @@ class TradingStrategyCalc(TradingStrategyBase):
     
         self.ask = row["ask"]
         self.bid = row["bid"]
-        self.price = row[self.instrument]
+        self.price = row["close"]
         self.price_max = row["price_max"]
         self.price_min = row["price_min"]
         # self.price_volatility = row['price_volatility']

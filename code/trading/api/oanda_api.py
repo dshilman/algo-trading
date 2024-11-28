@@ -61,7 +61,6 @@ class OandaApi:
             # logger.info(f"Candles: {data['candles']}")
             df = self.__convert_to_df(data['candles'])
             df = df.set_index('time')
-            df.rename(columns={"mid": pair_name}, inplace=True)
             df.index = df.index.tz_localize(None)
             return df
         else:
@@ -94,7 +93,6 @@ class OandaApi:
                 df = pd.concat([df, df_t])
 
         df = df.set_index('time')
-        df.rename(columns={"mid": pair_name}, inplace=True)
         df.index = df.index.tz_localize(None)
 
         return df
@@ -271,12 +269,13 @@ class OandaApi:
             for p in prices:
                 if p in candle:
                     new_dict[f"{p}"] = float(candle[p]["c"])
-                    if p == 'mid':
-                        new_dict[f"{p}_o"] = float(candle[p]["o"])
+                    # if p == 'mid':
+                    #     new_dict[f"{p}_o"] = float(candle[p]["o"])
 
             final_data.append(new_dict)
 
         df = pd.DataFrame.from_dict(final_data)
+        df.rename(columns={"mid": "close"}, inplace=True)
         return df
 
 if __name__ == "__main__":
