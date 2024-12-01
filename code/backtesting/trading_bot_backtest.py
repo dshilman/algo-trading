@@ -90,15 +90,15 @@ class TradingBacktester():
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
 
-            try:
-                file_path = f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx"
-                if not os.path.exists(file_path):
-                   logger.info("Saving indicators to Excel...")
-                   self.strategy.data.to_excel(file_path)
-                else:
-                    logger.info(f"File: {file_path} already exists")
-            except Exception as e:
-                logger.error("Couldn't wtite to " + f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx." + " File is open")
+            # try:
+            #     file_path = f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx"
+            #     if not os.path.exists(file_path):
+            #        logger.info("Saving indicators to Excel...")
+            #        self.strategy.data.to_excel(file_path)
+            #     else:
+            #         logger.info(f"File: {file_path} already exists")
+            # except Exception as e:
+            #     logger.error("Couldn't wtite to " + f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx." + " File is open")
  
  
             pause_trading = None

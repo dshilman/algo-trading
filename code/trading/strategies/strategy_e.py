@@ -30,7 +30,7 @@ class TradingStrategy(TradingStrategyExec):
             return
 
         
-        if self.price_std > 0.0015:
+        if self.std_dev_recent_mean > 0.001 and self.price_std > 0.00125:
 
             if self.price_min < self.bb_low and self.rsi_short_min < 25 and self.reverse_up():
                     if not self.backtest:

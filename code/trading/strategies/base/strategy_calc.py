@@ -53,6 +53,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # Bollinger Band
         df["std_dev"] = df["close"].fillna(0).rolling(period_long).std(numeric_only=True)
+        df["std_dev_recent_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
         df["sma_long"] = df["close"].fillna(0).rolling(period_long).mean(numeric_only=True)
         df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
         df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
@@ -151,6 +152,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.trading_volatility = row['trading_volatility']
         # self.price_efficiency_long = row['price_efficiency_long']
         self.price_std = row['std_dev']
+        self.std_dev_recent_mean = row["std_dev_recent_mean"]
         # self.price_std_mean = row['price_std_mean']
 
         # MACD
@@ -216,9 +218,10 @@ class TradingStrategyCalc(TradingStrategyBase):
        
     def print_indicators(self):
 
-        price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]
-        price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
-        logger.info("\n" + tabulate(price_data, headers=price_headers) + "\n")
+        logger.info("\n" + df.tail(1).to_string(header=True))
+        # price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]
+        # price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
+        # logger.info("\n" + tabulate(price_data, headers=price_headers) + "\n")
 
         # logger.debug("*********** MACD and BOLLINGER *************")
         # macd_bb_data = [[self.price_ema_short, self.sma_long, self.bb_low, self.bb_high]]
