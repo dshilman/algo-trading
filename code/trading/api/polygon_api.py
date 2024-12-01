@@ -24,7 +24,7 @@ logger = logging.getLogger()
 class PolygonAPI:
 
     def __init__(self):
-        self.client = RESTClient(api_key="iSJWcq8jWhe3Bmw7K0Fc19hoctpwvABc", trace=True)
+        # self.client = RESTClient(api_key="", trace=True)
 
     def get_latest_price_candles(self, ticker) -> pd.DataFrame:
 
