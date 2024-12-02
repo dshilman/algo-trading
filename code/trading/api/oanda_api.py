@@ -186,8 +186,8 @@ class OandaApi:
                     time = data["time"]
                     bid = float(data["closeoutBid"])
                     ask = float(data["closeoutAsk"])
-                    status = data["status"]
-                    if callback:
+                    status = data["status"]                    
+                    if callback and status:
                         callback(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
                     else:
                         self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
