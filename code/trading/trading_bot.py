@@ -24,10 +24,9 @@ from trading.utils import utils
 logger = logging.getLogger()
 
 class Trader():
-    def __init__(self, conf_file, pair_file, instrument, unit_test = False):
+    def __init__(self, conf_file, pair_file, trading_strategy, unit_test = False):
 
-        self.instrument = instrument
-        self.init_logs(unit_test=unit_test)
+        self.init_logs(name=trading_strategy, unit_test=unit_test)
 
         self.api = OandaApi(conf_file)
         self.streaming = False
@@ -36,15 +35,15 @@ class Trader():
         config = configparser.ConfigParser()  
         config.read(pair_file)
 
-        # self.days = int(config.get(self.instrument, 'days'))
-        # self.start = config.get(self.instrument, 'start')
-        # self.end = config.get(self.instrument, 'end')
+        # self.days = int(config.get(self.strategy.instrument, 'days'))
+        # self.start = config.get(self.strategy.instrument, 'start')
+        # self.end = config.get(self.strategy.instrument, 'end')
 
         self.ticker_data_deque = None
         self.stop_loss_count = 0
         
         class_ = None
-        strategy = config.get(instrument, 'strategy')
+        strategy = config.get(trading_strategy, 'strategy')
 
         try:
             modules = strategy.split(sep=".", maxsplit=2)
@@ -53,11 +52,11 @@ class Trader():
             logger.info(f"Loading:{modules[1]} class")
             class_ = getattr(module, modules[1])
         except Exception as e:            
-            logger.error(f"Strategy not found for {instrument}", e)
-            raise Exception(f"Strategy not found for {instrument}")
+            logger.error(f"Strategy not found for {trading_strategy}", e)
+            raise Exception(f"Strategy not found for {trading_strategy}")
 
         logger.info(f"Running:{class_} strategy")
-        self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pair_file, api = self.api, unit_test = unit_test)
+        self.strategy: TradingStrategyExec  = class_(trading_strategy=trading_strategy, pair_file=pair_file, api = self.api, unit_test = unit_test)
         logger.info(f"Trading Strategy: {self.strategy}")
 
         today = datetime.now(tz=timezone.utc).date()
@@ -72,7 +71,7 @@ class Trader():
         super().__init__()
 
 
-    def init_logs(self, unit_test = False):
+    def init_logs(self, name, unit_test = False):
 
         
         if unit_test:
@@ -82,7 +81,7 @@ class Trader():
 
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', utils.date_format)
 
-        log_file = os.path.join("../../logs/trading", f"{self.instrument}_{datetime.now(tz=timezone.utc).strftime('%m-%d')}_app.log")
+        log_file = os.path.join("../../logs/trading", f"{name}_{datetime.now(tz=timezone.utc).strftime('%m-%d')}_app.log")
         log_handler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         log_handler.setFormatter(formatter)
         logger.addHandler(log_handler)
@@ -113,8 +112,8 @@ class Trader():
     
     def start_streaming(self, stop_after = None):
 
-        # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.instrument).drop(columns=["mid_o", "volume"]).to_records())
-        candles = self.api.get_latest_price_candles(pair_name=self.instrument)
+        # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.strategy.instrument).drop(columns=["mid_o", "volume"]).to_records())
+        candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
         candles["status"] = pd.NA
         self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 500, iterable = candles.drop(columns={"volume"}).reset_index().values.tolist())
         self.streaming = True
@@ -124,7 +123,7 @@ class Trader():
 
             try:
                 logger.info ("Start Stream")
-                self.api.stream_prices(instrument=self.instrument, stop = stop_after, callback=self.new_price_ticker)
+                self.api.stream_prices(instrument=self.strategy.instrument, stop = stop_after, callback=self.new_price_ticker)
                 self.terminate = True
                 break
 
@@ -191,7 +190,7 @@ class Trader():
                     ticker_data_df = ticker_data_df.resample("30s").last()
                     ticker_data_df = ticker_data_df.tail(utils.ticker_data_size)
                 else:
-                    ticker_data_df = self.api.get_latest_price_candles(pair_name=self.instrument)
+                    ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
 
                 if ticker_data_df.size < utils.ticker_data_size:
                     logger.info(f"Skip strategy execution, {ticker_data_df.size} ticker data size is too small")
@@ -246,12 +245,12 @@ class Trader():
 
                 logger.debug("Check Positions")
 
-                units = self.api.get_position(instrument = self.instrument)
+                units = self.api.get_position(instrument = self.strategy.instrument)
                 if not units == self.strategy.trading_session.have_units:
                     self.strategy.trading_session.have_units = units
 
                 if print_logs % 5 == 0:
-                    logger.info(f"Instrument: {self.instrument}, Units: {units}")
+                    logger.info(f"Instrument: {self.strategy.instrument}, Units: {units}")
 
                 print_logs = print_logs + 1
                 time.sleep(refresh)
@@ -293,7 +292,7 @@ class Trader():
         second: int = pd_timestamp.second
 
         if minute in [0, 15, 30, 45] and second == 0:
-            logger.info(f"Heartbeat: instrument: {self.instrument} | ask: {ask} | bid: {bid} | status: {status}")
+            logger.info(f"Heartbeat: instrument: {self.strategy.instrument} | ask: {ask} | bid: {bid} | status: {status}")
  
   
         

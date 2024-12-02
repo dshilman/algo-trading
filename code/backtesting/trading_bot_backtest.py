@@ -21,18 +21,18 @@ logger = logging.getLogger()
 
 class TradingBacktester():
     
-    def __init__(self, conf_file, pairs_file, instrument, days = 33, refresh = False):
+    def __init__(self, conf_file, pairs_file, trading_strategy, days = 33, refresh = False):
         
         self.days = days
         self.refresh = refresh
         self.api = OandaApi(conf_file)
         config = configparser.ConfigParser()  
         config.read(pairs_file)
-        self.units_to_trade = int(config.get(instrument, 'units_to_trade'))
+        self.units_to_trade = int(config.get(trading_strategy, 'units_to_trade'))
 
         logger.setLevel(logging.INFO)
         
-        log_file = os.path.join("logs", f"{instrument}_{days}.log")
+        log_file = os.path.join("logs", f"{trading_strategy}_{days}.log")
         logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', utils.date_format)
@@ -41,7 +41,7 @@ class TradingBacktester():
         logger.addHandler(logHandler)
 
         class_ = None
-        strategy = config.get(instrument, 'strategy')
+        strategy = config.get(trading_strategy, 'strategy')
 
         try:
             modules = strategy.split(sep=".", maxsplit=2)
@@ -50,13 +50,13 @@ class TradingBacktester():
             logger.info(f"Loading:{modules[1]} class")
             class_ = getattr(module, modules[1])
         except Exception as e:            
-            logger.error(f"Strategy not found for {instrument}", e)
-            raise Exception(f"Strategy not found for {instrument}")
+            logger.error(f"Strategy not found for {trading_strategy}", e)
+            raise Exception(f"Strategy not found for {trading_strategy}")
 
         logger.info(f"Running:{class_} strategy")
-        logger.info(f"Strategy Configuration \n + {config.items(instrument)}")
+        logger.info(f"Strategy Configuration \n + {config.items(trading_strategy)}")
 
-        self.strategy: TradingStrategyExec  = class_(instrument=instrument, pair_file=pairs_file, api = self.api, unit_test = False)
+        self.strategy: TradingStrategyExec  = class_(trading_strategy=trading_strategy, pair_file=pairs_file, api = self.api, unit_test = False)
         self.strategy.backtest = True
     
     def get_history_with_all_prices(self):
@@ -131,7 +131,7 @@ class TradingBacktester():
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('pair', type=str, help='pair')
+    parser.add_argument('trading_strategy', type=str, help='trading_strategy')
 
     parser.add_argument('--days', type = int, default=33, help='Number of days, numeric only')
     parser.add_argument('--refresh', choices=['True', 'False', 'true', 'false'], default="False", type = str, help='Refresh data')
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     trader = TradingBacktester(
         conf_file=config_file,
         pairs_file="../trading/pairs.ini",
-        instrument=args.pair, days=args.days, refresh=(args.refresh in ['True', 'true']))
+        trading_strategy=args.trading_strategy, days=args.days, refresh=(args.refresh in ['True', 'true']))
 
     trader.start_trading_backtest()
 

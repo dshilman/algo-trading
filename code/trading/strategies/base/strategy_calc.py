@@ -25,8 +25,8 @@ Go Short (sell) when the bid price is above the high Bollinger Band and close tr
 
 
 class TradingStrategyCalc(TradingStrategyBase):
-    def __init__(self, instrument, pair_file, api=None, unit_test=False):
-        super().__init__(instrument=instrument,
+    def __init__(self, trading_strategy, pair_file, api=None, unit_test=False):
+        super().__init__(trading_strategy=trading_strategy,
                          pair_file=pair_file, api=api, unit_test=unit_test)
 
     def add_tickers(self, ticker_df: pd.DataFrame):
@@ -53,7 +53,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # Bollinger Band
         df["std_dev"] = df["close"].fillna(0).rolling(period_long).std(numeric_only=True)
-        df["std_dev_recent_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
+        df["std_dev_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
+        df["sma_short"] = df["close"].fillna(0).rolling(period_short).mean(numeric_only=True)
         df["sma_long"] = df["close"].fillna(0).rolling(period_long).mean(numeric_only=True)
         df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
         df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
@@ -152,14 +153,16 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.trading_volatility = row['trading_volatility']
         # self.price_efficiency_long = row['price_efficiency_long']
         self.price_std = row['std_dev']
-        self.std_dev_recent_mean = row["std_dev_recent_mean"]
+        self.std_dev_mean = row["std_dev_mean"]
         # self.price_std_mean = row['price_std_mean']
 
         # MACD
         # self.ema_long = row["ema_long"]
 
         # Bollinger Band
+        self.sma_short = row['sma_short']
         self.sma_long = row['sma_long']
+
         self.bb_low = row['bb_lower']
         self.bb_high = row['bb_upper']
 

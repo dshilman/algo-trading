@@ -20,8 +20,8 @@ Go Short (sell) when the bid price is above the high Bollinger Band and close tr
 
 """
 class TradingStrategy(TradingStrategyExec):
-    def __init__(self, instrument, pair_file, api = None, unit_test = False):
-        super().__init__(instrument=instrument, pair_file=pair_file, api = api, unit_test = unit_test)
+    def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
+        super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
 
     def check_if_need_open_trade(self, trading_time):
@@ -30,7 +30,7 @@ class TradingStrategy(TradingStrategyExec):
             return
 
         
-        if self.std_dev_recent_mean > 0.001 and self.price_std > 0.00125:
+        if self.std_dev_mean > 0.001 and self.price_std > 0.00125:
 
             if self.price_min < self.bb_low and self.rsi_short_min < 25 and self.reverse_up():
                     if not self.backtest:

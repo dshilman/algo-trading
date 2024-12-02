@@ -18,8 +18,8 @@ logger = logging.getLogger()
 
 
 class TradingStrategyExec(TradingStrategyCalc):
-    def __init__(self, instrument, pair_file, api=None, unit_test=False):
-        super().__init__(instrument=instrument,
+    def __init__(self, trading_strategy, pair_file, api=None, unit_test=False):
+        super().__init__(trading_strategy=trading_strategy,
                          pair_file=pair_file, api=api, unit_test=unit_test)
 
         self.stop_trading = False
