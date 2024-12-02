@@ -49,6 +49,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
             if order is not None:
                 self.submit_order(order)
+                self.trading_session.open_trade = trade_action.open_trade
 
         # if trade_action is not None and trade_action.sl_trade:
         #     raise PauseTradingException(2)
@@ -63,11 +64,12 @@ class TradingStrategyExec(TradingStrategyCalc):
         if have_units != 0:
 
             logger.debug(f"Have {have_units} positions, checking for stop loss")
-            trade = self.check_for_sl(trading_time, have_units)
+            if self.trading_session.open_trade:
+                trade = self.check_for_sl(trading_time, have_units)
 
-            if trade is None:
-                logger.debug(f"Have {have_units} positions, checking if need to close a trade")
-                trade = self.check_if_need_close_trade(trading_time)
+                if trade is None:
+                    logger.debug(f"Have {have_units} positions, checking if need to close a trade")
+                    trade = self.check_if_need_close_trade(trading_time)
 
         if trade is None and have_units == 0:
 
