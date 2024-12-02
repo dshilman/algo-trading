@@ -114,7 +114,7 @@ class Trader():
 
         # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.strategy.instrument).drop(columns=["mid_o", "volume"]).to_records())
         candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
-        candles["status"] = pd.NA
+        candles["status"] = "NA"
         self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 500, iterable = candles.drop(columns={"volume"}).reset_index().values.tolist())
         self.streaming = True
         i: int = 0
