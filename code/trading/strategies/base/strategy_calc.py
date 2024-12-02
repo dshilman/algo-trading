@@ -125,11 +125,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_ema_slope_max"] = df['rsi_ema_slope'].rolling(period).max()
         # df["rsi_ema_slope_min"] = df['rsi_ema_slope'].rolling(period).min()
 
-        df["greater_sma"] = df["sma_long"] - df["close"]
-        df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
-        df["sma_crossover"] = df["greater_sma"].rolling(period_short).apply(lambda x: count_sma_crossover(x))
+        # df["greater_sma"] = df["sma_long"] - df["close"]
+        # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+        # df["sma_crossover"] = df["greater_sma"].rolling(period_short).apply(lambda x: count_sma_crossover(x))
 
-        df.drop(columns=["greater_sma"], inplace=True)
+        # df.drop(columns=["greater_sma"], inplace=True)
 
         
         if self.unit_test:
@@ -211,7 +211,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.volume_max = row ["volume_max"]
 
 
-        self.sma_crossover = row ["sma_crossover"]
+        # self.sma_crossover = row ["sma_crossover"]
 
         self.trading = True
         if not self.backtest and "status" in row:
