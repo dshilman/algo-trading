@@ -189,6 +189,7 @@ class Trader():
                     ticker_data_df.index = ticker_data_df.index.tz_localize(None)
                     ticker_data_df = ticker_data_df.resample("30s").last()
                     ticker_data_df = ticker_data_df.tail(utils.ticker_data_size)
+                    ticker_data_df.dropna(inplace = True)
                 else:
                     ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
 
