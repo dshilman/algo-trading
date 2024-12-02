@@ -221,7 +221,7 @@ class TradingStrategyCalc(TradingStrategyBase):
        
     def print_indicators(self):
 
-        logger.info("\n" + df.tail(1).to_string(header=True))
+        logger.info("\n" + self.data.tail(5).to_string(header=True))
         # price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]
         # price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
         # logger.info("\n" + tabulate(price_data, headers=price_headers) + "\n")
