@@ -56,7 +56,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["std_dev"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["std_dev_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
         df["sma_short"] = df["close"].rolling(period_short).mean(numeric_only=True)
-        df["sma_long"] = df["close"].rolling(period_=long).mean(numeric_only=True)
+        df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
         df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
         df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
 

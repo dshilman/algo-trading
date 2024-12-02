@@ -204,7 +204,7 @@ class Trader():
                 self.strategy.execute_strategy()
                 exec_counter = exec_counter + 1
 
-                if exec_counter % 100 == 0:
+                if exec_counter % 50 == 0:
                     logger.info (f"Heartbeat... {exec_counter}")
                     self.strategy.print_indicators()
             
