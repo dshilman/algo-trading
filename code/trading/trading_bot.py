@@ -307,7 +307,7 @@ class Trader():
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('pair', type=str, help='pair')
+    parser.add_argument('trading_strategy', type=str, help='trading_strategy')
     args = parser.parse_args()
 
     config_file = os.path.abspath(path="../../config/oanda.cfg")
@@ -319,7 +319,7 @@ if __name__ == "__main__":
     trader = Trader(
         conf_file=config_file,
         pair_file="pairs.ini",
-        instrument=args.pair,
+        trading_strategy=args.trading_strategy,
         unit_test=False
     )
     trader.start_trading()
