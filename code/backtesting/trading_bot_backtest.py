@@ -111,9 +111,12 @@ class TradingBacktester():
                 if pause_trading == None or index > pause_trading:
                     trade_action = self.strategy.determine_trade_action(trading_time=index)
                                         
-                    if trade_action != None and trade_action.sl_trade:
-                        logger.debug(f"Pausing trading for 5 minutes at {index}")
-                        pause_trading = index + timedelta(minutes = 1)                        
+                    if trade_action:
+                        self.strategy.trading_session.open_trade = trade_action.open_trade
+
+                        if trade_action.sl_trade:
+                            logger.debug(f"Pausing trading for 5 minutes at {index}")
+                            pause_trading = index + timedelta(minutes = 1)                        
         
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()
