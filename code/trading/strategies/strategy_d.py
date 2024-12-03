@@ -30,7 +30,7 @@ class TradingStrategy(TradingStrategyExec):
             return
 
         
-        if 0.00025 < self.price_std:
+        if 0.00025 < self.std_dev_mean < self.price_std:
 
             if self.sma_long < self.price < self.bb_high \
                 and self.rsi_short_pct_change > 0.3 and self.rsi_short == self.rsi_short_max > 70 and self.ema_short > self.sma_short:
