@@ -25,12 +25,9 @@ Go Short (sell) when the bid price is above the high Bollinger Band and close tr
 
 """
 class TradingStrategyBase():
-    def __init__(self, instrument, pair_file, api = None, unit_test = False):
+    def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__()
 
-        self.trading_session = Trading_Session(instrument)
-
-        self.instrument = instrument
         self.api:OandaApi = api
         self.unit_test = unit_test
         self.backtest = False
@@ -38,30 +35,25 @@ class TradingStrategyBase():
 
         config = configparser.ConfigParser()  
         config.read(pair_file)
-        self.SMA = config.getint(instrument, 'SMA')
-        self.DEV = config.getfloat(instrument, 'dev')
-        self.trading_volume = config.getint(instrument, 'trading_volume')
-        self.trading_std = config.getfloat(instrument, 'trading_std')
-        # self.rsi_high = float(config.get(instrument, 'rsi_high'))
-        # self.rsi_low = float(config.get(instrument, 'rsi_low'))
-        self.rsi_change = config.getfloat(instrument, 'rsi_change')
-        self.units_to_trade = config.getint(instrument, 'units_to_trade')
-        self.sl_perc = config.getfloat(self.instrument, 'sl_perc')
-        self.tp_perc = config.getfloat(self.instrument, 'tp_perc')
-        self.pause_start = config.get(self.instrument, 'pause_start')
-        self.pause_end = config.get(self.instrument, 'pause_end')
-        self.short_trading = config.getboolean(self.instrument, 'short_trading')
-        self.long_trading = config.getboolean(self.instrument, 'long_trading')
-        self.keep_trade_open_time = config.getint(instrument, 'keep_trade_open_time')
+        self.instrument = config.get(trading_strategy, "pair")
+        self.SMA = config.getint(trading_strategy, 'SMA')
+        self.DEV = config.getfloat(trading_strategy, 'dev')
+        self.trading_volume = config.getint(trading_strategy, 'trading_volume')
+        self.trading_std = config.getfloat(trading_strategy, 'trading_std')
+        # self.rsi_high = float(config.get(trading_strategy, 'rsi_high'))
+        # self.rsi_low = float(config.get(trading_strategy, 'rsi_low'))
+        self.rsi_change = config.getfloat(trading_strategy, 'rsi_change')
+        self.units_to_trade = config.getint(trading_strategy, 'units_to_trade')
+        self.sl_perc = config.getfloat(trading_strategy, 'sl_perc')
+        self.tp_perc = config.getfloat(trading_strategy, 'tp_perc')
+        self.pause_start = config.get(trading_strategy, 'pause_start')
+        self.pause_end = config.get(trading_strategy, 'pause_end')
+        self.short_trading = config.getboolean(trading_strategy, 'short_trading')
+        self.long_trading = config.getboolean(trading_strategy, 'long_trading')
+        self.keep_trade_open_time = config.getint(trading_strategy, 'keep_trade_open_time')
         self.data: pd.DataFrame = None
-  
-        self.rsi_min_time = None
-        self.rsi_min_price = None
-        self.rsi_min_sma = None
 
-        self.rsi_max_time = None
-        self.rsi_max_time = None
-        self.rsi_max_sma = None
+        self.trading_session = Trading_Session(self.instrument)
 
 
     def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
@@ -78,18 +70,17 @@ class TradingStrategyBase():
             """
 
             # sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
-            sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * (sl_perc + .0005), (4 if trade_action.price < 100 else 0))
+            sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * (sl_perc + .001), (4 if trade_action.price < 100 else 0))
 
                 
             if tp_perc:
-                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * (tp_perc + .0005), (4 if trade_action.price < 100 else 0))
+                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * (tp_perc + .001), (4 if trade_action.price < 100 else 0))
 
 
         order = Order(
-            instrument = trade_action.instrument,
+            instrument = trade_action.trading_strategy,
             price = trade_action.price,
             trade_units = trade_action.units,
-            # sl_dist = sl_dist,
             sl_price = sl_price,
             tp_price = tp_price
         )

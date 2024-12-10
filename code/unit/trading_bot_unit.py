@@ -21,7 +21,7 @@ if __name__ == "__main__":
         exit(1) 
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('pair', type=str, default = "EUR_USD", help='pair')
+    parser.add_argument('trading_strategy', type=str, default = "EUR_USD", help='trading_strategy')
     parser.add_argument('--stop', type = int, default=5, help='Stop after')
     args = parser.parse_args()
 
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     trader = Trader(
         conf_file=config_file,
         pair_file="../trading/pairs.ini",
-        instrument=args.pair,
+        trading_strategy=args.trading_strategy,
         unit_test=True
     )
 

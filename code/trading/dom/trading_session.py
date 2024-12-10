@@ -8,7 +8,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from dom.trade import Trade_Action
-
+from utils import utils
 
 logger = logging.getLogger()
 class Trading_Session():
@@ -27,6 +27,7 @@ class Trading_Session():
         self.trade_cost: float = 0
         self.have_units: int = 0
         self.trade_id: int = 0
+        self.open_trade: bool = False
         self.columns = ["datetime", "trade_id", "trade", "action", "units", "price", "trade_pl", "trade_pl_pct", "pl"]
 
         super().__init__()
@@ -83,8 +84,8 @@ class Trading_Session():
         
         self.have_units = self.have_units + trade_action.units
 
-        self.trades.append([date_time.strftime("%m/%d/%Y %H:%M:%S"), self.trade_id, trade, action, trade_action.units, trade_action.price, '${:,.2f}'.format(trade_pl), '%{:,.4f}'.format(trade_pl_pct), '${:,.2f}'.format(self.pl)])
-
+        self.trades.append([date_time.strftime(utils.date_format), self.trade_id, trade, action, trade_action.units, trade_action.price, '${:,.2f}'.format(trade_pl), '%{:,.4f}'.format(trade_pl_pct), '${:,.2f}'.format(self.pl)])
+       
         return
 
     def print_trades(self):

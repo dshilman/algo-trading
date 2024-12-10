@@ -14,6 +14,7 @@ parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
 from dom.order import Order
+from utils import utils
 
 logger = logging.getLogger()
 
@@ -44,6 +45,30 @@ class OandaApi:
         self.session.headers.update(self.SECURE_HEADER)
         self.stop_stream = False
 
+    def get_latest_price_candles(self, pair_name) -> pd.DataFrame:
+
+        url = f"accounts/{self.account_id}/candles/latest"
+        params = dict(
+            instrument=pair_name,
+            granularity="S30",
+            price="MBA",
+            count=utils.ticker_data_size
+        )
+
+        ok, data = self.__make_request(url, params=params)
+
+        if ok and 'candles' in data:
+            # logger.info(f"Candles: {data['candles']}")
+            df = self.__convert_to_df(data['candles'])
+            df = df.set_index('time')
+            df.index = df.index.tz_localize(None)
+            return df
+        else:
+            print("ERROR fetch_candles()", params, data)
+            return None
+
+
+
     def get_price_candles(self, pair_name, days = 0, hours = 0, minutes = 0, seconds = 0):
 
         now = datetime.now(tz=timezone.utc)
@@ -67,10 +92,7 @@ class OandaApi:
                 df_t = self.__convert_to_df(data_t)
                 df = pd.concat([df, df_t])
 
-        # df.sort_values(by='time', ascending=True, inplace=True)
         df = df.set_index('time')
-        df.rename(columns={"mid": pair_name}, inplace=True)
-        # df.drop(columns = ["index"], inplace = True)
         df.index = df.index.tz_localize(None)
 
         return df
@@ -162,10 +184,10 @@ class OandaApi:
                     count += 1
                     instrument = data["instrument"]
                     time = data["time"]
-                    bid = float(data["bicloseoutBidds"])
+                    bid = float(data["closeoutBid"])
                     ask = float(data["closeoutAsk"])
-                    status = data["status"]
-                    if callback:
+                    status = data["status"]                    
+                    if callback and status:
                         callback(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
                     else:
                         self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
@@ -237,8 +259,8 @@ class OandaApi:
 
         final_data = []
         for candle in data:
-            if not candle["complete"]:
-                continue
+            # if not candle["complete"]:
+            #     continue
             
             new_dict = {}
             new_dict['time'] = parser.parse(candle['time'])
@@ -247,12 +269,13 @@ class OandaApi:
             for p in prices:
                 if p in candle:
                     new_dict[f"{p}"] = float(candle[p]["c"])
-                    if p == 'mid':
-                        new_dict[f"{p}_o"] = float(candle[p]["o"])
+                    # if p == 'mid':
+                    #     new_dict[f"{p}_o"] = float(candle[p]["o"])
 
             final_data.append(new_dict)
 
         df = pd.DataFrame.from_dict(final_data)
+        df.rename(columns={"mid": "close"}, inplace=True)
         return df
 
 if __name__ == "__main__":
