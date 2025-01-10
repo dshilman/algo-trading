@@ -30,20 +30,18 @@ class TradingStrategy(TradingStrategyExec):
             return
 
         
-        if 0.00025 < self.std_dev_mean < self.price_std:
+        # if 0.00025 < self.std_dev_mean:
 
-            if self.sma_long < self.price < self.bb_high \
-                and self.rsi_short_pct_change > 0.3 and self.rsi_short == self.rsi_short_max > 70 and self.ema_short > self.sma_short:
-                    if not self.backtest:
-                        logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-                    return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
+        if self.rsi_short_pct_change > 0.5 and self.rsi_short == self.rsi_short_max > 75 and self.sma_long > 0.001:
+                if not self.backtest:
+                    logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
+                return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
 
 
-            elif self.sma_long > self.price > self.bb_low \
-                and self.rsi_short_pct_change < -0.3 and self.rsi_short == self.rsi_short_min < 30 and self.ema_short < self.sma_short:
-                    if not self.backtest:
-                        logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
-                    return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
+        elif self.rsi_short_pct_change < -0.5 and self.rsi_short == self.rsi_short_min < 25 and self.sma_long < -0.001:
+                if not self.backtest:
+                    logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
+                return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
 
     def check_if_need_close_trade(self, trading_time):

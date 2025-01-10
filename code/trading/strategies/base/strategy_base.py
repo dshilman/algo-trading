@@ -45,6 +45,7 @@ class TradingStrategyBase():
         self.rsi_change = config.getfloat(trading_strategy, 'rsi_change')
         self.units_to_trade = config.getint(trading_strategy, 'units_to_trade')
         self.sl_perc = config.getfloat(trading_strategy, 'sl_perc')
+        self.trailing_sl = config.getboolean(trading_strategy, 'trailing_sl', fallback=True)
         self.tp_perc = config.getfloat(trading_strategy, 'tp_perc')
         self.pause_start = config.get(trading_strategy, 'pause_start')
         self.pause_end = config.get(trading_strategy, 'pause_end')

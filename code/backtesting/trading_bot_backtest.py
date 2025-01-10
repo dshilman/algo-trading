@@ -90,15 +90,15 @@ class TradingBacktester():
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
 
-            # try:
-            #     file_path = f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx"
-            #     if not os.path.exists(file_path):
-            #        logger.info("Saving indicators to Excel...")
-            #        self.strategy.data.to_excel(file_path)
-            #     else:
-            #         logger.info(f"File: {file_path} already exists")
-            # except Exception as e:
-            #     logger.error("Couldn't wtite to " + f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx." + " File is open")
+            try:
+                file_path = f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx"
+                if not os.path.exists(file_path):
+                   logger.info("Saving indicators to Excel...")
+                   self.strategy.data.to_excel(file_path)
+                else:
+                    logger.info(f"File: {file_path} already exists")
+            except Exception as e:
+                logger.error("Couldn't wtite to " + f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx." + " File is open")
  
  
             pause_trading = None
@@ -114,9 +114,9 @@ class TradingBacktester():
                     if trade_action:
                         self.strategy.trading_session.open_trade = trade_action.open_trade
 
-                        if trade_action.sl_trade:
-                            logger.debug(f"Pausing trading for 5 minutes at {index}")
-                            pause_trading = index + timedelta(minutes = 1)                        
+                        # if trade_action.open_trade:
+                        #     logger.debug(f"Pausing trading for 5 minutes at {index}")
+                        #     pause_trading = index + timedelta(minutes = 60)                        
         
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('trading_strategy', type=str, help='trading_strategy')
 
-    parser.add_argument('--days', type = int, default=33, help='Number of days, numeric only')
+    parser.add_argument('--days', type = int, default=3, help='Number of days, numeric only')
     parser.add_argument('--refresh', choices=['True', 'False', 'true', 'false'], default="False", type = str, help='Refresh data')
     args = parser.parse_args()
 
@@ -156,4 +156,4 @@ if __name__ == "__main__":
     trader.start_trading_backtest()
 
 
-# python trading_bot_backtest.py EUR_USD --refresh True
+# python trading_bot_backtest.py EUR_USD#2 --refresh True

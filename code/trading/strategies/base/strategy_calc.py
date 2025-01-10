@@ -44,21 +44,27 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df: pd.DataFrame = self.data
 
-        instrument = self.instrument
-
         # DEV = self.DEV
         std_dev = 2
-        period_long = 200
-        period_short = 30
+        period_long = 100
+        period_short = 15
 
         # Bollinger Band
         df["close"] = df["close"].fillna(0)
+        # df["change_rate"] = df["close"].pct_change()
+        df["change_rate_1h"] = df["close"].pct_change(periods=period_short)
         df["std_dev"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["std_dev_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
-        df["sma_short"] = df["close"].rolling(period_short).mean(numeric_only=True)
+
+       
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
+        # df['sma_long_slope'] = df["sma_long"].rolling(period_long).apply(lambda x: calculate_slope(x))
+
         df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
-        df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
+        # df['ema_short_min'] = df['ema_short'].rolling(period_short).min()
+        # df['ema_short_max'] = df['ema_short'].rolling(period_short).max()
+        # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
+        
 
         df["bb_lower"] = df["sma_long"] - df["std_dev"] * std_dev
         df["bb_upper"] = df["sma_long"] + df["std_dev"] * std_dev
@@ -111,7 +117,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
         df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None)
-        df['rsi_short_ema'] = df["rsi_short"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
+        # df['rsi_short_ema'] = df["rsi_short"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
 
         # df["rsi_short_pct_change_max"] = df.rsi_short_pct_change.rolling(period_short).max()
         # df["rsi_short_pct_change_min"] = df.rsi_short_pct_change.rolling(period_short).min()
@@ -148,6 +154,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row["close"]
+        self.price_low = row["low"]
+        self.price_high = row["high"]
+        self.change_rate_1h = row["change_rate_1h"]
+
         self.price_max = row["price_max"]
         self.price_min = row["price_min"]
         # self.price_volatility = row['price_volatility']
@@ -161,16 +171,17 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.ema_long = row["ema_long"]
 
         # Bollinger Band
-        self.sma_short = row['sma_short']
+        # self.sma_short = row['sma_short']
         self.sma_long = row['sma_long']
 
         self.bb_low = row['bb_lower']
         self.bb_high = row['bb_upper']
 
-        # self.price_sma_long_slope = row["sma_long_slope"]
-        # self.price_ema_long_slope = row["ema_long_slope"]
+        # self.sma_long_slope = row["sma_long_slope"]
         self.ema_short = row["ema_short"]
-        self.ema_short_slope = row["ema_short_slope"]
+        # self.ema_short_min = row["ema_short_min"]
+        # self.ema_short_max = row["ema_short_max"]
+        # # self.ema_short_slope = row["ema_short_slope"]
         # self.price_ema_short_slope_max = row["ema_short_slope_max"]
         # self.price_ema_short_slope_min = row["ema_short_slope_min"]
 
@@ -201,7 +212,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.rsi_short_pct_change_min = row["rsi_short_pct_change_min"]
         self.rsi_short_max = round(row["rsi_short_max"], 4)
         self.rsi_short_min = round(row["rsi_short_min"], 4)
-        self.rsi_short_ema = row["rsi_short_ema"]
+        # self.rsi_short_ema = row["rsi_short_ema"]
 
         
         # Volume Momentum
@@ -259,7 +270,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         return None
 
-    def is_trading_time(self, date_time) -> bool:
+    def is_trading_time(self, date_time: datetime) -> bool:
 
         logger.debug(f"Date time: {date_time}")
 
@@ -269,8 +280,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         if day == 4 and hour >= 20:
             return False
 
-        pause_from_dt = datetime.combine(date_time, datetime.strptime(self.pause_start, '%H:%M:%S').time())
-        pause_to_dt = datetime.combine(date_time, datetime.strptime(self.pause_end, '%H:%M:%S').time())
+        pause_from_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_start, '%H:%M:%S').time())
+        pause_to_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_end, '%H:%M:%S').time())
+
+        if pause_from_dt > pause_to_dt:
+            pause_from_dt = pause_from_dt - pd.DateOffset(days=1)
 
         if pause_from_dt < date_time < pause_to_dt:
             return False

@@ -125,21 +125,31 @@ class TradingStrategyExec(TradingStrategyCalc):
         if len(self.trading_session.trades) == 0:
             return None
 
-        open_trade_price = self.get_open_trade_price()
-
+        base_price = None
+        
         if have_units < 0:
-            current_loss_perc = round((self.ask - open_trade_price)/open_trade_price, 4)
+            if self.trailing_sl:
+                base_price = min(self.price_min, self.get_open_trade_price())
+            else: 
+                base_price = self.get_open_trade_price()
+
+            current_loss_perc = (self.ask - base_price)/base_price
             if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
                     logger.info(
-                        f"Close short position, - Stop Loss Buy, short price {open_trade_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
+                        f"Close short position, - Stop Loss Buy, short price {base_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, True)
 
         elif have_units > 0:
-            current_loss_perc = round((open_trade_price - self.bid)/open_trade_price, 4)
+            if self.trailing_sl:
+                base_price = max(self.price_max, self.get_open_trade_price())
+            else: 
+                base_price = self.get_open_trade_price()
+
+            current_loss_perc = (base_price - self.bid)/base_price
             if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
                     logger.info(
-                        f"Close long position, - Stop Loss Sell, long price {open_trade_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
+                        f"Close long position, - Stop Loss Sell, long price {base_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, True)
         

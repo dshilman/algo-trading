@@ -50,7 +50,7 @@ class OandaApi:
         url = f"accounts/{self.account_id}/candles/latest"
         params = dict(
             instrument=pair_name,
-            granularity="S30",
+            granularity="M5",
             price="MBA",
             count=utils.ticker_data_size
         )
@@ -79,7 +79,7 @@ class OandaApi:
 
         if days == 0:
             logger.debug(f"Getting price candles for {pair_name} from {past} to {now}")
-            data_t: pd.DataFrame = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity="S30", price="MBA")
+            data_t: pd.DataFrame = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity="M5", price="MBA")
             df = self.__convert_to_df(data_t)
         else:
             for i in range(0, days):
@@ -88,7 +88,7 @@ class OandaApi:
                 end_d = start_d + timedelta(days=1)
 
                 logger.debug(f"Getting price candles for {pair_name} from {start_d} to {end_d}")
-                data_t: pd.DataFrame = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="S30", price="MBA")
+                data_t: pd.DataFrame = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="M5", price="MBA")
                 df_t = self.__convert_to_df(data_t)
                 df = pd.concat([df, df_t])
 
@@ -226,7 +226,7 @@ class OandaApi:
         except Exception as error:
             return False, {'Exception': error}
 
-    def __fetch_candles(self, pair_name, date_f, date_t, granularity="S30", price="MBA") -> pd.DataFrame:
+    def __fetch_candles(self, pair_name, date_f, date_t, granularity="M5", price="MBA") -> pd.DataFrame:
 
         url = f"instruments/{pair_name}/candles"
         params = dict(
@@ -268,14 +268,17 @@ class OandaApi:
             
             for p in prices:
                 if p in candle:
-                    new_dict[f"{p}"] = float(candle[p]["c"])
-                    # if p == 'mid':
-                    #     new_dict[f"{p}_o"] = float(candle[p]["o"])
+                    if p == 'mid':
+                       new_dict["close"] = float(candle[p]["c"])
+                       new_dict["high"] = float(candle[p]["h"])
+                       new_dict["low"] = float(candle[p]["l"])
+                    else:
+                        new_dict[f"{p}"] = float(candle[p]["c"])
+
 
             final_data.append(new_dict)
 
         df = pd.DataFrame.from_dict(final_data)
-        df.rename(columns={"mid": "close"}, inplace=True)
         return df
 
 if __name__ == "__main__":
