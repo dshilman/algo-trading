@@ -2,10 +2,12 @@
 
 # Define array of process names
 processes=(
-    "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD_1.sh"
-    "python3 trading_bot.py EUR_USD#1"
     "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD_2.sh"
     "python3 trading_bot.py EUR_USD#2"
+    "/bin/sh /home/ec2-user/algo-trading/trader_oanda_GBP_USD_2.sh"
+    "python3 trading_bot.py GBP_USD#2"
+    "/bin/sh /home/ec2-user/algo-trading/trader_oanda_USD_CHF_2.sh"
+    "python3 trading_bot.py USD_CHF#2"
     # "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_GBP.sh"
     # "python3 trading_bot.py EUR_GBP"
     # "/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_GBP.sh"

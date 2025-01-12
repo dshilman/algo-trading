@@ -30,13 +30,13 @@ class TradingStrategy(TradingStrategyExec):
 
         if  round(self.std_dev_mean, 4) <= .00075:
 
-            if self.rsi_short > 80 and .0015 < self.change_rate_1h < .0025:
+            if self.rsi_short > 80 and .0015 < self.change_rate_1h < .0035:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
 
 
-            elif self.rsi_short < 20 and -.0015 > self.change_rate_1h > -.0025:
+            elif self.rsi_short < 20 and -.0015 > self.change_rate_1h > -.0035:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
