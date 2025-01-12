@@ -61,6 +61,7 @@ class TradingStrategyBase():
         
         tp_price = None
         sl_price = None
+        trailing_sl = None
 
         if trade_action.open_trade:
             
@@ -70,8 +71,10 @@ class TradingStrategyBase():
                 if the price is grater that $100, do not use decimals for stop loss
             """
 
-            # sl_dist = round(trade_action.price * (sl_perc), (4 if trade_action.price < 100 else 0))
-            sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * (sl_perc + .001), (4 if trade_action.price < 100 else 0))
+            if self.trailing_sl:
+                trailing_sl = sl_perc
+            else:
+                sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * (sl_perc + .001), (4 if trade_action.price < 100 else 0))
 
                 
             if tp_perc:
@@ -79,10 +82,11 @@ class TradingStrategyBase():
 
 
         order = Order(
-            instrument = trade_action.trading_strategy,
+            instrument = trade_action.instrument,
             price = trade_action.price,
             trade_units = trade_action.units,
             sl_price = sl_price,
+            trailing_sl = trailing_sl,
             tp_price = tp_price
         )
         logger.debug(order)

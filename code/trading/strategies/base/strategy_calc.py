@@ -224,11 +224,6 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
         # self.sma_crossover = row ["sma_crossover"]
-
-        self.trading = True
-        if not self.backtest and "status" in row:
-            self.trading = row["status"] == "tradeable"
-
        
        
     def print_indicators(self):

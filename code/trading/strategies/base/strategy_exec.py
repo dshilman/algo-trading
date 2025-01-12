@@ -1,9 +1,9 @@
-from trading.utils.errors import PauseTradingException
 from trading.strategies.base.strategy_calc import TradingStrategyCalc
 from trading.dom.trade import Trade_Action
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import timedelta
+
 from pathlib import Path
 
 import pandas as pd
@@ -24,22 +24,8 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         self.stop_trading = False
 
-    def execute_strategy(self):
-
-        trading_time = datetime.utcnow()
-        
-        if not self.backtest:
-            if not self.trading:
-                logger.info("Skip strategy execution, ticker trading status is not tradeable")
-                return
-
-            last_candle_time = self.data.index[-1]
-            if (trading_time - last_candle_time) > timedelta(days = 0, hours = 0, minutes=0, seconds=45):
-                logger.info(f"Skip strategy execution, ticker data is too stale: {last_candle_time}")
-                return
-
-        self.trading_session.have_units = self.api.get_position(instrument = self.instrument)
-        logger.debug(f"Have {self.trading_session.have_units} positions of {self.instrument}")
+    def execute_strategy(self, trading_time):
+       
         trade_action = self.determine_trade_action(trading_time)
 
         if trade_action is not None:

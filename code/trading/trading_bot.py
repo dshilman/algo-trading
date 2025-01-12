@@ -6,7 +6,7 @@ import logging.handlers as handlers
 import os
 import sys
 import threading
-import time
+from time import sleep
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import pandas as pd
@@ -96,13 +96,14 @@ class Trader():
         treads = []
         # treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
         # # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
-        treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
-        treads.append(threading.Thread(target=self.refresh_strategy, args=(10,stop_after)))
+        # treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
+        # treads.append(threading.Thread(target=self.refresh_strategy, args=(5,stop_after)))
 
+        self.refresh_strategy(refresh=5, stop_after=999999999999999999999999999999999999999999)
 
         for t in treads:
             t.start()
-            time.sleep(5)
+            sleep(5)
         
         for t in treads:
             t.join()
@@ -167,15 +168,14 @@ class Trader():
             # time.sleep(refresh)
 
 
-    def refresh_strategy(self, refresh = 10, stop_after=99999999999999999999999999):
+    def refresh_strategy(self, refresh = 5, stop_after=2):
 
         error_counter: int = 0
         exec_counter: int = 0
 
-        while not self.terminate:
-            time.sleep(refresh)
-
-            logger.debug("Refreshing Strategy")
+        while exec_counter < stop_after or not self.terminate:
+            
+            logger.debug("Inside refresh strategy loop")
 
             try:
 
@@ -190,28 +190,34 @@ class Trader():
                     ticker_data_df = ticker_data_df.resample("30s").last()
                     ticker_data_df = ticker_data_df.tail(utils.ticker_data_size)
                     ticker_data_df.dropna(inplace = True)
+                    self.exec_strategy(ticker_data_df)
+
+                    exec_counter = exec_counter + 1
+                    if exec_counter % 50 == 0:
+                        logger.info (f"Heartbeat... {exec_counter}")
+                        self.strategy.print_indicators()
+
                 else:
-                    ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
 
-                if ticker_data_df.size < utils.ticker_data_size:
-                    logger.info(f"Skip strategy execution, {ticker_data_df.size} ticker data size is too small")
-                    continue
+                    trading_time = datetime.now(tz=timezone.utc)
+                    logger.debug (f"Refresh Strategy... {trading_time}")
 
+                    if trading_time.minute % 5 == 0 and trading_time.second < 10:
+                        logger.debug (f"Start executing strategy... {exec_counter}")
 
-                logger.debug(f"Ticker data: {ticker_data_df}")
-                self.strategy.data = ticker_data_df
-                self.strategy.calc_indicators()                
-                self.strategy.set_strategy_indicators()
-                self.strategy.execute_strategy()
-                exec_counter = exec_counter + 1
+                        logger.debug (f"Get candles for {self.strategy.instrument}")
+                        ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
+                        status = self.exec_strategy(ticker_data_df)
 
-                if exec_counter % 50 == 0:
-                    logger.info (f"Heartbeat... {exec_counter}")
-                    self.strategy.print_indicators()
-            
-                if stop_after is not None and exec_counter > stop_after:
-                    self.terminate = True
-                    break
+                        if status:
+                            exec_counter = exec_counter + 1
+                            logger.info (f"Heartbeat... {exec_counter}")
+                            self.strategy.print_indicators()
+
+                        sleep(60)
+                    else:
+                        logger.debug (f"Skipping strategy execution... {trading_time}")
+
                 # try:
                 #     self.strategy.execute_strategy()
                 # except PauseTradingException as e:
@@ -233,7 +239,41 @@ class Trader():
                     self.terminate = True
                     break
 
-            # time.sleep(refresh)
+            sleep(refresh)
+
+    def exec_strategy(self, ticker_data_df: pd.DataFrame) -> bool:
+
+        logger.debug(f"Ticker data: {ticker_data_df}")
+
+        if ticker_data_df.size < utils.ticker_data_size:
+            logger.info(f"Skip strategy execution, {ticker_data_df.size} ticker data size is too small")
+            return
+
+        trading_time = datetime.now(tz=None)
+        last_candle_data = ticker_data_df.iloc[-1]
+
+        # last_candle_time = datetime.strptime(last_candle_data.index["time"], "%Y-%m-%d %H:%M:%S")
+        last_candle_time = ticker_data_df.index[-1]
+        if (trading_time - last_candle_time) > timedelta(days = 0, hours = 0, minutes=0, seconds=45):
+            logger.info(f"Skip strategy execution, ticker data is too stale: {last_candle_time}")
+            return False
+
+        if last_candle_data["open"] == last_candle_data["close"]:
+            logger.info(f"Skip strategy execution, no price movement")
+            return False
+
+        if "status" in last_candle_data and not last_candle_data["status"] == "tradeable":
+            logger.info(f"Skip strategy execution, ticker data is not tradeable: {last_candle_time["status"]}")
+            return False
+
+        self.strategy.data = ticker_data_df
+        self.strategy.calc_indicators()                
+        self.strategy.set_strategy_indicators()
+
+        self.strategy.trading_session.have_units = self.api.get_position(instrument = self.strategy.instrument)
+        self.strategy.execute_strategy(trading_time)
+
+        return True
 
 
     def check_positions(self, refresh = 300): 
@@ -254,7 +294,7 @@ class Trader():
                     logger.info(f"Instrument: {self.strategy.instrument}, Units: {units}")
 
                 print_logs = print_logs + 1
-                time.sleep(refresh)
+                sleep(refresh)
 
             except Exception as e:
                 logger.error("Exception occurred in check_positions")
@@ -263,7 +303,7 @@ class Trader():
                 if i > 20:
                     self.terminate = True
                     break
-                time.sleep(5)
+                sleep(5)
         
  
     def new_price_ticker(self, **kwargs):
@@ -276,7 +316,7 @@ class Trader():
         # bid_liquidity = kwargs.get('bid_liquidity')
         status = kwargs.get('status')
 
-        if not (instrument and time and bid and ask and status):
+        if not (instrument and bid and ask and status):
             logger.error(f"Invalid instrument price values!!!")
             logger.error(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask} | Status: {status}")
             return

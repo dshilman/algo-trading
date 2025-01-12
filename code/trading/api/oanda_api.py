@@ -114,6 +114,9 @@ class OandaApi:
         if order.sl is not None:
             stopLossOnFill = dict(price=str(order.sl))
             data['order']['stopLossOnFill'] = stopLossOnFill
+        if order.trailing_sl is not None:
+            trailingStopLossOnFill = dict(distance=str(order.trailing_sl))
+            data['order']['trailingStopLossOnFill'] = trailingStopLossOnFill
 
         if order.tp is not None:
             takeProfitOnFill = dict(price=str(order.tp))
@@ -269,6 +272,7 @@ class OandaApi:
             for p in prices:
                 if p in candle:
                     if p == 'mid':
+                       new_dict["open"] = float(candle[p]["o"])
                        new_dict["close"] = float(candle[p]["c"])
                        new_dict["high"] = float(candle[p]["h"])
                        new_dict["low"] = float(candle[p]["l"])
