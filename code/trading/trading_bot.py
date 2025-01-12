@@ -262,8 +262,8 @@ class Trader():
             logger.info(f"Skip strategy execution, no price movement")
             return False
 
-        if "status" in last_candle_data and not last_candle_data["status"] == "tradeable":
-            logger.info(f"Skip strategy execution, ticker data is not tradeable: {last_candle_time["status"]}")
+        if "status" in last_candle_data and not last_candle_data.get("status") == "tradeable":
+            logger.info(f"Skip strategy execution, ticker data is not tradeable: {last_candle_data.get("status")}")
             return False
 
         self.strategy.data = ticker_data_df
