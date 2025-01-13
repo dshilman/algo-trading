@@ -112,11 +112,12 @@ class OandaApi:
         )
 
         if order.sl is not None:
-            stopLossOnFill = dict(price=str(order.sl))
-            data['order']['stopLossOnFill'] = stopLossOnFill
-        if order.trailing_sl is not None:
-            trailingStopLossOnFill = dict(distance=str(order.trailing_sl))
-            data['order']['trailingStopLossOnFill'] = trailingStopLossOnFill
+            if order.trailing_sl is not None:
+                trailingStopLossOnFill = dict(distance=str(order.trailing_sl))
+                data['order']['trailingStopLossOnFill'] = trailingStopLossOnFill
+            else:
+                stopLossOnFill = dict(price=str(order.sl))
+                data['order']['stopLossOnFill'] = stopLossOnFill
 
         if order.tp is not None:
             takeProfitOnFill = dict(price=str(order.tp))

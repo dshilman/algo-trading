@@ -3,7 +3,6 @@ import json
 import logging
 import sys
 from pathlib import Path
-
 import pandas as pd
 from tabulate import tabulate
 
@@ -15,6 +14,7 @@ from trading.api.oanda_api import OandaApi
 from trading.dom.order import Order
 from trading.dom.trade import Trade_Action
 from trading.dom.trading_session import Trading_Session
+from trading.utils import utils
 
 logger = logging.getLogger()
 
@@ -72,13 +72,13 @@ class TradingStrategyBase():
             """
 
             if self.trailing_sl:
-                trailing_sl = sl_perc
+                trailing_sl = utils.convert_perc_to_pips(trade_action.units, self.sl_perc, trade_action.price)
             else:
-                sl_price = round(trade_action.price - (1 if trade_action.units > 0 else -1) * trade_action.price * (sl_perc + .001), (4 if trade_action.price < 100 else 0))
+                sl_price = utils.convert_perc_to_ls_price(trade_action.units, self.sl_perc, trade_action.price)
 
                 
             if tp_perc:
-                tp_price = round(trade_action.price + (1 if trade_action.units > 0 else -1) * trade_action.price * (tp_perc + .001), (4 if trade_action.price < 100 else 0))
+                tp_price = utils.convert_perc_to_tp_price(trade_action.units, tp_perc, trade_action.price)
 
 
         order = Order(
