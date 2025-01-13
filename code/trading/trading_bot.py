@@ -57,7 +57,9 @@ class Trader():
 
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategyExec  = class_(trading_strategy=trading_strategy, pair_file=pair_file, api = self.api, unit_test = unit_test)
-        logger.info(f"Trading Strategy: {self.strategy}")
+        logger.info(f"Running:{class_} strategy")
+        logger.info(f"Strategy Configuration \n + {config.items(trading_strategy)}")
+
 
         today = datetime.now(tz=timezone.utc).date()
 
@@ -213,8 +215,7 @@ class Trader():
                             exec_counter = exec_counter + 1
                             logger.info (f"Heartbeat... {exec_counter}")
                             self.strategy.print_indicators()
-
-                        sleep(60)
+                            sleep(60)
                     else:
                         logger.debug (f"Skipping strategy execution... {trading_time}")
 
