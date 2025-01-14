@@ -51,7 +51,6 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # Bollinger Band
         df["close"] = df["close"].fillna(0)
-        df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
         # df["change_rate"] = df["close"].pct_change()
         df["change_rate_1h"] = df["close"].pct_change(periods=period_short)
         df["std_dev"] = df["close"].rolling(period_long).std(numeric_only=True)
@@ -63,8 +62,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
         # df['ema_short_min'] = df['ema_short'].rolling(period_short).min()
         # df['ema_short_max'] = df['ema_short'].rolling(period_short).max()
-        df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
-        
+                
 
         df["bb_lower"] = df["sma_long"] - df["std_dev"] * std_dev
         df["bb_upper"] = df["sma_long"] + df["std_dev"] * std_dev
@@ -115,7 +113,13 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
         df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
         df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
+        
+        df["price_pct_change"] = df["close"].pct_change(fill_method=None)
+        df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None)
+
+        df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
+        df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
         df['rsi_short_slope'] = df["rsi_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
 
 
@@ -155,11 +159,10 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.price_max = row["price_max"]
         self.price_min = row["price_min"]
-        self.price_slope = row["price_slope"]
         # self.price_volatility = row['price_volatility']
         # self.trading_volatility = row['trading_volatility']
         # self.price_efficiency_long = row['price_efficiency_long']
-        self.price_std = row['std_dev']
+        # self.price_std = row['std_dev']
         self.std_dev_mean = row["std_dev_mean"]
         # self.price_std_mean = row['price_std_mean']
 
@@ -169,13 +172,13 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Bollinger Band
         # self.sma_short = row['sma_short']
         self.sma_long = row['sma_long']
+        self.ema_short = row["ema_short"]
 
         self.bb_low = row['bb_lower']
         self.bb_high = row['bb_upper']
 
         # self.sma_long_slope = row["sma_long_slope"]
-        self.ema_short = row["ema_short"]
-        self.ema_short_slope = row["ema_short_slope"]
+
         # self.ema_short_min = row["ema_short_min"]
         # self.ema_short_max = row["ema_short_max"]
         # # self.ema_short_slope = row["ema_short_slope"]
@@ -203,15 +206,20 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.rsi_long_min = round(row["rsi_long_min"], 4)
 
         self.rsi_short = round(row["rsi_short"], 4)
-        self.rsi_short_pct_change = row["rsi_short_pct_change"]
-        self.rsi_short_slope = row["rsi_short_slope"]
         # self.rsi_short_pct_change_max = row["rsi_short_pct_change_max"]
         # self.rsi_short_pct_change_min = row["rsi_short_pct_change_min"]
         self.rsi_short_max = round(row["rsi_short_max"], 4)
         self.rsi_short_min = round(row["rsi_short_min"], 4)
         # self.rsi_short_ema = row["rsi_short_ema"]
 
-        
+        self.price_slope = row["price_slope"]
+        self.ema_short_slope = row["ema_short_slope"]
+        self.rsi_short_slope = row["rsi_short_slope"]
+
+        self.price_pct_change = row["price_pct_change"]
+        self.ema_short_pct_change = row["ema_short_pct_change"]
+        self.rsi_short_pct_change = row["rsi_short_pct_change"]
+
         # Volume Momentum
         # self.volume_momentum_short = row ["volume_momentum_short"]
         # self.volume_momentum_long = row ["volume_momentum_long"]
