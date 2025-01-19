@@ -45,8 +45,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df: pd.DataFrame = self.data
 
         # DEV = self.DEV
-        std_dev = 2
-        period_long = 100
+        std_dev = self.DEV
+        period_long = self.SMA
         period_short = 15
 
         # Bollinger Band
@@ -67,8 +67,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_lower"] = df["sma_long"] - df["std_dev"] * std_dev
         df["bb_upper"] = df["sma_long"] + df["std_dev"] * std_dev
 
-        df["price_max"] = df["close"].rolling(period_short).max()
-        df["price_min"] = df["close"].rolling(period_short).min()
+        df["price_max"] = df["high"].rolling(10).max()
+        df["price_min"] = df["low"].rolling(10).min()
 
         # Price/Volume Momentum
         # df["volume_pct_change"] = df["volume"].pct_change()
@@ -111,16 +111,16 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
 
         df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
-        df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
-        df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
+        df["rsi_short_max"] = df["rsi_short"].rolling(10).max()
+        df["rsi_short_min"] = df["rsi_short"].rolling(10).min()
         
-        df["price_pct_change"] = df["close"].pct_change(fill_method=None)
-        df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
+        # df["price_pct_change"] = df["close"].pct_change(fill_method=None)
+        # df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None)
 
-        df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
-        df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
-        df['rsi_short_slope'] = df["rsi_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
+        # df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
+        # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
+        # df['rsi_short_slope'] = df["rsi_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
 
 
         # df["rsi_short_pct_change_max"] = df.rsi_short_pct_change.rolling(period_short).max()
@@ -163,7 +163,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.trading_volatility = row['trading_volatility']
         # self.price_efficiency_long = row['price_efficiency_long']
         # self.price_std = row['std_dev']
+        self.std_dev = row["std_dev"]
         self.std_dev_mean = row["std_dev_mean"]
+
         # self.price_std_mean = row['price_std_mean']
 
         # MACD
@@ -212,12 +214,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_short_min = round(row["rsi_short_min"], 4)
         # self.rsi_short_ema = row["rsi_short_ema"]
 
-        self.price_slope = row["price_slope"]
-        self.ema_short_slope = row["ema_short_slope"]
-        self.rsi_short_slope = row["rsi_short_slope"]
+        # self.price_slope = row["price_slope"]
+        # self.ema_short_slope = row["ema_short_slope"]
+        # self.rsi_short_slope = row["rsi_short_slope"]
 
-        self.price_pct_change = row["price_pct_change"]
-        self.ema_short_pct_change = row["ema_short_pct_change"]
+        # self.price_pct_change = row["price_pct_change"]
+        # self.ema_short_pct_change = row["ema_short_pct_change"]
         self.rsi_short_pct_change = row["rsi_short_pct_change"]
 
         # Volume Momentum
@@ -264,9 +266,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         have_units = self.trading_session.have_units
 
         if have_units != 0 and len(self.trading_session.trades) > 0:
-            open_trade_price = self.trading_session.trades[-1][5]
-
-            return open_trade_price
+            trade:str = self.trading_session.trades[-1][2]
+            if trade.startswith("Open"):
+                open_trade_price = self.trading_session.trades[-1][5]
+                return open_trade_price
 
         return None
 
