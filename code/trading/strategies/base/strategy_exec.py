@@ -84,7 +84,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         have_units = self.trading_session.have_units
 
         close_trade = False
-        open_trade_time = self.get_last_trade_time()
+        open_trade_time = self.get_open_trade_time()
         open_trade_price = self.get_open_trade_price()
 
         if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or not self.is_trading_time(trading_time):

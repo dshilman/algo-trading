@@ -294,13 +294,15 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         return True
 
-    def get_last_trade_time(self):
+    def get_open_trade_time(self):
 
         date_time = None
 
         if len(self.trading_session.trades) > 0:
-            date_time_s = self.trading_session.trades[-1][0]
-            date_time = datetime.strptime(date_time_s, utils.date_format).replace(tzinfo=None)
+            trade:str = self.trading_session.trades[-1][2]
+            if trade.startswith("Open"):
+                date_time_s = self.trading_session.trades[-1][0]
+                date_time = datetime.strptime(date_time_s, utils.date_format).replace(tzinfo=None)
 
         return date_time
 
