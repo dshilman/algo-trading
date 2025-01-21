@@ -28,15 +28,15 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
-        if  round(self.std_dev_mean, 4) <= .00075:
+        if  self.std_dev <= .00075:
 
-            if self.rsi_short == self.rsi_short_max > 80 and .0015 < self.change_rate_1h < .0035:
+            if self.price > self.bb_high and self.rsi_short == self.rsi_short_max > 80 and .0015 < self.change_rate_1h < .0035:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
 
 
-            elif self.rsi_short == self.rsi_short_min < 20 and -.0015 > self.change_rate_1h > -.0035:
+            elif self.price < self.bb_low and self.rsi_short == self.rsi_short_min < 20 and -.0015 > self.change_rate_1h > -.0035:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
@@ -55,14 +55,14 @@ class TradingStrategy(TradingStrategyExec):
 
         if have_units > 0:  # long position
             target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price_high > target_price and self.rsi_short < self.rsi_short_max or self.ema_short < self.sma_long):
+            if close_trade or target_price is not None and self.price_high > target_price:
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, False)
                 
         elif have_units < 0:  # short position
             target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price_low < target_price and self.rsi_short > self.rsi_short_min or self.ema_short > self.sma_long):
+            if close_trade or target_price is not None and self.price_low < target_price:
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False) 
