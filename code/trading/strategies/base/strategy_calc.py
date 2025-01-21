@@ -67,8 +67,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_lower"] = df["sma_long"] - df["std_dev"] * std_dev
         df["bb_upper"] = df["sma_long"] + df["std_dev"] * std_dev
 
-        df["price_max"] = df["high"].rolling(6).max()
-        df["price_min"] = df["low"].rolling(6).min()
+        df["price_max"] = df["high"].rolling(10).max()
+        df["price_min"] = df["low"].rolling(10).min()
 
         # Price/Volume Momentum
         # df["volume_pct_change"] = df["volume"].pct_change()
@@ -111,8 +111,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
 
         df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
-        df["rsi_short_max"] = df["rsi_short"].rolling(6).max()
-        df["rsi_short_min"] = df["rsi_short"].rolling(6).min()
+        df["rsi_short_max"] = df["rsi_short"].rolling(10).max()
+        df["rsi_short_min"] = df["rsi_short"].rolling(10).min()
         
         # df["price_pct_change"] = df["close"].pct_change(fill_method=None)
         # df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
@@ -305,4 +305,3 @@ class TradingStrategyCalc(TradingStrategyBase):
                 date_time = datetime.strptime(date_time_s, utils.date_format).replace(tzinfo=None)
 
         return date_time
-
