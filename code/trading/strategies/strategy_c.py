@@ -23,10 +23,10 @@ class TradingStrategy(TradingStrategyExec):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
-    def check_if_need_open_trade(self, trading_time):
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action | None:
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
-            return
+            return None
 
         if  round(self.std_dev_mean, 4) <= .00075:
 
@@ -41,6 +41,7 @@ class TradingStrategy(TradingStrategyExec):
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
+        return None
 
     def check_if_need_close_trade(self, trading_time):
 

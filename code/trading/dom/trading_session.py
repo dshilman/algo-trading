@@ -69,8 +69,8 @@ class Trading_Session():
             self.pl = self.pl + trade_pl
             trade_pl_pct = 0 if self.outstanding == 0 else trade_pl / self.outstanding * 100 
             self.long_trades_close = self.long_trades_close + 1
-            self.outstanding = 0
-            trade = "Close Long"  + (" (SL)" if trade_action.sl_trade else "")
+            self.outstanding = self.have_units + trade_action.units
+            trade = "Close Long" + (" (SL)" if trade_action.sl_trade else "")
             action = "Sell"
         elif self.have_units < 0 and trade_action.units > 0:
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
@@ -78,7 +78,7 @@ class Trading_Session():
             self.pl = self.pl + trade_pl
             trade_pl_pct = 0 if self.outstanding == 0 else trade_pl / self.outstanding * 100
             self.short_trades_close = self.short_trades_close + 1
-            self.outstanding = 0
+            self.outstanding = self.have_units + trade_action.units
             trade = "Close Short" + (" (SL)" if trade_action.sl_trade else "")
             action = "Buy"
         

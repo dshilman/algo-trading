@@ -59,7 +59,9 @@ class TradingStrategyCalc(TradingStrategyBase):
        
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
 
-        df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
+        # df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
+        df['ema_short'] = df["close"].ewm(span=period_short, adjust=False).mean()
+
         # df['ema_short_min'] = df['ema_short'].rolling(period_short).min()
         # df['ema_short_max'] = df['ema_short'].rolling(period_short).max()
                 
@@ -67,8 +69,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_lower"] = df["sma_long"] - df["std_dev"] * std_dev
         df["bb_upper"] = df["sma_long"] + df["std_dev"] * std_dev
 
-        df["price_max"] = df["high"].rolling(10).max()
-        df["price_min"] = df["low"].rolling(10).min()
+        df["price_max"] = df["high"].rolling(period_short).max()
+        df["price_min"] = df["low"].rolling(period_short).min()
 
         # Price/Volume Momentum
         # df["volume_pct_change"] = df["volume"].pct_change()
@@ -111,12 +113,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_long_min"] = df['rsi_long'].rolling(period_long).min()
 
         df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
-        df["rsi_short_max"] = df["rsi_short"].rolling(10).max()
-        df["rsi_short_min"] = df["rsi_short"].rolling(10).min()
+        df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
+        df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
         
         # df["price_pct_change"] = df["close"].pct_change(fill_method=None)
         # df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
-        df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None)
+        df["rsi_short_pct_change"] = df["rsi_short"].pct_change()
 
         # df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
         # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
@@ -143,7 +145,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.data = df
 
-    def set_strategy_indicators(self, row: pd.Series = None):  # type: ignore
+    def set_strategy_indicators(self, row: pd.Series):  # type: ignore
 
         logger.debug("Setting strategy indicators")
 
@@ -261,7 +263,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # logger.debug("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
 
 
-    def get_open_trade_price(self):
+    def get_open_trade_price(self) -> float | None:
 
         have_units = self.trading_session.have_units
 

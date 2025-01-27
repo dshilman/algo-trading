@@ -9,6 +9,7 @@ import threading
 from time import sleep
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Optional, Any
 import pandas as pd
 
 
@@ -39,7 +40,7 @@ class Trader():
         # self.start = config.get(self.strategy.instrument, 'start')
         # self.end = config.get(self.strategy.instrument, 'end')
 
-        self.ticker_data_deque = None
+        self.ticker_data_deque: deque[list[Any]] = deque()
         self.stop_loss_count = 0
         
         class_ = None
@@ -83,7 +84,10 @@ class Trader():
 
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', utils.date_format)
 
-        log_file = os.path.join("../../logs/trading", f"{name}_{datetime.now(tz=timezone.utc).strftime('%m-%d')}_app.log")
+        log_dir = os.path.join(os.path.dirname(__file__), "../../logs/trading")
+        os.makedirs(log_dir, exist_ok=True)
+
+        log_file = os.path.join(log_dir, f"{name}_{datetime.now(tz=timezone.utc).strftime('%m-%d')}_app.log")
         log_handler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
         log_handler.setFormatter(formatter)
         logger.addHandler(log_handler)
@@ -118,7 +122,7 @@ class Trader():
         # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.strategy.instrument).drop(columns=["mid_o", "volume"]).to_records())
         candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
         candles["status"] = "NA"
-        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 500, iterable = candles.drop(columns={"volume"}).reset_index().values.tolist())
+        self.ticker_data_deque = deque(candles.drop(columns=["volume"]).reset_index().values.tolist(), maxlen=utils.ticker_data_size * 500)
         self.streaming = True
         i: int = 0
 
@@ -188,7 +192,7 @@ class Trader():
                     ticker_data_list = list(self.ticker_data_deque)
                     ticker_data_df = pd.DataFrame(ticker_data_list, columns=["time", "close", "bid", "ask", "status"])
                     ticker_data_df = ticker_data_df.set_index('time')
-                    ticker_data_df.index = ticker_data_df.index.tz_localize(None)
+                    ticker_data_df.index = pd.to_datetime(ticker_data_df.index).tz_localize(None)
                     ticker_data_df = ticker_data_df.resample("30s").last()
                     ticker_data_df = ticker_data_df.tail(utils.ticker_data_size)
                     ticker_data_df.dropna(inplace = True)
@@ -248,7 +252,7 @@ class Trader():
 
         if ticker_data_df.size < utils.ticker_data_size:
             logger.info(f"Skip strategy execution, {ticker_data_df.size} ticker data size is too small")
-            return
+            return False
 
         trading_time = datetime.now(tz=None)
         last_candle_data = ticker_data_df.iloc[-1]
@@ -269,9 +273,9 @@ class Trader():
 
         self.strategy.data = ticker_data_df
         self.strategy.calc_indicators()                
-        self.strategy.set_strategy_indicators()
+        self.strategy.set_strategy_indicators(ticker_data_df.iloc[-1])
 
-        self.strategy.trading_session.have_units = self.api.get_position(instrument = self.strategy.instrument)
+        self.strategy.trading_session.have_units = int(self.api.get_position(instrument = self.strategy.instrument))
         self.strategy.execute_strategy(trading_time)
 
         return True
@@ -289,7 +293,7 @@ class Trader():
 
                 units = self.api.get_position(instrument = self.strategy.instrument)
                 if not units == self.strategy.trading_session.have_units:
-                    self.strategy.trading_session.have_units = units
+                    self.strategy.trading_session.have_units = int(units)
 
                 if print_logs % 5 == 0:
                     logger.info(f"Instrument: {self.strategy.instrument}, Units: {units}")
@@ -325,6 +329,10 @@ class Trader():
         logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask} | Status: {status}")
 
          # 2023-12-19T13:28:35.194571445Z
+        if date_time is None:
+            logger.error("date_time is None, cannot convert to pd.Timestamp")
+            return
+
         pd_timestamp: pd.Timestamp = pd.to_datetime(date_time).replace(tzinfo=None)
         
         recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask, status]

@@ -67,7 +67,9 @@ class TradingBacktester():
 
     def get_data(self):
 
-        pcl_file_name = f"../../data/backtest_{self.strategy.instrument}_{self.days}.pcl"
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        os.makedirs(data_dir, exist_ok=True)
+        pcl_file_name = os.path.join(data_dir, f"backtest_{self.strategy.instrument}_{self.days}.pcl")
         if self.refresh:
             logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()
@@ -91,14 +93,18 @@ class TradingBacktester():
             self.strategy.calc_indicators()
 
             try:
-                file_path = f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx"
-                if not os.path.exists(file_path):
+
+                data_dir = os.path.join(os.path.dirname(__file__), "data")
+                os.makedirs(data_dir, exist_ok=True)
+                excel_file_name = os.path.join(data_dir, f"backtest_{self.strategy.instrument}_{self.days}.xlsx")
+
+                if not os.path.exists(excel_file_name):
                    logger.info("Saving indicators to Excel...")
-                   self.strategy.data.to_excel(file_path)
+                   self.strategy.data.to_excel(excel_file_name)
                 else:
-                    logger.info(f"File: {file_path} already exists")
+                    logger.info(f"File: {excel_file_name} already exists")
             except Exception as e:
-                logger.error("Couldn't wtite to " + f"../../data/backtest_{self.strategy.instrument}_{self.days}.xlsx." + " File is open")
+                logger.error("Couldn't wtite to {excel_file_name}", e)
  
  
             pause_trading = None

@@ -31,7 +31,7 @@ class TradingStrategy(TradingStrategyExec):
         super().calc_indicators()
 
 
-    def set_strategy_indicators(self, row: pd.Series = None):
+    def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
 
 
@@ -40,7 +40,7 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
-        if  round(self.std_dev, 3) > .001 and self.rsi_short_max - self.rsi_short_min > 20:
+        if  round(self.std_dev_mean, 3) > .001 and self.rsi_short_max - self.rsi_short_min > 30:
 
             if self.price_max > self.bb_high and self.rsi_short > 65 and self.rsi_short_max > 80 \
                 and self.rsi_short_pct_change < 0:
@@ -81,5 +81,3 @@ class TradingStrategy(TradingStrategyExec):
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False) 
-
-                    
