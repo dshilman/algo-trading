@@ -263,7 +263,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # logger.debug("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
 
 
-    def get_open_trade_price(self) -> float | None:
+    def get_open_trade_price(self) -> float:
 
         have_units = self.trading_session.have_units
 
@@ -272,8 +272,9 @@ class TradingStrategyCalc(TradingStrategyBase):
             if trade is not None and trade.startswith("Open"):
                 open_trade_price = self.trading_session.trades[-1][5]
                 return open_trade_price
-
+        
         return None
+
 
     def is_trading_time(self, date_time: datetime) -> bool:
 
