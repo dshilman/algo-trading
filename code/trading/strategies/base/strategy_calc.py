@@ -263,7 +263,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # logger.debug("\n" + tabulate(volume_momentume_data, headers=volume_momentume_headers) + "\n")
 
 
-    def get_open_trade_price(self) -> float:
+    def get_open_trade_price(self):
 
         have_units = self.trading_session.have_units
 
