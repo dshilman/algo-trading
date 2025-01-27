@@ -2,6 +2,7 @@ import logging
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import Optional
 
 
 file = Path(__file__).resolve()
@@ -23,7 +24,7 @@ class TradingStrategy(TradingStrategyExec):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
-    def check_if_need_open_trade(self, trading_time) -> Trade_Action:
+    def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return None
@@ -43,7 +44,7 @@ class TradingStrategy(TradingStrategyExec):
 
         return None
 
-    def check_if_need_close_trade(self, trading_time):
+    def check_if_need_close_trade(self, trading_time) -> Optional[Trade_Action]:
 
         have_units = self.trading_session.have_units
 

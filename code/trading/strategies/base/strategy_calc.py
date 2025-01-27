@@ -133,8 +133,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["rsi_momentum_" + str(period) + "_max"] = df["rsi_momentum_" + str(period)].rolling(period).max()
         # df["rsi_momentum_" + str(period) + "_min"] = df["rsi_momentum_" + str(period)].rolling(period).min()
       
-        # df["greater_sma"] = df["sma_long"] - df["close"]
-        # df["greater_sma"] = df["greater_sma"].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+        # df["greater_sma"] = df["sma_long"] - df["ema_short"]
         # df["sma_crossover"] = df["greater_sma"].rolling(period_short).apply(lambda x: count_sma_crossover(x))
 
         # df.drop(columns=["greater_sma"], inplace=True)

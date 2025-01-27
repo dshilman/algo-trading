@@ -9,7 +9,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.utils.tech_indicators import calculate_slope
+from trading.utils.tech_indicators import calculate_slope, count_sma_crossover
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 from trading.dom.trade import Trade_Action
 
@@ -35,6 +35,8 @@ class TradingStrategy(TradingStrategyExec):
         df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
         df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
         df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
+        df["macd_crossover_times"] = (df["sma_long"] - df["ema_short"]).apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0).rolling(15).apply(lambda x: count_sma_crossover(x))
+
          
         self.data = df
 
@@ -43,6 +45,7 @@ class TradingStrategy(TradingStrategyExec):
 
         self.macd_crossover = row["macd_crossover"]
         self.ema_short_slope = row["ema_short_slope"]
+        self.macd_crossover_times = row["macd_crossover_times"]
 
     def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:
    
@@ -51,13 +54,13 @@ class TradingStrategy(TradingStrategyExec):
 
         if  self.std_dev <= .0005:
 
-            if self.macd_crossover == 1 and self.rsi_short > 65 and self.price < self.bb_high:
+            if self.macd_crossover == 1 and self.macd_crossover_times == 1 and self.rsi_short > 65 and self.price < self.bb_high:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
 
 
-            elif self.macd_crossover == -1 and self.rsi_short < 35 and self.price > self.bb_low:
+            elif self.macd_crossover == -1 and self.macd_crossover_times == 1 and self.rsi_short < 35 and self.price > self.bb_low:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
