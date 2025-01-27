@@ -23,7 +23,7 @@ class TradingStrategy(TradingStrategyExec):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
-    def check_if_need_open_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action:
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return None

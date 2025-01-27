@@ -2,6 +2,7 @@ import logging
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import Optional
 
 import pandas as pd
 
@@ -35,7 +36,7 @@ class TradingStrategy(TradingStrategyExec):
         super().set_strategy_indicators(row)
 
 
-    def check_if_need_open_trade(self, trading_time):
+    def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
@@ -57,7 +58,7 @@ class TradingStrategy(TradingStrategyExec):
 
 
 
-    def check_if_need_close_trade(self, trading_time):
+    def check_if_need_close_trade(self, trading_time) -> Optional[Trade_Action]:
 
         have_units = self.trading_session.have_units
 
