@@ -269,7 +269,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         if have_units != 0 and len(self.trading_session.trades) > 0:
             trade:str = self.trading_session.trades[-1][2]
-            if trade.startswith("Open"):
+            if trade is not None and trade.startswith("Open"):
                 open_trade_price = self.trading_session.trades[-1][5]
                 return open_trade_price
 
