@@ -34,9 +34,9 @@ class TradingStrategy(TradingStrategyExec):
         df['macd_crossover'] = 0  # Initialize signal column
         df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
         df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
-        df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
         df["macd_crossover_times"] = (df["sma_long"] - df["ema_short"]).apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0).rolling(15).apply(lambda x: count_sma_crossover(x))
-
+ 
+        df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
          
         self.data = df
 
@@ -52,7 +52,7 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return None
 
-        if  self.std_dev <= .0005:
+        if  self.std_dev <= .00055:
 
             if self.macd_crossover == 1 and self.macd_crossover_times == 1 and self.rsi_short > 65 and self.price < self.bb_high:
                 if not self.backtest:
