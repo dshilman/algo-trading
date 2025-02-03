@@ -25,7 +25,7 @@ Go Short (sell) when the bid price is above the high Bollinger Band and close tr
 
 """
 class TradingStrategyBase():
-    def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
+    def __init__(self, trading_strategy, pair_file, api, unit_test = False):
         super().__init__()
 
         self.api:OandaApi = api
@@ -51,7 +51,8 @@ class TradingStrategyBase():
         self.short_trading = config.getboolean(trading_strategy, 'short_trading')
         self.long_trading = config.getboolean(trading_strategy, 'long_trading')
         self.keep_trade_open_time = config.getint(trading_strategy, 'keep_trade_open_time')
-        self.data: pd.DataFrame = None
+        self.trading_spread = config.getfloat(trading_strategy, 'trading_spread', fallback=.0001)
+        
 
         self.trading_session = Trading_Session(self.instrument)
 
@@ -100,7 +101,7 @@ class TradingStrategyBase():
             # result = self.api.create_order(order=order)
             result = self.api.place_order(order=order)
             self.report_trade(result)
-            if "rejectReason" in result:               
+            if isinstance(result, dict) and "rejectReason" in result:               
                 error = f"Order was not filled: {result ['type']}, reason: {result['rejectReason']}"
                 logger.error(error)
                 raise Exception(error)

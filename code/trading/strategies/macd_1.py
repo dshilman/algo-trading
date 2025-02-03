@@ -51,6 +51,9 @@ class TradingStrategy(TradingStrategyExec):
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return None
+        
+        if abs(self.ask - self.bid) > self.trading_spread:
+            return None
 
         if  self.std_dev <= .00055:
 
