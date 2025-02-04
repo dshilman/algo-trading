@@ -218,7 +218,9 @@ class Trader():
                         if status:
                             exec_counter = exec_counter + 1
                             logger.info (f"Heartbeat... {exec_counter}")
-                            self.strategy.print_indicators()
+                            if  exec_counter % 10 == 0:
+                                self.strategy.print_indicators()
+                            
                             sleep(60)
                     else:
                         logger.debug (f"Skipping strategy execution... {trading_time}")
