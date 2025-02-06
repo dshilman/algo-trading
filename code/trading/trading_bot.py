@@ -99,19 +99,19 @@ class Trader():
         logger.info ("Started New Trading Session")
         self.terminate = False
 
-        treads = []
-        # treads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
-        # # treads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
-        # treads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
-        # treads.append(threading.Thread(target=self.refresh_strategy, args=(5,stop_after)))
+        threads = []
+        # threads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
+        # threads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
+        # threads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
+        # threads.append(threading.Thread(target=self.refresh_strategy, args=(5,stop_after)))
 
         self.refresh_strategy(refresh=5, stop_after=999999999999999999999999999999999999999999)
 
-        for t in treads:
+        for t in threads:
             t.start()
             sleep(5)
         
-        for t in treads:
+        for t in threads:
             t.join()
 
         self.terminate_session("Finished Trading Session")
@@ -122,7 +122,8 @@ class Trader():
         # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.strategy.instrument).drop(columns=["mid_o", "volume"]).to_records())
         candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
         candles["status"] = "NA"
-        self.ticker_data_deque = deque(candles.drop(columns=["volume"]).reset_index().values.tolist(), maxlen=utils.ticker_data_size * 500)
+        data = candles.drop(columns=["volume"]).reset_index().values.tolist()
+        self.ticker_data_deque = deque([list(item) for item in data], maxlen=utils.ticker_data_size * 500)
         self.streaming = True
         i: int = 0
 

@@ -59,13 +59,25 @@ class OandaApi:
 
         if ok and 'candles' in data:
             # logger.info(f"Candles: {data['candles']}")
-            df = self.__convert_to_df(data['candles'])
-            df = df.set_index('time')
-            df.index = df.index.tz_localize(None)
-            return df
+            if isinstance(data, dict) and 'candles' in data:
+                if isinstance(data['candles'], dict):
+                    df = self.__convert_to_df(data['candles'])
+                else:
+                    df = pd.DataFrame()
+            else:
+                df = pd.DataFrame()
+          
+            if df is not None and df.size > 0:
+                df = df.set_index('time')
+                if isinstance(df.index, pd.DatetimeIndex):
+                    df.index = pd.to_datetime(df.index).tz_localize(None)
+                return df
+            else:
+                print("ERROR converting candles to DataFrame", data['candles'])
+                return pd.DataFrame()
         else:
             print("ERROR fetch_candles()", params, data)
-            return None
+            return pd.DataFrame()
 
 
 
@@ -79,7 +91,8 @@ class OandaApi:
 
         if days == 0:
             logger.debug(f"Getting price candles for {pair_name} from {past} to {now}")
-            data_t: pd.DataFrame = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity="M5", price="MBA")
+            data_t: dict = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity="M5", price="MBA")
+
             df = self.__convert_to_df(data_t)
         else:
             for i in range(0, days):
@@ -88,12 +101,13 @@ class OandaApi:
                 end_d = start_d + timedelta(days=1)
 
                 logger.debug(f"Getting price candles for {pair_name} from {start_d} to {end_d}")
-                data_t: pd.DataFrame = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="M5", price="MBA")
+                data_t: dict = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="M5", price="MBA")
                 df_t = self.__convert_to_df(data_t)
                 df = pd.concat([df, df_t])
 
         df = df.set_index('time')
-        df.index = df.index.tz_localize(None)
+        if isinstance(df.index, pd.DatetimeIndex):
+            df.index = df.index.tz_localize(None)
 
         return df
 
@@ -112,15 +126,12 @@ class OandaApi:
         )
 
         if order.trailing_sl is not None:
-            trailingStopLossOnFill = dict(distance=str(order.trailing_sl))
-            data['order']['trailingStopLossOnFill'] = trailingStopLossOnFill
+            data['order']['trailingStopLossOnFill'] = str(order.trailing_sl)
         elif order.sl is not None:
-            stopLossOnFill = dict(price=str(order.sl))
-            data['order']['stopLossOnFill'] = stopLossOnFill
+            data['order']['stopLossOnFill'] = str(order.sl)
 
         if order.tp is not None:
-            takeProfitOnFill = dict(price=str(order.tp))
-            data['order']['takeProfitOnFill'] = takeProfitOnFill
+            data['order']['takeProfitOnFill'] = str(order.tp)
 
         ok, response = self.__make_request(
             url, verb="post", data=data, code=201)
@@ -136,7 +147,7 @@ class OandaApi:
             
             return result
         
-        return None
+        return {}
 
 
     def get_position(self, instrument): 
@@ -224,12 +235,12 @@ class OandaApi:
             if response.status_code == code:
                 return True, response.json()
             else:
-                return False, response.json()
+                return False, response.json() if response.content else {}
 
         except Exception as error:
             return False, {'Exception': error}
 
-    def __fetch_candles(self, pair_name, date_f, date_t, granularity="M5", price="MBA") -> pd.DataFrame:
+    def __fetch_candles(self, pair_name, date_f, date_t, granularity="M5", price="MBA") -> dict:
 
         url = f"instruments/{pair_name}/candles"
         params = dict(
@@ -248,9 +259,9 @@ class OandaApi:
             return data['candles']
         else:
             print("ERROR fetch_candles()", params, data)
-            return None
+            return {}
 
-    def __convert_to_df(self, data):
+    def __convert_to_df(self, data: dict)-> pd.DataFrame:
 
         if data is None:
             return None
@@ -282,12 +293,13 @@ class OandaApi:
 
             final_data.append(new_dict)
 
-        df = pd.DataFrame.from_dict(final_data)
+        df = pd.DataFrame(final_data)
         return df
 
 if __name__ == "__main__":
     api = OandaApi("../../../config/oanda.cfg")
-    api.stream_prices(instrument="EUR_USD", stop = 5)
+    data = api.get_latest_price_candles(pair_name="EUR_USD")
+    print(data)
     print ("Done!")
 
 # python oanda_api.py
