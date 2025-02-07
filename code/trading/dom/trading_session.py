@@ -44,8 +44,9 @@ class Trading_Session():
         action = None
         trade_pl = None
         trade_pl_pct = None
+        self.open_trade = trade_action.open_trade
 
-        if self.have_units >= 0 and trade_action.units > 0:
+        if trade_action.open_trade and trade_action.units > 0:
             self.trade_id = self.__get_trade_new_id()
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
             self.outstanding = (self.outstanding) + (self.trade_cost)      
@@ -54,7 +55,7 @@ class Trading_Session():
             self.long_trades = self.long_trades + 1
             trade = "Open Long"
             action = "Buy"
-        elif self.have_units <= 0 and trade_action.units < 0:
+        elif trade_action.open_trade and trade_action.units < 0:
             self.trade_id = self.__get_trade_new_id()
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
             self.outstanding = (self.outstanding) + (self.trade_cost)   
@@ -63,7 +64,7 @@ class Trading_Session():
             self.short_trades = self.short_trades + 1
             trade = "Open Short"
             action = "Sell"
-        elif self.have_units > 0 and trade_action.units < 0:
+        elif not trade_action.open_trade and trade_action.units < 0:
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
             trade_pl = (self.trade_cost) - (self.outstanding)
             self.pl = self.pl + trade_pl
@@ -72,7 +73,7 @@ class Trading_Session():
             self.outstanding = self.have_units + trade_action.units
             trade = "Close Long" + (" (SL)" if trade_action.sl_trade else "")
             action = "Sell"
-        elif self.have_units < 0 and trade_action.units > 0:
+        elif not trade_action.open_trade and trade_action.units > 0:
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
             trade_pl = (self.outstanding) - (self.trade_cost)
             self.pl = self.pl + trade_pl

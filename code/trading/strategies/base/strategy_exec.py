@@ -36,7 +36,6 @@ class TradingStrategyExec(TradingStrategyCalc):
 
             if order is not None:
                 self.submit_order(order)
-                self.trading_session.open_trade = trade_action.open_trade
 
         # if trade_action is not None and trade_action.sl_trade:
         #     raise PauseTradingException(2)
@@ -49,17 +48,16 @@ class TradingStrategyExec(TradingStrategyCalc):
         trade: Optional[Trade_Action] = None
         have_units = self.trading_session.have_units
 
-        if have_units != 0:
+        if have_units != 0 and self.trading_session.open_trade:
 
             logger.debug(f"Have {have_units} positions, checking for stop loss")
-            if self.trading_session.open_trade:
-                trade = self.check_for_sl(trading_time, have_units)
+            trade = self.check_for_sl(trading_time, have_units)
 
-                if trade is None:
-                    logger.debug(f"Have {have_units} positions, checking if need to close a trade")
-                    trade = self.check_if_need_close_trade(trading_time)
+            if trade is None:
+                logger.debug(f"Have {have_units} positions, checking if need to close a trade")
+                trade = self.check_if_need_close_trade(trading_time)
 
-        if trade is None and have_units == 0:
+        if trade is None and not self.trading_session.open_trade:
 
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)
@@ -90,16 +88,17 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         base_price = None
         
+        open_trade_price = self.get_open_trade_price()
+        
+        if open_trade_price is None:
+            return None
+        
         if have_units < 0:
             if self.trailing_sl:
-                open_trade_price = self.get_open_trade_price()
-                if open_trade_price is not None:
-                    base_price = min(self.price_min, open_trade_price)
-                else:
-                    base_price = self.price_min
+                base_price = min(self.price_min, open_trade_price)
             else: 
-                base_price = self.get_open_trade_price()
-
+                base_price = open_trade_price
+             
             current_loss_perc = (self.ask - base_price)/base_price
             if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
@@ -109,13 +108,9 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         elif have_units > 0:
             if self.trailing_sl:
-                open_trade_price = self.get_open_trade_price()
-                if open_trade_price is not None:
-                    base_price = max(self.price_max, open_trade_price)
-                else:
-                    base_price = self.price_max
+                base_price = max(self.price_max, open_trade_price)
             else: 
-                base_price = self.get_open_trade_price()
+                base_price = open_trade_price
 
             current_loss_perc = (base_price - self.bid)/base_price
             if current_loss_perc >= self.sl_perc:
@@ -125,3 +120,11 @@ class TradingStrategyExec(TradingStrategyCalc):
                 return Trade_Action(self.instrument, -have_units, self.bid, False, True)
         
         return None
+    
+    def need_close_trade(self, trading_time) -> bool:
+
+        open_trade_time = self.get_open_trade_time()
+        close_trade = open_trade_time is not None and (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or not self.is_trading_time(trading_time)
+
+        return close_trade
+    

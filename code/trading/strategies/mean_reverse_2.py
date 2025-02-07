@@ -56,18 +56,13 @@ class TradingStrategy(TradingStrategyExec):
                             logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                         return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
 
-
-
+    
     def check_if_need_close_trade(self, trading_time) -> Optional[Trade_Action]:
 
         have_units = self.trading_session.have_units
 
-        close_trade = False
-        open_trade_time = self.get_open_trade_time()
         open_trade_price = self.get_open_trade_price()
-
-        if open_trade_time is None or (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or not self.is_trading_time(trading_time):
-            close_trade = True
+        close_trade = self.need_close_trade(trading_time)
 
         if have_units > 0:  # long position
             target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
