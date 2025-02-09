@@ -27,7 +27,6 @@ class Trading_Session():
         self.trade_cost: float = 0
         self.have_units: int = 0
         self.trade_id: int = 0
-        self.open_trade: bool = False
         self.columns = ["datetime", "trade_id", "trade", "action", "units", "price", "trade_pl", "trade_pl_pct", "pl"]
 
         super().__init__()
@@ -44,7 +43,6 @@ class Trading_Session():
         action = None
         trade_pl = None
         trade_pl_pct = None
-        self.open_trade = trade_action.open_trade
 
         if trade_action.open_trade and trade_action.units > 0:
             self.trade_id = self.__get_trade_new_id()

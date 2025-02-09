@@ -48,7 +48,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         trade: Optional[Trade_Action] = None
         have_units = self.trading_session.have_units
 
-        if have_units != 0 and self.trading_session.open_trade:
+        if abs(have_units) == self.units_to_trade:
 
             logger.debug(f"Have {have_units} positions, checking for stop loss")
             trade = self.check_for_sl(trading_time, have_units)
@@ -57,7 +57,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                 logger.debug(f"Have {have_units} positions, checking if need to close a trade")
                 trade = self.check_if_need_close_trade(trading_time)
 
-        if trade is None and not self.trading_session.open_trade:
+        if trade is None and have_units == 0:
 
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)

@@ -1,4 +1,5 @@
 import logging
+import math
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -63,7 +64,7 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return None
 
-        if  self.std_dev <= .00055:
+        if  not math.isnan(self.std_dev) and not math.isnan(self.std_dev_mean) and self.std_dev <= .00055 and (round(self.std_dev, 4) >= round(self.std_dev_mean, 4) or math.ceil(self.std_dev * 10000) == math.ceil(self.std_dev_mean * 10000)):
 
             if self.macd_crossover == 1 and self.macd_crossover_times == 1 and self.rsi_short > 65 and self.price < self.bb_high:
                 if not self.backtest:
