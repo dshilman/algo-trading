@@ -1,6 +1,7 @@
 import configparser
 import json
 import logging
+from math import log
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -57,27 +58,23 @@ class OandaApi:
 
         ok, data = self.__make_request(url, params=params)
 
+        df: pd.DataFrame = pd.DataFrame()
         if ok and 'candles' in data:
-            # logger.info(f"Candles: {data['candles']}")
+            logger.debug(f"Latest price candles for {pair_name}:\n{data['candles']}")
             if isinstance(data, dict) and 'candles' in data:
-                if isinstance(data['candles'], dict):
-                    df = self.__convert_to_df(data['candles'])
-                else:
-                    df = pd.DataFrame()
-            else:
-                df = pd.DataFrame()
-          
+                df = self.__convert_to_df(data['candles'])
+                logger.debug(f"Latest price candles for {pair_name}:\n{df}")
             if df is not None and df.size > 0:
                 df = df.set_index('time')
                 if isinstance(df.index, pd.DatetimeIndex):
                     df.index = pd.to_datetime(df.index).tz_localize(None)
                 return df
             else:
-                print("ERROR converting candles to DataFrame", data['candles'])
-                return pd.DataFrame()
+                logger.debug("ERROR converting candles to DataFrame", data['candles'])
+                return df
         else:
-            print("ERROR fetch_candles()", params, data)
-            return pd.DataFrame()
+            logger.debug("ERROR fetch_candles()", params, data)
+            return df
 
 
 
@@ -182,7 +179,7 @@ class OandaApi:
         return result
     def __on_success(self, **kwargs):
         
-        print(f"Instrument: {kwargs.get('instrument')} | Time: {kwargs.get('time')} | \
+        logger.debug(f"Instrument: {kwargs.get('instrument')} | Time: {kwargs.get('time')} | \
             Bid: {kwargs.get('bid')} | \
                 Ask: {kwargs.get('ask')} | \
                     Status: {kwargs.get('status')}")
@@ -193,7 +190,7 @@ class OandaApi:
         for line in response.iter_lines():
             if line:
                 data = json.loads(line.decode('utf-8'))
-                # print (data)
+                # logger.debug (data)
                 if data.get("type") == "PRICE":
                     count += 1
                     instrument = data["instrument"]
@@ -258,7 +255,7 @@ class OandaApi:
             # logger.info(f"Candles: {data['candles']}")
             return data['candles']
         else:
-            print("ERROR fetch_candles()", params, data)
+            logger.debug("ERROR fetch_candles()", params, data)
             return {}
 
     def __convert_to_df(self, data: dict)-> pd.DataFrame:
@@ -299,7 +296,7 @@ class OandaApi:
 if __name__ == "__main__":
     api = OandaApi("../../../config/oanda.cfg")
     data = api.get_latest_price_candles(pair_name="EUR_USD")
-    print(data)
-    print ("Done!")
+    logger.debug(data)
+    logger.debug ("Done!")
 
 # python oanda_api.py

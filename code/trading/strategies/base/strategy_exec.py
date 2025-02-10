@@ -1,3 +1,4 @@
+from math import log
 from trading.strategies.base.strategy_calc import TradingStrategyCalc
 from trading.dom.trade import Trade_Action
 import logging
@@ -63,7 +64,10 @@ class TradingStrategyExec(TradingStrategyCalc):
             trade = self.check_if_need_open_trade(trading_time)
             
         if trade is not None:
+            logger.debug(f"Adding trade action: {trade}")
             self.trading_session.add_trade(trade_action=trade, date_time=trading_time)
+        else:
+            logger.debug(f"No trade action for {self.instrument}")
         
         return trade
             
