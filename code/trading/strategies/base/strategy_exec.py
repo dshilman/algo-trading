@@ -31,12 +31,14 @@ class TradingStrategyExec(TradingStrategyCalc):
         trade_action = self.determine_trade_action(trading_time)
 
         if trade_action is not None:
-            # logger.info(f"trade_action: {trade_action}")
-
+            logger.info(f"{trade_action}")
             order = self.create_order(trade_action, self.sl_perc, self.tp_perc)
 
             if order is not None:
                 self.submit_order(order)
+
+        else:
+            logger.debug("No trade action")
 
         # if trade_action is not None and trade_action.sl_trade:
         #     raise PauseTradingException(2)
@@ -63,12 +65,9 @@ class TradingStrategyExec(TradingStrategyCalc):
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)
             
-        if trade is not None:
-            logger.debug(f"Adding trade action: {trade}")
+        if trade is not None:            
             self.trading_session.add_trade(trade_action=trade, date_time=trading_time)
-        else:
-            logger.debug(f"No trade action for {self.instrument}")
-        
+                
         return trade
             
 

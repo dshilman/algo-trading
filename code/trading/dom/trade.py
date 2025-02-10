@@ -9,7 +9,7 @@ class Trade_Action():
   
 
     def __str__(self):
-        return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}" 
+        return f'Trade_Action: {"open new trade" if self.open_trade else "close trade"}, instrument: {self.instrument}, {"buy" if self.units > 0 else "sell"} units: {abs(self.units)}, price: {self.price}'
 
     def __repr__(self):
-        return f"Trade_Action: instrument: {self.instrument}, units: {self.units}, price: {self.price}"       
+        return f'Trade_Action: {"open new trade" if self.open_trade else "close trade"}, instrument: {self.instrument}, {"buy" if self.units > 0 else "sell"} units: {abs(self.units)}, price: {self.price}'
