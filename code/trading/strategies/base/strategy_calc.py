@@ -1,3 +1,4 @@
+from math import log
 from trading.utils.tech_indicators import (
     count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema)
 from trading.strategies.base.strategy_base import TradingStrategyBase
@@ -52,7 +53,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Bollinger Band
         df["close"] = df["close"].fillna(0)
         # df["change_rate"] = df["close"].pct_change()
-        df["change_rate_1h"] = df["close"].pct_change(periods=period_short)
+        # df["change_rate_1h"] = df["close"].pct_change(periods=period_short)
         df["std_dev"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["std_dev_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
 
@@ -156,7 +157,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.price = row["close"]
         self.price_low = row["low"]
         self.price_high = row["high"]
-        self.change_rate_1h = row["change_rate_1h"]
+        # self.change_rate_1h = row["change_rate_1h"]
 
         self.price_max = row["price_max"]
         self.price_min = row["price_min"]
@@ -236,7 +237,9 @@ class TradingStrategyCalc(TradingStrategyBase):
        
     def print_indicators(self):
 
-        logger.info("\n" + self.data.tail(5).to_string(header=True))
+        logger.info(f'price: {self.price}, std_dev: {round(self.std_dev, 6)}, std_dev_mean: {round(self.std_dev_mean, 6)}, bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}')
+        logger.info(f'rsi: {round(self.rsi_short, 6)}, rsi_max: {round(self.rsi_short_max, 6)}, rsi_min: {round(self.rsi_short_min, 6)}, rsi_pct_change: {round(self.rsi_short_pct_change, 6)}')
+        # logger.info("\n" + self.data.tail(5).to_string(header=True))
         # price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]
         # price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
         # logger.info("\n" + tabulate(price_data, headers=price_headers) + "\n")

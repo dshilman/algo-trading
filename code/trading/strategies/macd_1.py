@@ -45,8 +45,13 @@ class TradingStrategy(TradingStrategyExec):
         super().set_strategy_indicators(row)
 
         self.macd_crossover = row["macd_crossover"]
-        self.ema_short_slope = row["ema_short_slope"]
         self.macd_crossover_times = row["macd_crossover_times"]
+        self.ema_short_slope = row["ema_short_slope"]
+
+    def print_indicators(self):        
+        super().print_indicators()
+        logger.info(f'sma_long: {self.sma_long}, ema_short: {self.ema_short}, macd_crossover: {self.macd_crossover}')
+
 
     def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:
    
@@ -79,14 +84,15 @@ class TradingStrategy(TradingStrategyExec):
 
         if have_units > 0:  # long position
             target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price_high > target_price) or self.ema_short_slope < 0:
+            if close_trade or target_price is not None and (self.price_high > target_price) or round(self.ema_short_slope, 5) < 0:
+
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, False)
                 
         elif have_units < 0:  # short position
             target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price_low < target_price) or self.ema_short_slope > 0:
+            if close_trade or target_price is not None and (self.price_low < target_price) or round(self.ema_short_slope, 5) > 0:
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False) 

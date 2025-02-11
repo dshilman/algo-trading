@@ -217,10 +217,12 @@ class Trader():
                         status = self.exec_strategy(ticker_data_df)
 
                         if status:
-                            exec_counter = exec_counter + 1
-                            logger.info (f"Heartbeat... {exec_counter}")
-                            if  exec_counter % 10 == 0:
-                                self.strategy.print_indicators()
+                            self.strategy.print_indicators()
+
+                            # exec_counter = exec_counter + 1
+                            # logger.info (f"Heartbeat... {exec_counter}")
+                            # if  exec_counter % 10 == 0:
+                            #     self.strategy.print_indicators()
                             
                             sleep(60)
                     else:
@@ -377,4 +379,4 @@ if __name__ == "__main__":
     )
     trader.start_trading()
     
-# python trading_bot.py EUR_USD
+# python trading_bot.py EUR_USD#1

@@ -32,6 +32,7 @@ class TradingStrategyBase():
         self.unit_test = unit_test
         self.backtest = False
 
+        self.data: pd.DataFrame = pd.DataFrame()
 
         config = configparser.ConfigParser()  
         config.read(pair_file)
@@ -111,9 +112,9 @@ class TradingStrategyBase():
     def report_trade(self, order):
 
         logger.info("\n" + 100 * "-" + "\n")
-        # logger.info("")
-        # logger.info("\n" + self.data[-8:].to_string(header=True))
-        # logger.info("")
+        logger.info("")
+        logger.info("\n" + self.data[-5:].to_string(header=True))
+        logger.info("")
         logger.info(json.dumps(order, indent=2))
         logger.info("\n" + 100 * "-" + "\n")
 
