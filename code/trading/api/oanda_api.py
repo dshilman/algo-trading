@@ -3,7 +3,7 @@ import json
 import logging
 from math import log
 import sys
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd

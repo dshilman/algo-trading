@@ -7,7 +7,7 @@ import os
 import sys
 import threading
 from time import sleep
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, Any
 import pandas as pd

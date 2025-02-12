@@ -6,7 +6,7 @@ from trading.strategies.base.strategy_base import TradingStrategyBase
 from trading.utils import utils
 import logging
 import sys
-from datetime import datetime, timezone, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 import pandas as pd
 from tabulate import tabulate
