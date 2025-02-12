@@ -7,7 +7,7 @@ import os
 import sys
 import threading
 from time import sleep
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, Any
 import pandas as pd
@@ -40,7 +40,7 @@ class Trader():
         # self.start = config.get(self.strategy.instrument, 'start')
         # self.end = config.get(self.strategy.instrument, 'end')
 
-        self.ticker_data_deque: deque[list[Any]] = deque()
+        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 1000)
         self.stop_loss_count = 0
         
         class_ = None
@@ -58,7 +58,6 @@ class Trader():
 
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategyExec  = class_(trading_strategy=trading_strategy, pair_file=pair_file, api = self.api, unit_test = unit_test)
-        logger.info(f"Running:{class_} strategy")
         logger.info(f"Strategy Configuration \n + {config.items(trading_strategy)}")
 
 
@@ -93,7 +92,7 @@ class Trader():
         logger.addHandler(log_handler)
 
 
-    def start_trading(self, stop_after = None):
+    def start_trading(self, stop_after = 999999999999999999999):
 
         logger.info("\n" + 100 * "-")
         logger.info ("Started New Trading Session")
@@ -102,10 +101,10 @@ class Trader():
         threads = []
         # threads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
         # threads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
-        # threads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
-        # threads.append(threading.Thread(target=self.refresh_strategy, args=(5,stop_after)))
+        threads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
+        threads.append(threading.Thread(target=self.refresh_strategy, args=(5, stop_after)))
 
-        self.refresh_strategy(refresh=5, stop_after=999999999999999999999999999999999999999999)
+        # self.refresh_strategy(refresh=5, stop_after=999999999999999999999999999999999999999999)
 
         for t in threads:
             t.start()
@@ -117,13 +116,12 @@ class Trader():
         self.terminate_session("Finished Trading Session")
 
     
-    def start_streaming(self, stop_after = None):
+    def start_streaming(self, stop_after):
 
-        # self.ticker_data_deque.extend(self.api.get_latest_price_candles(pair_name=self.strategy.instrument).drop(columns=["mid_o", "volume"]).to_records())
         candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
-        candles["status"] = "NA"
-        data = candles.drop(columns=["volume"]).reset_index().values.tolist()
-        self.ticker_data_deque = deque([list(item) for item in data], maxlen=utils.ticker_data_size * 500)
+        for index, row in candles.iterrows():
+            self.ticker_data_deque.append([index, row["close"], row["bid"], row["ask"], "tradeable"])    
+
         self.streaming = True
         i: int = 0
 
@@ -138,10 +136,10 @@ class Trader():
             except Exception as e:
                 logger.error(f"Error in start_streaming")
                 logger.exception(e)
-                i = i + 1
-                if i > 30:
-                    self.terminate = True
-                    break
+                # i = i + 1
+                # if i > 30:
+                #     self.terminate = True
+                #     break
 
     def stop_streaming(self):
 
@@ -175,7 +173,7 @@ class Trader():
             # time.sleep(refresh)
 
 
-    def refresh_strategy(self, refresh = 5, stop_after=2):
+    def refresh_strategy(self, refresh = 5, stop_after=999999999999999999):
 
         error_counter: int = 0
         exec_counter: int = 0
@@ -190,19 +188,19 @@ class Trader():
 
                 if self.streaming:
 
-                    ticker_data_list = list(self.ticker_data_deque)
-                    ticker_data_df = pd.DataFrame(ticker_data_list, columns=["time", "close", "bid", "ask", "status"])
-                    ticker_data_df = ticker_data_df.set_index('time')
-                    ticker_data_df.index = pd.to_datetime(ticker_data_df.index).tz_localize(None)
-                    ticker_data_df = ticker_data_df.resample("30s").last()
-                    ticker_data_df = ticker_data_df.tail(utils.ticker_data_size)
-                    ticker_data_df.dropna(inplace = True)
-                    self.exec_strategy(ticker_data_df)
+                    trading_time = datetime.now(tz=timezone.utc)
 
-                    exec_counter = exec_counter + 1
-                    if exec_counter % 50 == 0:
-                        logger.info (f"Heartbeat... {exec_counter}")
-                        self.strategy.print_indicators()
+                    if trading_time.minute % 5 == 0 and trading_time.second < 10:
+                        logger.info("\n" + f"Start executing strategy... {exec_counter}, data size: {len(self.ticker_data_deque)}")
+
+                        ticker_data_list = list(self.ticker_data_deque.copy())                        
+                        ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list)
+                        status = self.exec_strategy(ticker_data_df)
+                        
+                        if status:
+                            self.strategy.print_indicators()
+                            exec_counter = exec_counter + 1
+                            sleep(10)
 
                 else:
 
@@ -218,13 +216,13 @@ class Trader():
 
                         if status:
                             self.strategy.print_indicators()
+                            exec_counter = exec_counter + 1
 
-                            # exec_counter = exec_counter + 1
                             # logger.info (f"Heartbeat... {exec_counter}")
                             # if  exec_counter % 10 == 0:
                             #     self.strategy.print_indicators()
                             
-                            sleep(60)
+                            # sleep(5)
                     else:
                         logger.debug (f"Skipping strategy execution... {trading_time}")
 
@@ -255,18 +253,18 @@ class Trader():
 
         logger.debug(f"Ticker data: {ticker_data_df}")
 
-        if ticker_data_df.size < utils.ticker_data_size:
-            logger.info(f"Skip strategy execution, {ticker_data_df.size} ticker data size is too small")
+        if len(ticker_data_df.index) < utils.ticker_data_size:
+            logger.info(f"Skip strategy execution, {len(ticker_data_df.index)} ticker data size is too small")
             return False
 
-        trading_time = datetime.now(tz=None)
+        trading_time = datetime.now(timezone.utc)
+
+        last_candle_time: pd.Timestamp = ticker_data_df.index[-1]
+        if trading_time - last_candle_time > timedelta(seconds=30):
+            logger.info(f"Skip strategy execution, ticker data is too stale: {last_candle_time}, trading time: {trading_time}")
+            return False
+
         last_candle_data = ticker_data_df.iloc[-1]
-
-        # last_candle_time = datetime.strptime(last_candle_data.index["time"], "%Y-%m-%d %H:%M:%S")
-        last_candle_time = ticker_data_df.index[-1]
-        if (trading_time - last_candle_time) > timedelta(days = 0, hours = 0, minutes=0, seconds=45):
-            logger.info(f"Skip strategy execution, ticker data is too stale: {last_candle_time}")
-            return False
 
         if last_candle_data["open"] == last_candle_data["close"]:
             logger.info(f"Skip strategy execution, no price movement")
@@ -342,12 +340,13 @@ class Trader():
         
         recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask, status]
         self.ticker_data_deque.append(recent_tick)
+        
 
-        minute: int = pd_timestamp.minute
-        second: int = pd_timestamp.second
+        # minute: int = pd_timestamp.minute
+        # second: int = pd_timestamp.second
 
-        if minute in [0, 15, 30, 45] and second == 0:
-            logger.info(f"Heartbeat: instrument: {self.strategy.instrument} | ask: {ask} | bid: {bid} | status: {status}")
+        # if minute in [0, 15, 30, 45] and second == 0:
+        #     logger.info(f"Heartbeat: instrument: {self.strategy.instrument} | ask: {ask} | bid: {bid} | status: {status}")
  
   
         

@@ -3,7 +3,7 @@ import json
 import logging
 from math import log
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from pathlib import Path
 
 import pandas as pd
@@ -63,11 +63,10 @@ class OandaApi:
             logger.debug(f"Latest price candles for {pair_name}:\n{data['candles']}")
             if isinstance(data, dict) and 'candles' in data:
                 df = self.__convert_to_df(data['candles'])
-                logger.debug(f"Latest price candles for {pair_name}:\n{df}")
-            if df is not None and df.size > 0:
                 df = df.set_index('time')
                 if isinstance(df.index, pd.DatetimeIndex):
-                    df.index = pd.to_datetime(df.index).tz_localize(None)
+                    df.index = df.index.tz_convert(tz=timezone.utc)
+                logger.debug(f"Latest price candles for {pair_name}:\n{df}")
                 return df
             else:
                 logger.debug("ERROR converting candles to DataFrame", data['candles'])
@@ -104,7 +103,7 @@ class OandaApi:
 
         df = df.set_index('time')
         if isinstance(df.index, pd.DatetimeIndex):
-            df.index = df.index.tz_localize(None)
+            df.index = df.index.tz_convert(timezone.utc)
 
         return df
 

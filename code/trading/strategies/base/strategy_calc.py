@@ -1,11 +1,12 @@
 from math import log
+
 from trading.utils.tech_indicators import (
     count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema)
 from trading.strategies.base.strategy_base import TradingStrategyBase
 from trading.utils import utils
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 import pandas as pd
 from tabulate import tabulate
@@ -40,6 +41,43 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.data = df.tail(self.SMA * 2)
 
         # logger.debug("After new tickers:\n" + df.iloc[-1:].to_string(header=True))
+
+    def to_5_min_candles(self, ticker_data_list) -> pd.DataFrame:
+
+        # Create DataFrame
+        ticker_df: pd.DataFrame = pd.DataFrame(ticker_data_list, columns=["time", "mid", "bid", "ask", "status"])
+
+        # Ensure 'time' is in datetime format and set as index
+        ticker_df["time"] = pd.to_datetime(ticker_df["time"], utc=True)
+        ticker_df = ticker_df.set_index("time")
+        # logger.info(f"Last price ticker update {ticker_df.index[-1]}")
+
+        # Handle timezone
+        if isinstance(ticker_df.index, pd.DatetimeIndex) and ticker_df.index.tz is not None:
+            ticker_df.index = ticker_df.index.tz_convert(timezone.utc)
+
+        # Resample to 1-minute intervals
+        ticker_df = ticker_df.resample("1Min").last().ffill()
+
+        # Create a new DataFrame
+        df = pd.DataFrame(index=ticker_df.index)
+
+        df["close"] = ticker_df["mid"]
+        df["open"] = df["close"].shift(1)
+        df["ask"] = ticker_df["ask"]
+        df["bid"] = ticker_df["bid"]
+        df["high"] = ticker_df["mid"].rolling(5, min_periods=1).max()
+        df["low"] = ticker_df["mid"].rolling(5, min_periods=1).min()
+
+        # Resample to 5-minute intervals and fill missing values
+        df = df.resample("5min").last().ffill()
+
+        # logger.info("after resample")
+        # logger.info(f"Last candle time {df.index[-1]}")
+
+        return df
+
+
 
     def calc_indicators(self):
 
@@ -288,8 +326,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         if day == 4 and hour >= 20:
             return False
 
-        pause_from_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_start, '%H:%M:%S').time())
-        pause_to_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_end, '%H:%M:%S').time())
+        pause_from_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_start, '%H:%M:%S').time(), tzinfo=timezone.utc)
+        pause_to_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_end, '%H:%M:%S').time(), tzinfo=timezone.utc)
 
         if pause_from_dt > pause_to_dt:
             pause_from_dt = pause_from_dt - pd.DateOffset(days=1)
