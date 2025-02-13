@@ -92,6 +92,8 @@ class TradingBacktester():
             logger.info("Calculating indicators...")
             self.strategy.calc_indicators()
 
+            excel_file_name = None
+
             try:
 
                 data_dir = os.path.join(os.path.dirname(__file__), "data")
@@ -100,11 +102,13 @@ class TradingBacktester():
 
                 if not os.path.exists(excel_file_name):
                    logger.info("Saving indicators to Excel...")
-                   self.strategy.data.to_excel(excel_file_name)
+                   df = self.strategy.data.copy()
+                   df.index =  pd.to_datetime(df.index).tz_convert(None)           
+                   df.to_excel(excel_file_name)
                 else:
                     logger.info(f"File: {excel_file_name} already exists")
             except Exception as e:
-                logger.error("Couldn't wtite to {excel_file_name}", e)
+                logger.error(f"Couldn't wtite to {excel_file_name}", e)
  
  
             pause_trading = None

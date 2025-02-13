@@ -34,14 +34,29 @@ class TradingStrategy(TradingStrategyExec):
 
         df: pd.DataFrame = self.data
  
+        df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
+        df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
+        df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(15).mean()
+
+        df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
+        df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(15).mean()
+
+
         df["rsi_short_pct_change_10"] = df["rsi_short_pct_change"].rolling(2).sum()
-       
+
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
 
         self.rsi_short_pct_change_10 = row["rsi_short_pct_change_10"]
+
+        self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
+        self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
+
+        self.ema_bb_high_divergance_mean = row["ema_bb_high_divergance_mean"]
+        self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
+
 
 
     def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:
