@@ -126,8 +126,11 @@ class TradingStrategyExec(TradingStrategyCalc):
     
     def need_close_trade(self, trading_time) -> bool:
 
+        if not self.is_trading_time(trading_time):
+            return True
+
         open_trade_time = self.get_open_trade_time()
-        close_trade = open_trade_time is not None and (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time or not self.is_trading_time(trading_time)
+        close_trade = open_trade_time is not None and (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time
 
         return close_trade
     
