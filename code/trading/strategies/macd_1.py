@@ -50,7 +50,7 @@ class TradingStrategy(TradingStrategyExec):
 
     def print_indicators(self):        
         super().print_indicators()
-        logger.info(f'sma_long: {self.sma_long}, ema_short: {self.ema_short}, macd_crossover: {self.macd_crossover}')
+        logger.info(f'sma_long: {round(self.sma_long, 6)}, ema_short: {round(self.ema_short, 6)}, macd_crossover: {round(self.macd_crossover, 6)}')
 
 
     def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:

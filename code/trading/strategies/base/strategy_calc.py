@@ -344,7 +344,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         if len(self.trading_session.trades) > 0:
             trade:str = self.trading_session.trades[-1][2]
             if trade.startswith("Open"):
-                date_time_s = self.trading_session.trades[-1][0]
-                date_time = datetime.strptime(date_time_s, utils.date_format).replace(tzinfo=None)
+                date_time = self.trading_session.trades[-1][0]
 
         return date_time

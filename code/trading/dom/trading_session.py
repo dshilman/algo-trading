@@ -83,7 +83,7 @@ class Trading_Session():
         
         self.have_units = self.have_units + trade_action.units
 
-        self.trades.append([date_time.strftime(utils.date_format), self.trade_id, trade, action, trade_action.units, trade_action.price, '${:,.2f}'.format(trade_pl), '%{:,.4f}'.format(trade_pl_pct), '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time, self.trade_id, trade, action, trade_action.units, trade_action.price, '${:,.2f}'.format(trade_pl), '%{:,.4f}'.format(trade_pl_pct), '${:,.2f}'.format(self.pl)])
        
         return
 

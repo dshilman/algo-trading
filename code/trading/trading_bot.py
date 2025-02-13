@@ -191,7 +191,8 @@ class Trader():
                     trading_time = datetime.now(tz=timezone.utc)
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
-                        logger.info("\n" + f"Start executing strategy... {exec_counter}, data size: {len(self.ticker_data_deque)}")
+                        logger.info("")
+                        logger.info(f"Start executing strategy... {exec_counter}, data size: {len(self.ticker_data_deque)}")
 
                         ticker_data_list = list(self.ticker_data_deque.copy())                        
                         ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list)
