@@ -34,15 +34,11 @@ class TradingStrategy(TradingStrategyExec):
 
         df: pd.DataFrame = self.data
  
-        df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
         df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(15).mean()
 
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
         df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(15).mean()
-
-
-        df["rsi_short_pct_change_10"] = df["rsi_short_pct_change"].rolling(2).sum()
 
         df['macd_crossover'] = 0  # Initialize signal column
         df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
@@ -52,8 +48,6 @@ class TradingStrategy(TradingStrategyExec):
 
     def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
-
-        self.rsi_short_pct_change_10 = row["rsi_short_pct_change_10"]
 
         self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
         self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
@@ -69,7 +63,7 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
-        if  self.std_dev > .0015:
+        if  self.std_dev > self.trading_std:
 
             if self.rsi_short_max > 85 and self.price > self.sma_long and self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean:
                 if not self.backtest:

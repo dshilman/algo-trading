@@ -37,7 +37,6 @@ class TradingStrategy(TradingStrategyExec):
         df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
 
-        df["macd_crossover_times"] = (df["sma_long"] - df["ema_short"]).apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0).rolling(15).apply(lambda x: count_sma_crossover(x))
         df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
          
         self.data = df
@@ -48,7 +47,6 @@ class TradingStrategy(TradingStrategyExec):
         self.macd_crossover = row["macd_crossover"]
         self.macd_crossover_recent = row["macd_crossover_recent"]
 
-        self.macd_crossover_times = row["macd_crossover_times"]
         self.ema_short_slope = row["ema_short_slope"]
 
     def print_indicators(self):        

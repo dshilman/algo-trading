@@ -36,16 +36,7 @@ class TradingStrategy(TradingStrategyExec):
         df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
         df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
-        df["macd_crossover_times"] = (df["sma_long"] - df["ema_short"]).apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0).rolling(15).apply(lambda x: count_sma_crossover(x))
- 
-        df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
-
-        df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
-        df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(15).mean()
-
-        df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
-        df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(15).mean()
-
+        
         df["rsi_short_mean"] = df["rsi_short"].rolling(5).mean()
 
         self.data = df
@@ -55,15 +46,7 @@ class TradingStrategy(TradingStrategyExec):
 
         self.macd_crossover = row["macd_crossover"]
         self.macd_crossover_recent = row["macd_crossover_recent"]
-
-        self.macd_crossover_times = row["macd_crossover_times"]
-        self.ema_short_slope = row["ema_short_slope"]
-
-        self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
-        self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
-
-        self.ema_bb_high_divergance_mean = row["ema_bb_high_divergance_mean"]
-        self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
+ 
         self.rsi_short_mean = row["rsi_short_mean"]
 
 

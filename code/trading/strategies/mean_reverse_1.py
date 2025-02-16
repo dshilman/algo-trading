@@ -64,7 +64,7 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
-        if  self.std_dev > .0015:
+        if  self.std_dev > self.trading_std:
 
             if self.rsi_short > 70 and self.price_high > self.bb_high and self.rsi_short_pct_change_10 < -0.2:
                 if not self.backtest:
