@@ -41,7 +41,7 @@ class TradingStrategy(TradingStrategyExec):
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
 
-        if  round(self.std_dev_mean, 3) > self.trading_std and self.rsi_short_max - self.rsi_short_min > 30:
+        if  self.rsi_short_max - self.rsi_short_min > 30:
 
             if self.price_max > self.bb_high and self.rsi_short > 65 and self.rsi_short_max > 80 \
                 and self.rsi_short_pct_change < 0:

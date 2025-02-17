@@ -33,11 +33,19 @@ class TradingStrategy(TradingStrategyExec):
  
         # Identify crossovers
         df['macd_crossover'] = 0  # Initialize signal column
-        df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
-        df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
+        df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) < df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
+        df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) > df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
         
         df["rsi_short_mean"] = df["rsi_short"].rolling(5).mean()
+        df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
+
+        df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
+        df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(15).mean()
+
+        df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
+        df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(15).mean()
+
 
         self.data = df
 
@@ -48,11 +56,19 @@ class TradingStrategy(TradingStrategyExec):
         self.macd_crossover_recent = row["macd_crossover_recent"]
  
         self.rsi_short_mean = row["rsi_short_mean"]
+        self.ema_short_slope = row["ema_short_slope"]
+
+        self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
+        self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
+
+        self.ema_bb_high_divergance_mean = row["ema_bb_high_divergance_mean"]
+        self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
+
 
 
     def print_indicators(self):        
         super().print_indicators()
-        logger.info(f'sma_long: {round(self.sma_long, 6)}, ema_short: {round(self.ema_short, 6)}, macd_crossover: {round(self.macd_crossover, 0)}')
+        logger.info(f'sma_long: {round(self.sma_long, 6)}, ema_short: {round(self.ema_short, 6)}, macd_crossover: {round(self.macd_crossover, 0)}, macd_crossover_recent: {round(self.macd_crossover_recent, 0)}')
 
 
     def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:
@@ -86,7 +102,7 @@ class TradingStrategy(TradingStrategyExec):
 
         if have_units > 0:  # long position
             target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price_high > target_price):
+            if close_trade or target_price is not None and (self.price > target_price) or (self.std_dev > self.trading_std and self.price_max > self.bb_high and round(self.ema_short_slope, 4) <= 0):
 
 
                 if not self.backtest:
@@ -95,7 +111,7 @@ class TradingStrategy(TradingStrategyExec):
                 
         elif have_units < 0:  # short position
             target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price_low < target_price):
+            if close_trade or target_price is not None and (self.price < target_price) or (self.std_dev > self.trading_std and self.price_min < self.bb_low and round(self.ema_short_slope, 4) <= 0):
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False) 

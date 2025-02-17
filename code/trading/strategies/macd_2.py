@@ -33,8 +33,8 @@ class TradingStrategy(TradingStrategyExec):
  
         # Identify crossovers
         df['macd_crossover'] = 0  # Initialize signal column
-        df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
-        df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
+        df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) < df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
+        df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) > df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
 
         df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
@@ -51,7 +51,7 @@ class TradingStrategy(TradingStrategyExec):
 
     def print_indicators(self):        
         super().print_indicators()
-        logger.info(f'sma_long: {round(self.sma_long, 6)}, ema_short: {round(self.ema_short, 6)}, macd_crossover: {round(self.macd_crossover, 0)}')
+        logger.info(f'sma_long: {round(self.sma_long, 6)}, ema_short: {round(self.ema_short, 6)}, macd_crossover: {round(self.macd_crossover, 0)}, macd_crossover_recent: {round(self.macd_crossover_recent, 0)}')
 
 
     def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:
