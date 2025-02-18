@@ -48,9 +48,6 @@ class TradingStrategyExec(TradingStrategyCalc):
         trade: Optional[Trade_Action] = None
         have_units = self.trading_session.have_units
 
-        if not self.backtest:
-            logger.info(f"Have {have_units} units of {self.instrument}")
-        
         if have_units == 0:
 
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
@@ -68,7 +65,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         if trade is not None:            
             self.trading_session.add_trade(trade_action=trade, date_time=trading_time)
 
-        if not self.backtest:
+        if not self.backtest and trade is not None:
             logger.info(f"Trade Action: {trade}")                
         
         return trade
