@@ -102,7 +102,7 @@ class TradingStrategy(TradingStrategyExec):
 
         if have_units > 0:  # long position
             target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price > target_price) or (self.std_dev > self.trading_std and self.price_max > self.bb_high and round(self.ema_short_slope, 4) <= 0):
+            if close_trade or target_price is not None and (self.price > target_price) or (self.std_dev > self.trading_std and self.price_max > self.bb_high and round(self.ema_short_slope, 5) <= 0):
 
 
                 if not self.backtest:
@@ -111,7 +111,8 @@ class TradingStrategy(TradingStrategyExec):
                 
         elif have_units < 0:  # short position
             target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price < target_price) or (self.std_dev > self.trading_std and self.price_min < self.bb_low and round(self.ema_short_slope, 4) <= 0):
+            if close_trade or target_price is not None and (self.price < target_price) or (self.std_dev > self.trading_std and self.price_min < self.bb_low and round(self.ema_short_slope, 5) >= 0):
+
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False) 
