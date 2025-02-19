@@ -42,10 +42,9 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         return
 
-    def determine_trade_action(self, trading_time) -> Optional[Trade_Action]:
+    def determine_trade_action(self, trading_time) -> Trade_Action | None:
 
 
-        trade: Optional[Trade_Action] = None
         have_units = self.trading_session.have_units
 
         if have_units == 0:
@@ -61,29 +60,28 @@ class TradingStrategyExec(TradingStrategyCalc):
             if trade is None:
                 logger.debug(f"Have {have_units} positions, checking if need to close a trade")
                 trade = self.check_if_need_close_trade(trading_time)
+        else:
+            trade = None
             
         if trade is not None:            
             self.trading_session.add_trade(trade_action=trade, date_time=trading_time)
-
-        if not self.backtest and trade is not None:
-            logger.info(f"Trade Action: {trade}")                
         
         return trade
             
 
-    def check_if_need_open_trade(self, trading_time) -> Optional[Trade_Action]:
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action | None:
         # Implement the logic to determine if a new trade needs to be opened
         # For now, return a default Trade_Action or raise an exception
         raise NotImplementedError("This method needs to be implemented")
 
-    def check_if_need_close_trade(self, trading_time) -> Optional[Trade_Action]:
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action | None:
         # Implement the logic to determine if a new trade needs to be opened
         # For now, return a default Trade_Action or raise an exception
         raise NotImplementedError("This method needs to be implemented")
     
     
 
-    def check_for_sl(self, trading_time, have_units) -> Optional[Trade_Action]:
+    def check_for_sl(self, trading_time, have_units) -> Trade_Action | None:
 
         base_price = None
         
