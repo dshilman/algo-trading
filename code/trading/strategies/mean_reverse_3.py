@@ -58,7 +58,7 @@ class TradingStrategy(TradingStrategyExec):
         self.macd_crossover = row["macd_crossover"]
 
 
-    def check_if_need_open_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action:
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
@@ -78,7 +78,7 @@ class TradingStrategy(TradingStrategyExec):
 
 
 
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action:
 
         have_units = self.trading_session.have_units
 

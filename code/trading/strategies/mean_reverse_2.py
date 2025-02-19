@@ -36,7 +36,7 @@ class TradingStrategy(TradingStrategyExec):
         super().set_strategy_indicators(row)
 
 
-    def check_if_need_open_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action:
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return
@@ -57,7 +57,7 @@ class TradingStrategy(TradingStrategyExec):
                         return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
 
     
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action:
 
         have_units = self.trading_session.have_units
 

@@ -42,7 +42,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         return
 
-    def determine_trade_action(self, trading_time) -> Trade_Action | None:
+    def determine_trade_action(self, trading_time) -> Trade_Action:
 
 
         have_units = self.trading_session.have_units
@@ -69,19 +69,19 @@ class TradingStrategyExec(TradingStrategyCalc):
         return trade
             
 
-    def check_if_need_open_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action:
         # Implement the logic to determine if a new trade needs to be opened
         # For now, return a default Trade_Action or raise an exception
         raise NotImplementedError("This method needs to be implemented")
 
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action:
         # Implement the logic to determine if a new trade needs to be opened
         # For now, return a default Trade_Action or raise an exception
         raise NotImplementedError("This method needs to be implemented")
     
     
 
-    def check_for_sl(self, trading_time, have_units) -> Trade_Action | None:
+    def check_for_sl(self, trading_time, have_units) -> Trade_Action:
 
         base_price = None
         

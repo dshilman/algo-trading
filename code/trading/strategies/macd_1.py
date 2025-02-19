@@ -71,7 +71,7 @@ class TradingStrategy(TradingStrategyExec):
         logger.info(f'sma_long: {round(self.sma_long, 6)}, ema_short: {round(self.ema_short, 6)}, macd_crossover: {round(self.macd_crossover, 0)}, macd_crossover_recent: {round(self.macd_crossover_recent, 0)}')
 
 
-    def check_if_need_open_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action:
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
             return None
@@ -93,7 +93,7 @@ class TradingStrategy(TradingStrategyExec):
                 return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
 
 
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action | None:
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action:
 
         have_units = self.trading_session.have_units
 
