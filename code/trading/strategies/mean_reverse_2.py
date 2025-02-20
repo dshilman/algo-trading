@@ -36,12 +36,9 @@ class TradingStrategy(TradingStrategyExec):
         super().set_strategy_indicators(row)
 
 
-    def check_if_need_open_trade(self, trading_time) -> Trade_Action:
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
    
-        if not self.is_trading_time(trading_time) or self.stop_trading:
-            return
-
-        if  self.rsi_short_max - self.rsi_short_min > 30:
+           if  self.rsi_short_max - self.rsi_short_min > 30:
 
             if self.price_max > self.bb_high and self.rsi_short > 65 and self.rsi_short_max > 80 \
                 and self.rsi_short_pct_change < 0:
@@ -57,7 +54,7 @@ class TradingStrategy(TradingStrategyExec):
                         return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
 
     
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action:
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
 
         have_units = self.trading_session.have_units
 

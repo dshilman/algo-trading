@@ -51,7 +51,7 @@ class TradingStrategyBase():
         self.short_trading = config.getboolean(trading_strategy, 'short_trading')
         self.long_trading = config.getboolean(trading_strategy, 'long_trading')
         self.keep_trade_open_time = config.getint(trading_strategy, 'keep_trade_open_time')
-        self.trading_spread = config.getfloat(trading_strategy, 'trading_spread', fallback=.0001)
+        self.trading_spread = config.getfloat(trading_strategy, 'trading_spread', fallback=0)
         
 
         self.trading_session = Trading_Session(self.instrument)

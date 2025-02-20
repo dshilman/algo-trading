@@ -58,11 +58,8 @@ class TradingStrategy(TradingStrategyExec):
         self.macd_crossover = row["macd_crossover"]
 
 
-    def check_if_need_open_trade(self, trading_time) -> Trade_Action:
+    def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
    
-        if not self.is_trading_time(trading_time) or self.stop_trading:
-            return
-
         if  self.std_dev > self.trading_std:
 
             if self.rsi_short_max > 85 and self.price > self.sma_long and self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean:
@@ -78,7 +75,7 @@ class TradingStrategy(TradingStrategyExec):
 
 
 
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action:
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
 
         have_units = self.trading_session.have_units
 

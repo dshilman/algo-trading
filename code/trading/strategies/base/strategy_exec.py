@@ -24,7 +24,6 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api=api, unit_test=unit_test)
 
-        self.stop_trading = False
 
     def execute_strategy(self, trading_time):
        
@@ -44,11 +43,10 @@ class TradingStrategyExec(TradingStrategyCalc):
 
     def determine_trade_action(self, trading_time) -> Trade_Action:
 
-
         have_units = self.trading_session.have_units
 
-        if have_units == 0:
-
+        if have_units == 0 and self.is_trading_time(trading_time) and (self.trading_spread == 0 or (self.ask - self.bid) < self.trading_spread):
+      
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)
 
@@ -66,7 +64,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         if trade is not None:            
             self.trading_session.add_trade(trade_action=trade, date_time=trading_time)
         
-        return trade
+        return trade # type: ignore
             
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action:
@@ -88,7 +86,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         open_trade_price = self.get_open_trade_price()
         
         if open_trade_price is None:
-            return None
+            return None # type: ignore
         
         if have_units < 0:
             if self.trailing_sl:
@@ -116,7 +114,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                         f"Close long position, - Stop Loss Sell, long price {base_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
                 return Trade_Action(self.instrument, -have_units, self.bid, False, True)
         
-        return None
+        return None # type: ignore
     
     def need_close_trade(self, trading_time) -> bool:
 

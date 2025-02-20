@@ -62,7 +62,7 @@ class TradingStrategy(TradingStrategyExec):
     def check_if_need_open_trade(self, trading_time) -> Trade_Action:
    
         if not self.is_trading_time(trading_time) or self.stop_trading:
-            return
+            return None # type: ignore
 
         if  self.std_dev > self.trading_std:
 
@@ -75,7 +75,9 @@ class TradingStrategy(TradingStrategyExec):
             elif self.rsi_short < 30 and self.price_low < self.bb_low and self.rsi_short_pct_change_10 > 0.5:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-                return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
+                return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
+        
+        return None                     # type: ignore
 
 
 
@@ -99,3 +101,5 @@ class TradingStrategy(TradingStrategyExec):
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, -have_units, self.ask, False, False) 
+
+        return None # type: ignore
