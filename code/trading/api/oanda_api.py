@@ -1,7 +1,9 @@
 import configparser
 import json
 import logging
+from logging import handlers
 from math import log
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -180,8 +182,7 @@ class OandaApi:
         
         logger.debug(f"Instrument: {kwargs.get('instrument')} | Time: {kwargs.get('time')} | \
             Bid: {kwargs.get('bid')} | \
-                Ask: {kwargs.get('ask')} | \
-                    Status: {kwargs.get('status')}")
+                Ask: {kwargs.get('ask')}")
 
     def __handle_response(self, response, callback, stop):
 
@@ -189,18 +190,25 @@ class OandaApi:
         for line in response.iter_lines():
             if line:
                 data = json.loads(line.decode('utf-8'))
-                # logger.debug (data)
+                logger.debug (data)
                 if data.get("type") == "PRICE":
                     count += 1
                     instrument = data["instrument"]
                     time = data["time"]
-                    bid = float(data["closeoutBid"])
-                    ask = float(data["closeoutAsk"])
-                    status = data["status"]                    
-                    if callback and status:
-                        callback(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
+                    if len(data["bids"]) > 0:
+                        bid = float(data["bids"][0]["price"])
+                    else: 
+                        bid = float(data["closeoutBid"])
+
+                    if len(data["asks"]) > 0:
+                        ask = float(data["asks"][0]["price"])
+                    else: 
+                        ask = float(data["closeoutAsk"])
+
+                    if callback:
+                        callback(instrument=instrument, time=time, bid=bid, ask=ask)
                     else:
-                        self.__on_success(instrument=instrument, time=time, bid=bid, ask=ask, status=status)
+                        self.__on_success(instrument=instrument, time=time, bid=bid)
                 
                     if self.stop_stream or stop is not None and count >= stop:
                         break
@@ -294,7 +302,18 @@ class OandaApi:
 
 if __name__ == "__main__":
     api = OandaApi("../../../config/oanda.cfg")
-    data = api.get_latest_price_candles(pair_name="EUR_USD")
+    logger.setLevel(logging.DEBUG)     
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', utils.date_format)
+
+    log_dir = os.path.join(os.path.dirname(__file__), "../../../logs/trading")
+    os.makedirs(log_dir, exist_ok=True)
+
+    log_file = os.path.join(log_dir, f"oanda_api.log")
+    log_handler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
+    log_handler.setFormatter(formatter)
+    logger.addHandler(log_handler)       
+
+    data = api.stream_prices(instrument="EUR_USD", stop=5)
     logger.debug(data)
     logger.debug ("Done!")
 

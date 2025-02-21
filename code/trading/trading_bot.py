@@ -40,8 +40,7 @@ class Trader():
         # self.start = config.get(self.strategy.instrument, 'start')
         # self.end = config.get(self.strategy.instrument, 'end')
 
-        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 1000)
-        self.stop_loss_count = 0
+        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 60 * 4)
         
         class_ = None
         strategy = config.get(trading_strategy, 'strategy')
@@ -59,14 +58,6 @@ class Trader():
         logger.info(f"Running:{class_} strategy")
         self.strategy: TradingStrategyExec  = class_(trading_strategy=trading_strategy, pair_file=pair_file, api = self.api, unit_test = unit_test)
         logger.info(f"Strategy Configuration \n + {config.items(trading_strategy)}")
-
-
-        today = datetime.now(tz=timezone.utc).date()
-
-        # self.from_dt = datetime.combine(today, datetime.strptime(self.start, '%H:%M:%S').time())
-        # self.to_dt = datetime.combine(today, datetime.strptime(self.end, '%H:%M:%S').time())
-        # if self.to_dt < self.from_dt:
-        #     self.to_dt = self.to_dt + timedelta(days=1)
 
         self.terminate = False
 
@@ -120,7 +111,7 @@ class Trader():
 
         candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
         for index, row in candles.iterrows():
-            self.ticker_data_deque.append([index, row["close"], row["bid"], row["ask"], "tradeable"])    
+            self.ticker_data_deque.append([index, row["close"], row["bid"], row["ask"]])    
 
         self.streaming = True
         i: int = 0
@@ -227,17 +218,7 @@ class Trader():
                     else:
                         logger.debug (f"Skipping strategy execution... {trading_time}")
 
-                # try:
-                #     self.strategy.execute_strategy()
-                # except PauseTradingException as e:
-                #     logger.info(f"Caught Stop Loss Error. Continue Traiding...")
-                #     self.stop_loss_count = self.stop_loss_count + 1
-                    # time.sleep(2 * 60 * 60)
-                    
-                    # if self.stop_loss_count > 2:
-                    #     logger.error(f"Stop Loss Count > 2. Terminating Trading")
-                    #     self.terminate = True
-
+    
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")
                 logger.exception(e)
@@ -269,10 +250,6 @@ class Trader():
 
         if last_candle_data["open"] == last_candle_data["close"]:
             logger.info(f"Skip strategy execution, no price movement")
-            return False
-
-        if "status" in last_candle_data and not last_candle_data.get("status") == "tradeable":
-            logger.info(f"Skip strategy execution, ticker data is not tradeable: {last_candle_data.get('status')}")
             return False
 
         self.strategy.data = ticker_data_df
@@ -320,17 +297,9 @@ class Trader():
         instrument = kwargs.get('instrument')
         date_time = kwargs.get('time')
         ask = kwargs.get('ask')
-        # ask_liquidity = kwargs.get('ask_liquidity')
         bid = kwargs.get('bid')
-        # bid_liquidity = kwargs.get('bid_liquidity')
-        status = kwargs.get('status')
-
-        if not (instrument and bid and ask and status):
-            logger.error(f"Invalid instrument price values!!!")
-            logger.error(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask} | Status: {status}")
-            return
         
-        logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask} | Status: {status}")
+        logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask}")
 
          # 2023-12-19T13:28:35.194571445Z
         if date_time is None:
@@ -339,7 +308,7 @@ class Trader():
 
         pd_timestamp: pd.Timestamp = pd.to_datetime(date_time).replace(tzinfo=None)
         
-        recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask, status]
+        recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask]
         self.ticker_data_deque.append(recent_tick)
         
         

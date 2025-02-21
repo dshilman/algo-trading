@@ -45,7 +45,7 @@ class TradingStrategyCalc(TradingStrategyBase):
     def to_5_min_candles(self, ticker_data_list) -> pd.DataFrame:
 
         # Create DataFrame
-        ticker_df: pd.DataFrame = pd.DataFrame(ticker_data_list, columns=["time", "mid", "bid", "ask", "status"])
+        ticker_df: pd.DataFrame = pd.DataFrame(ticker_data_list, columns=["time", "mid", "bid", "ask"])
 
         # Ensure 'time' is in datetime format and set as index
         ticker_df["time"] = pd.to_datetime(ticker_df["time"], utc=True)
