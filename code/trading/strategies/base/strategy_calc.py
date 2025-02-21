@@ -275,7 +275,7 @@ class TradingStrategyCalc(TradingStrategyBase):
        
     def print_indicators(self):
 
-        logger.info(f'price: {self.price}, std_dev: {round(self.std_dev, 6)}, std_dev_mean: {round(self.std_dev_mean, 6)}, bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}')
+        logger.info(f'price: {self.price}, std_dev: {round(self.std_dev, 6)}, spread: {round(self.ask - self.bid, 6)}, bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}')
         logger.info(f'rsi: {round(self.rsi_short, 6)}, rsi_max: {round(self.rsi_short_max, 6)}, rsi_min: {round(self.rsi_short_min, 6)}, rsi_pct_change: {round(self.rsi_short_pct_change, 6)}')
         # logger.info("\n" + self.data.tail(5).to_string(header=True))
         # price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]
