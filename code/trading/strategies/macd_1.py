@@ -38,13 +38,13 @@ class TradingStrategy(TradingStrategyExec):
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
         
         df["rsi_short_mean"] = df["rsi_short"].rolling(5).mean()
-        df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
+        df['ema_short_slope'] = df["ema_short"].rolling(self.period_short).apply(lambda x: calculate_slope(x))
 
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
-        df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(15).mean()
+        df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).mean()
 
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
-        df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(15).mean()
+        df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
 
 
         self.data = df

@@ -86,7 +86,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # DEV = self.DEV
         std_dev = self.DEV
         period_long = self.SMA
-        period_short = 15
+        period_short = self.period_short
 
         # Bollinger Band
         df["close"] = df["close"].fillna(0)

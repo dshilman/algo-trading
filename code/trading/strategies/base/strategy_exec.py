@@ -45,7 +45,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         have_units = self.trading_session.have_units
 
-        if have_units == 0 and self.is_trading_time(trading_time) and (self.trading_spread == 0 or (self.ask - self.bid) < self.trading_spread):
+        if have_units == 0 and self.is_trading_time(trading_time) and (self.trading_spread == 0 or (self.ask - self.bid) <= self.trading_spread):
       
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)

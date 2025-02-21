@@ -37,7 +37,7 @@ class TradingStrategy(TradingStrategyExec):
         df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) > df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
 
-        df['ema_short_slope'] = df["ema_short"].rolling(15).apply(lambda x: calculate_slope(x))
+        df['ema_short_slope'] = df["ema_short"].rolling(self.period_short).apply(lambda x: calculate_slope(x))
          
         self.data = df
 

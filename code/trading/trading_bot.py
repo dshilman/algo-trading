@@ -342,14 +342,6 @@ class Trader():
         recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask, status]
         self.ticker_data_deque.append(recent_tick)
         
-
-        # minute: int = pd_timestamp.minute
-        # second: int = pd_timestamp.second
-
-        # if minute in [0, 15, 30, 45] and second == 0:
-        #     logger.info(f"Heartbeat: instrument: {self.strategy.instrument} | ask: {ask} | bid: {bid} | status: {status}")
- 
-  
         
     def terminate_session(self, cause):
         # self.stop_stream = True
