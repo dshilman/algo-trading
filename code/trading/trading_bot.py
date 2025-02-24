@@ -40,7 +40,7 @@ class Trader():
         # self.start = config.get(self.strategy.instrument, 'start')
         # self.end = config.get(self.strategy.instrument, 'end')
 
-        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 60 * 4)
+        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 60 * 10)
         
         class_ = None
         strategy = config.get(trading_strategy, 'strategy')
