@@ -157,7 +157,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         # df["price_pct_change"] = df["close"].pct_change(fill_method=None)
         # df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
-        df["rsi_short_pct_change"] = df["rsi_short"].pct_change()
+        df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None)
 
         # df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
         # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
