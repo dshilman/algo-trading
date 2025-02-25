@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, Any
 import pandas as pd
+from pytz import utc
 
 
 file = Path(__file__).resolve()
@@ -246,11 +247,10 @@ class Trader():
             logger.info(f"Skip strategy execution, ticker data is too stale: {last_candle_time}, trading time: {trading_time}")
             return False
 
-        last_candle_data = ticker_data_df.iloc[-1]
-
-        if last_candle_data["open"] == last_candle_data["close"]:
-            logger.info(f"Skip strategy execution, no price movement")
-            return False
+        # last_candle_data = ticker_data_df.iloc[-1]
+        # if last_candle_data["open"] == last_candle_data["close"]:
+        #     logger.info(f"Skip strategy execution, no price movement")
+        #     return False
 
         self.strategy.data = ticker_data_df
         self.strategy.calc_indicators()                
@@ -306,9 +306,9 @@ class Trader():
             logger.error("date_time is None, cannot convert to pd.Timestamp")
             return
 
-        pd_timestamp: pd.Timestamp = pd.to_datetime(date_time).replace(tzinfo=None)
+        pd_timestamp: pd.Timestamp = pd.to_datetime(date_time, utc=True)
         
-        recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask]
+        recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask] # type: ignore
         self.ticker_data_deque.append(recent_tick)
         
         

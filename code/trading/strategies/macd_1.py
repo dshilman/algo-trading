@@ -37,7 +37,9 @@ class TradingStrategy(TradingStrategyExec):
         df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) > df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
         
-        df["rsi_short_mean"] = df["rsi_short"].rolling(5).mean()
+        df["rsi_short_min"] = df["rsi_short"].rolling(5).min()
+        df["rsi_short_max"] = df["rsi_short"].rolling(5).max()
+
         df['ema_short_slope'] = df["ema_short"].rolling(self.period_short).apply(lambda x: calculate_slope(x))
 
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
@@ -55,7 +57,7 @@ class TradingStrategy(TradingStrategyExec):
         self.macd_crossover = row["macd_crossover"]
         self.macd_crossover_recent = row["macd_crossover_recent"]
  
-        self.rsi_short_mean = row["rsi_short_mean"]
+        # self.rsi_short_mean = row["rsi_short_mean"]
         self.ema_short_slope = row["ema_short_slope"]
 
         self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
@@ -75,13 +77,13 @@ class TradingStrategy(TradingStrategyExec):
 
         if  self.std_dev <= self.trading_std:
 
-            if self.macd_crossover_recent == 1 and self.rsi_short_mean > 80 and self.price < self.bb_high:
+            if self.macd_crossover_recent == 1 and self.rsi_short_max > 80 and self.price < self.bb_high:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                 return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
 
 
-            elif self.macd_crossover_recent == -1 and self.rsi_short_mean < 20 and self.price > self.bb_low:
+            elif self.macd_crossover_recent == -1 and self.rsi_short_min < 20 and self.price > self.bb_low:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)

@@ -93,7 +93,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["change_rate"] = df["close"].pct_change()
         # df["change_rate_1h"] = df["close"].pct_change(periods=period_short)
         df["std_dev"] = df["close"].rolling(period_long).std(numeric_only=True)
-        df["std_dev_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
+        # df["std_dev_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
 
        
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
@@ -157,7 +157,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         # df["price_pct_change"] = df["close"].pct_change(fill_method=None)
         # df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
-        df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None)
+        df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None) # type: ignore
 
         # df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
         # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
@@ -204,7 +204,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.price_efficiency_long = row['price_efficiency_long']
         # self.price_std = row['std_dev']
         self.std_dev = row["std_dev"]
-        self.std_dev_mean = row["std_dev_mean"]
+        # self.std_dev_mean = row["std_dev_mean"]
 
         # self.price_std_mean = row['price_std_mean']
 
