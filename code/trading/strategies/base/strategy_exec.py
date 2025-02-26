@@ -31,7 +31,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         if trade_action is not None:
             logger.info(f"{trade_action}")
-            order = self.create_order(trade_action, self.sl_perc, self.tp_perc)
+            order = self.create_order(trade_action)
             self.submit_order(order)
         else:
             logger.debug("No trade action")

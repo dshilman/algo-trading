@@ -29,11 +29,11 @@ class OandaApi:
 
         self.config = configparser.ConfigParser()
         self.config.read(config_file)
-        self.access_token = self.config['oanda']['access_token']
-        self.account_id = self.config['oanda']['account_id']
-        self.account_type = self.config['oanda']['account_type']
+        self.access_token = self.config["oanda"]["access_token"]
+        self.account_id = self.config["oanda"]["account_id"]
+        self.account_type = self.config["oanda"]["account_type"]
 
-        if self.account_type == 'live':
+        if self.account_type == "live":
             self.hostname = "https://api-fxtrade.oanda.com/v3"
             self.stream_hostname = "https://stream-fxtrade.oanda.com/v3"
         else:
@@ -61,20 +61,21 @@ class OandaApi:
         ok, data = self.__make_request(url, params=params)
 
         df: pd.DataFrame = pd.DataFrame()
-        if ok and 'candles' in data:
-            logger.debug(f"Latest price candles for {pair_name}:\n{data['candles']}")
-            if isinstance(data, dict) and 'candles' in data:
-                df = self.__convert_to_df(data['candles'])
-                df = df.set_index('time')
+        if ok and "candles" in data:
+            logger.debug(f"Latest price candles for {pair_name}:\n{data["candles"]}")
+
+            if isinstance(data, dict) and "candles" in data:
+                df = self.__convert_to_df(data["candles"]) # type: ignore
+                df = df.set_index("time")
                 if isinstance(df.index, pd.DatetimeIndex):
                     df.index = df.index.tz_convert(tz=timezone.utc)
                 logger.debug(f"Latest price candles for {pair_name}:\n{df}")
                 return df
             else:
-                logger.debug("ERROR converting candles to DataFrame", data['candles'])
+                logger.debug("ERROR converting candles to DataFrame", data["candles"])
                 return df
         else:
-            logger.debug("ERROR fetch_candles()", params, data)
+            logger.error("ERROR fetch_candles()", params, data)
             return df
 
 
@@ -103,7 +104,7 @@ class OandaApi:
                 df_t = self.__convert_to_df(data_t)
                 df = pd.concat([df, df_t])
 
-        df = df.set_index('time')
+        df = df.set_index("time")
         if isinstance(df.index, pd.DatetimeIndex):
             df.index = df.index.tz_convert(timezone.utc)
 
@@ -124,29 +125,31 @@ class OandaApi:
         )
 
         if order.trailing_sl is not None:
-            data['order']['trailingStopLossOnFill'] = str(order.trailing_sl)
+            trailingStopLossOnFill = dict(distance=str(order.trailing_sl))
+            data['order']['trailingStopLossOnFill'] = trailingStopLossOnFill # type: ignore
         elif order.sl is not None:
-            data['order']['stopLossOnFill'] = str(order.sl)
-
+            stopLossOnFill = dict(price=str(order.sl))
+            data['order']['stopLossOnFill'] = stopLossOnFill # type: ignore
         if order.tp is not None:
-            data['order']['takeProfitOnFill'] = str(order.tp)
+            takeProfitOnFill = dict(price=str(order.tp))
+            data['order']['takeProfitOnFill'] = takeProfitOnFill # type: ignore
 
-        ok, response = self.__make_request(
-            url, verb="post", data=data, code=201)
+        ok, response = self.__make_request(url, verb="post", data=data, code=201)
 
         if ok:
             result = None
-            if 'orderRejectTransaction' in response:
-                result = response.get('orderRejectTransaction')
-            elif 'orderFillTransaction' in response:
-                result = response.get('orderFillTransaction')
-            elif 'orderCreateTransaction' in response:
-                result = response.get('orderCreateTransaction')
+            if "orderRejectTransaction" in response:
+                result = response.get("orderRejectTransaction")
+            elif "orderFillTransaction" in response:
+                result = response.get("orderFillTransaction")
+            elif "orderCreateTransaction" in response:
+                result = response.get("orderCreateTransaction")
             
             return result
         
-        return {}
-
+        else:
+            logger.error(f"ERROR in place_order(). status: {ok}, request: {data}, response: {response}")
+        
 
     def get_position(self, instrument): 
 
@@ -180,16 +183,16 @@ class OandaApi:
         return result
     def __on_success(self, **kwargs):
         
-        logger.debug(f"Instrument: {kwargs.get('instrument')} | Time: {kwargs.get('time')} | \
-            Bid: {kwargs.get('bid')} | \
-                Ask: {kwargs.get('ask')}")
+        logger.debug(f"Instrument: {kwargs.get("instrument")} | Time: {kwargs.get("time")} | \
+            Bid: {kwargs.get("bid")} | \
+                Ask: {kwargs.get("ask")}")
 
     def __handle_response(self, response, callback, stop):
 
         count = 0
         for line in response.iter_lines():
             if line:
-                data = json.loads(line.decode('utf-8'))
+                data = json.loads(line.decode("utf-8"))
                 logger.debug (data)
                 if data.get("type") == "PRICE":
                     count += 1
@@ -215,7 +218,8 @@ class OandaApi:
 
         return
 
-    def __make_request(self, url, verb='get', code=200, params=None, data=None, headers=None):
+    def __make_request(self, url, verb="get", code=200, params=None, data=None, headers=None):
+        
         full_url = f"{self.hostname}/{url}"
 
         if data is not None:
@@ -224,25 +228,22 @@ class OandaApi:
         try:
             response = None
             if verb == "get":
-                response = self.session.get(
-                    full_url, params=params, data=data, headers=headers)
+                response = self.session.get(full_url, params=params, data=data, headers=headers)
             if verb == "post":
-                response = self.session.post(
-                    full_url, params=params, data=data, headers=headers)
+                response = self.session.post(full_url, params=params, data=data, headers=headers)
             if verb == "put":
-                response = self.session.put(
-                    full_url, params=params, data=data, headers=headers)
+                response = self.session.put(full_url, params=params, data=data, headers=headers)
 
             if response == None:
-                return False, {'error': 'verb not found'}
+                return False, {"error": "verb not found"}
 
             if response.status_code == code:
                 return True, response.json()
             else:
-                return False, response.json() if response.content else {}
+                return False, response.json()
 
         except Exception as error:
-            return False, {'Exception': error}
+            return False, {"Exception": error}
 
     def __fetch_candles(self, pair_name, date_f, date_t, granularity="M5", price="MBA") -> dict:
 
@@ -258,9 +259,9 @@ class OandaApi:
 
         ok, data = self.__make_request(url, params=params)
 
-        if ok and 'candles' in data:
-            # logger.info(f"Candles: {data['candles']}")
-            return data['candles']
+        if ok and "candles" in data:
+            # logger.info(f"Candles: {data["candles"]}")
+            return data["candles"] # type: ignore
         else:
             logger.debug("ERROR fetch_candles()", params, data)
             return {}
@@ -273,7 +274,7 @@ class OandaApi:
         if len(data) == 0:
             return pd.DataFrame()
 
-        prices = ['mid', 'bid', 'ask']
+        prices = ["mid", "bid", "ask"]
 
         final_data = []
         for candle in data:
@@ -281,12 +282,12 @@ class OandaApi:
             #     continue
             
             new_dict = {}
-            new_dict['time'] = parser.parse(candle['time'])
-            new_dict['volume'] = candle['volume']
+            new_dict["time"] = parser.parse(candle["time"])
+            new_dict["volume"] = candle["volume"]
             
             for p in prices:
                 if p in candle:
-                    if p == 'mid':
+                    if p == "mid":
                        new_dict["open"] = float(candle[p]["o"])
                        new_dict["close"] = float(candle[p]["c"])
                        new_dict["high"] = float(candle[p]["h"])
@@ -303,7 +304,7 @@ class OandaApi:
 if __name__ == "__main__":
     api = OandaApi("../../../config/oanda.cfg")
     logger.setLevel(logging.DEBUG)     
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', utils.date_format)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", utils.date_format)
 
     log_dir = os.path.join(os.path.dirname(__file__), "../../../logs/trading")
     os.makedirs(log_dir, exist_ok=True)
@@ -312,8 +313,15 @@ if __name__ == "__main__":
     log_handler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
     log_handler.setFormatter(formatter)
     logger.addHandler(log_handler)       
-
-    data = api.stream_prices(instrument="EUR_USD", stop=5)
+    order = Order(
+            instrument = "EUR_USD",
+            price =1.04876,
+            trade_units = 100,
+            sl_price = utils.convert_perc_to_ls_price(100, 0.0025, 1.04919),
+            trailing_sl = utils.convert_perc_to_pips(100, 0.0025, 1.04919),
+            tp_price = utils.convert_perc_to_tp_price(100, 0.0035, 1.04919)
+        )
+    data = api.place_order(order)
     logger.debug(data)
     logger.debug ("Done!")
 

@@ -56,7 +56,7 @@ class TradingStrategyBase():
         self.trading_session = Trading_Session(self.instrument)
 
 
-    def create_order(self, trade_action: Trade_Action, sl_perc, tp_perc) -> Order:
+    def create_order(self, trade_action: Trade_Action) -> Order:
         
         tp_price = None
         sl_price = None
@@ -74,10 +74,8 @@ class TradingStrategyBase():
                 trailing_sl = utils.convert_perc_to_pips(trade_action.units, self.sl_perc, trade_action.price)
             else:
                 sl_price = utils.convert_perc_to_ls_price(trade_action.units, self.sl_perc, trade_action.price)
-
                 
-            if tp_perc:
-                tp_price = utils.convert_perc_to_tp_price(trade_action.units, tp_perc, trade_action.price)
+            tp_price = utils.convert_perc_to_tp_price(trade_action.units, self.tp_perc, trade_action.price)
 
 
         order = Order(
