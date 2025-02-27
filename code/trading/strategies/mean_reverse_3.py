@@ -65,13 +65,13 @@ class TradingStrategy(TradingStrategyExec):
             if self.rsi_short_max > 85 and self.price > self.sma_long and self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
-                return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
+                return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False)
                     
 
             elif self.rsi_short_min < 15 and self.price < self.sma_long and self.ema_bb_low_divergance > self.ema_bb_low_divergance_mean:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-                return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
+                return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False)                    
 
 
 
@@ -87,11 +87,11 @@ class TradingStrategy(TradingStrategyExec):
             if close_trade or target_price is not None and self.price > target_price or self.macd_crossover == -1:
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
-                return Trade_Action(self.instrument, -have_units, self.bid, False, False)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False)
                 
         elif have_units < 0:  # short position
             target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
             if close_trade or target_price is not None and self.price < target_price or self.macd_crossover == 1:
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(self.instrument, -have_units, self.ask, False, False) 
+                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False) 

@@ -3,7 +3,7 @@ from trading.strategies.base.strategy_calc import TradingStrategyCalc
 from trading.dom.trade import Trade_Action
 import logging
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from pathlib import Path
@@ -104,7 +104,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                 if not self.backtest:
                     logger.info(
                         f"Close short position, - Stop Loss Buy, short price {base_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
-                return Trade_Action(self.instrument, -have_units, self.ask, False, True)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, True)
 
         elif have_units > 0:
             if self.trailing_sl:
@@ -117,17 +117,85 @@ class TradingStrategyExec(TradingStrategyCalc):
                 if not self.backtest:
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {base_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
-                return Trade_Action(self.instrument, -have_units, self.bid, False, True)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, True)
         
         return None # type: ignore
     
+    def calc_open_trade_profit(self, units) -> float:
+
+        open_trade_price = self.get_open_trade_price()
+
+        if units < 0:
+            return (self.price - open_trade_price) / open_trade_price
+        elif units > 0:
+            return (self.price - open_trade_price) / open_trade_price
+        
+        return 0
+
+
     def need_close_trade(self, trading_time) -> bool:
 
         if not self.is_trading_time(trading_time):
             return True
 
-        open_trade_time = self.get_open_trade_time()
-        close_trade = open_trade_time is not None and (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time
+        # if self.calc_trade_open_duration(trading_time) > 240 and round(self.calc_open_trade_profit(self.trading_session.have_units), 4) <= 0:
+        #     return True
 
-        return close_trade
+        open_trade_time = self.get_open_trade_time()        
+
+        if open_trade_time is not None and (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time:
+            return True
+
+        return False
     
+    def calc_trade_open_duration(self, trading_time: pd.Timestamp) -> int:
+
+        open_trade_time = self.get_open_trade_time()
+        return 0 if open_trade_time is None else int((trading_time - open_trade_time).total_seconds() // 60)
+
+    def get_open_trade_price(self) -> float: # type: ignore
+
+        trade: Trade_Action = self.get_open_trade()
+        if trade and trade.open_trade:
+            return trade.price
+
+       
+    def get_open_trade(self) -> Trade_Action:
+
+        have_units = self.trading_session.have_units
+
+        if have_units != 0 and len(self.trading_session.trades) > 0:
+            trade = self.trading_session.trades[-1]
+            if trade[2].startswith("Open"):
+                # ["datetime", "trade_id", "trade", "action", "units", "price", "trade_pl", "trade_pl_pct", "pl"]
+                return Trade_Action(time=trade[0], instrument=self.instrument, units=trade[4], open_trade=True, price=trade[5])
+        
+        return None # type: ignore
+
+
+    def is_trading_time(self, date_time: datetime) -> bool:
+
+        logger.debug(f"Date time: {date_time}")
+
+        day = date_time.weekday()
+        hour = date_time.hour
+
+        if day == 4 and hour >= 20:
+            return False
+
+        pause_from_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_start, '%H:%M:%S').time(), tzinfo=timezone.utc)
+        pause_to_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_end, '%H:%M:%S').time(), tzinfo=timezone.utc)
+
+        if pause_from_dt > pause_to_dt:
+            pause_from_dt = pause_from_dt - pd.DateOffset(days=1)
+
+        if pause_from_dt < date_time < pause_to_dt:
+            return False
+
+        return True
+
+    def get_open_trade_time(self) -> pd.Timestamp: # type: ignore
+
+        trade: Trade_Action = self.get_open_trade()
+        if trade and trade.open_trade:
+            return trade.time

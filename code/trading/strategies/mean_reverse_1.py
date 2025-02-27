@@ -61,21 +61,18 @@ class TradingStrategy(TradingStrategyExec):
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action:
    
-        if not self.is_trading_time(trading_time) or self.stop_trading:
-            return None # type: ignore
-
         if  self.std_dev > self.trading_std:
 
             if self.rsi_short > 70 and self.price_high > self.bb_high and self.rsi_short_pct_change_10 < -0.2:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
-                return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
+                return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False)
                     
 
             elif self.rsi_short < 30 and self.price_low < self.bb_low and self.rsi_short_pct_change_10 > 0.5:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-                return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)
+                return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False)
         
         return None                     # type: ignore
 
@@ -93,13 +90,13 @@ class TradingStrategy(TradingStrategyExec):
             if close_trade or target_price is not None and self.price > target_price:
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
-                return Trade_Action(self.instrument, -have_units, self.bid, False, False)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False)
                 
         elif have_units < 0:  # short position
             target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
             if close_trade or target_price is not None and self.price < target_price:
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(self.instrument, -have_units, self.ask, False, False) 
+                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False) 
 
         return None # type: ignore

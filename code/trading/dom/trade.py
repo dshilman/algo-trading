@@ -1,6 +1,7 @@
 class Trade_Action():
-    def __init__(self, instrument, units, price, open_trade = False, sl_trade = False):
+    def __init__(self, time, instrument, units, price, open_trade = False, sl_trade = False):
         super().__init__()
+        self.time = time
         self.instrument = instrument
         self.units = units
         self.price = price

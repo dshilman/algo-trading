@@ -44,14 +44,14 @@ class TradingStrategy(TradingStrategyExec):
                 and self.rsi_short_pct_change < 0:
                         if not self.backtest:
                             logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
-                        return Trade_Action(self.instrument, -self.units_to_trade, self.bid, True, False)
+                        return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False)
                             
 
             elif self.price_min < self.bb_low and self.rsi_short < 35 and self.rsi_short_min < 20 \
                     and self.rsi_short_pct_change > 0:
                         if not self.backtest:
                             logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-                        return Trade_Action(self.instrument, self.units_to_trade, self.ask, True, False)                    
+                        return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False)                    
 
     
     def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
@@ -66,11 +66,11 @@ class TradingStrategy(TradingStrategyExec):
             if close_trade or target_price is not None and self.price > target_price:
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
-                return Trade_Action(self.instrument, -have_units, self.bid, False, False)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False)
                 
         elif have_units < 0:  # short position
             target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
             if close_trade or target_price is not None and self.price < target_price:
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(self.instrument, -have_units, self.ask, False, False) 
+                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False) 
