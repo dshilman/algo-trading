@@ -43,6 +43,9 @@ class TradingStrategy(TradingStrategyExec):
         df['macd_crossover'] = 0  # Initialize signal column
         df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
         df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
+
+        df['price_volatility'] = (df['high'] - df['low'])/ df['close']
+        df['price_volatility'] = df['price_volatility'].rolling(self.period_short).mean()    
         
         self.data = df
 
@@ -56,11 +59,12 @@ class TradingStrategy(TradingStrategyExec):
         self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
 
         self.macd_crossover = row["macd_crossover"]
+        self.price_volatility = row["price_volatility"]
 
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
    
-        if  self.std_dev > self.trading_std:
+        if  self.std_dev > self.trading_std and round(self.price_volatility, 5) >= .00035:
 
             if self.rsi_short_max > 85 and self.price_max > self.bb_high and self.price > self.sma_long and self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean:
                 if not self.backtest:
