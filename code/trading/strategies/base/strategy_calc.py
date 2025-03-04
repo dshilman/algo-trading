@@ -93,6 +93,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["change_rate"] = df["close"].pct_change()
         # df["change_rate_1h"] = df["close"].pct_change(periods=period_short)
         df["std_dev"] = df["close"].rolling(period_long).std(numeric_only=True)
+        df['price_volatility'] = (df['high'] - df['low'])/ df['close']
+        df['price_volatility'] = df['price_volatility'].rolling(self.period_short).mean()    
+ 
         # df["std_dev_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
 
        
@@ -159,6 +162,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None) # type: ignore
 
+        df['macd_crossover'] = 0  # Initialize signal column
+        df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
+        df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
+
         # df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
         # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
         # df['rsi_short_slope'] = df["rsi_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
@@ -204,6 +211,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.price_efficiency_long = row['price_efficiency_long']
         # self.price_std = row['std_dev']
         self.std_dev = row["std_dev"]
+        self.price_volatility = row["price_volatility"]
+
         # self.std_dev_mean = row["std_dev_mean"]
 
         # self.price_std_mean = row['price_std_mean']
@@ -252,15 +261,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.rsi_short_pct_change_min = row["rsi_short_pct_change_min"]
         self.rsi_short_max = round(row["rsi_short_max"], 4)
         self.rsi_short_min = round(row["rsi_short_min"], 4)
-        # self.rsi_short_ema = row["rsi_short_ema"]
-
-        # self.price_slope = row["price_slope"]
-        # self.ema_short_slope = row["ema_short_slope"]
-        # self.rsi_short_slope = row["rsi_short_slope"]
-
-        # self.price_pct_change = row["price_pct_change"]
-        # self.ema_short_pct_change = row["ema_short_pct_change"]
         self.rsi_short_pct_change = row["rsi_short_pct_change"]
+
+
+        self.macd_crossover = row["macd_crossover"]
+
 
         # Volume Momentum
         # self.volume_momentum_short = row ["volume_momentum_short"]
@@ -275,7 +280,7 @@ class TradingStrategyCalc(TradingStrategyBase):
        
     def print_indicators(self):
 
-        logger.info(f'price: {round(self.price, 6)}, std_dev: {round(self.std_dev, 6)}, bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}')
+        logger.info(f'price: {round(self.price, 6)}, std_dev: {round(self.std_dev, 6)}, price_volatility: {round(self.price_volatility, 5)}, bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}')
         logger.info(f'rsi: {round(self.rsi_short, 6)}, rsi_max: {round(self.rsi_short_max, 6)}, rsi_min: {round(self.rsi_short_min, 5)}, rsi_pct_change: {round(self.rsi_short_pct_change, 6)}')
         # logger.info("\n" + self.data.tail(5).to_string(header=True))
         # price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]

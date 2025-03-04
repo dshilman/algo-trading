@@ -40,12 +40,6 @@ class TradingStrategy(TradingStrategyExec):
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
         df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
 
-        df['macd_crossover'] = 0  # Initialize signal column
-        df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
-        df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
-
-        df['price_volatility'] = (df['high'] - df['low'])/ df['close']
-        df['price_volatility'] = df['price_volatility'].rolling(self.period_short).mean()    
         
         self.data = df
 
@@ -57,10 +51,6 @@ class TradingStrategy(TradingStrategyExec):
 
         self.ema_bb_high_divergance_mean = row["ema_bb_high_divergance_mean"]
         self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
-
-        self.macd_crossover = row["macd_crossover"]
-        self.price_volatility = row["price_volatility"]
-
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
    

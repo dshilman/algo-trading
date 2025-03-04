@@ -31,10 +31,6 @@ class TradingStrategy(TradingStrategyExec):
 
         df: pd.DataFrame = self.data
  
-        # Identify crossovers
-        df['macd_crossover'] = 0  # Initialize signal column
-        df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) < df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
-        df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) > df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
         
         df["rsi_short_min"] = df["rsi_short"].rolling(5).min()
@@ -48,16 +44,13 @@ class TradingStrategy(TradingStrategyExec):
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
         df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
 
-
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
 
-        self.macd_crossover = row["macd_crossover"]
         self.macd_crossover_recent = row["macd_crossover_recent"]
  
-        # self.rsi_short_mean = row["rsi_short_mean"]
         self.ema_short_slope = row["ema_short_slope"]
 
         self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
