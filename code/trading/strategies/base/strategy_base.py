@@ -39,6 +39,8 @@ class TradingStrategyBase():
         self.instrument = config.get(trading_strategy, "pair")
         self.SMA = config.getint(trading_strategy, 'SMA')
         self.DEV = config.getfloat(trading_strategy, 'dev')
+        self.high_rsi = config.getint(trading_strategy, 'high_rsi', fallback=70)
+        self.low_rsi = config.getint(trading_strategy, 'low_rsi', fallback=30)
         self.period_short = config.getint(trading_strategy, 'period_short', fallback=15)
         self.trading_std = config.getfloat(trading_strategy, 'trading_std')
         self.units_to_trade = config.getint(trading_strategy, 'units_to_trade')

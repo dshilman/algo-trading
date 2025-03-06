@@ -70,13 +70,13 @@ class TradingStrategy(TradingStrategyExec):
 
         if  self.std_dev <= self.trading_std and round(self.price_volatility, 5) >= .00035:
 
-            if self.macd_crossover_recent == 1 and self.rsi_short_max > 75 and self.price < self.bb_high:
+            if self.macd_crossover_recent == 1 and self.rsi_short_max > self.high_rsi and self.price < self.bb_high:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                 return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False)                    
 
 
-            elif self.macd_crossover_recent == -1 and self.rsi_short_min < 25 and self.price > self.bb_low:
+            elif self.macd_crossover_recent == -1 and self.rsi_short_min < self.low_rsi and self.price > self.bb_low:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False)
@@ -91,7 +91,8 @@ class TradingStrategy(TradingStrategyExec):
 
         if have_units > 0:  # long position
             target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price > target_price) or (self.std_dev > self.trading_std and self.price_max > self.bb_high and round(self.ema_short_slope, 5) <= 0):
+            if close_trade or target_price is not None and (self.price > target_price) \
+                or (self.std_dev > self.trading_std and self.price_max > self.bb_high and round(self.ema_short_slope, 5) <= 0):
 
 
                 if not self.backtest:
@@ -100,7 +101,8 @@ class TradingStrategy(TradingStrategyExec):
                 
         elif have_units < 0:  # short position
             target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
-            if close_trade or target_price is not None and (self.price < target_price) or (self.std_dev > self.trading_std and self.price_min < self.bb_low and round(self.ema_short_slope, 5) >= 0):
+            if close_trade or target_price is not None and (self.price < target_price) \
+                or (self.std_dev > self.trading_std and self.price_min < self.bb_low and round(self.ema_short_slope, 5) >= 0):
 
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
