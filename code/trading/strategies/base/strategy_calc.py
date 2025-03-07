@@ -103,6 +103,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # df['ema_short'] = df["close"].rolling(period_short).apply(lambda x: calculate_ema(S=x))
         df['ema_short'] = df["close"].ewm(span=period_short, adjust=False).mean()
+        df['ema_short_slope'] = df["ema_short"].rolling(self.period_short).apply(lambda x: calculate_slope(x))
 
         # df['ema_short_min'] = df['ema_short'].rolling(period_short).min()
         # df['ema_short_max'] = df['ema_short'].rolling(period_short).max()
@@ -166,6 +167,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
         df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
 
+        df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
+
         # df['price_slope'] = df["close"].rolling(period_short).apply(lambda x: calculate_slope(x))
         # df['ema_short_slope'] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
         # df['rsi_short_slope'] = df["rsi_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
@@ -200,6 +203,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row["close"]
+        self.price_open = row["open"]
         self.price_low = row["low"]
         self.price_high = row["high"]
         # self.change_rate_1h = row["change_rate_1h"]
@@ -224,6 +228,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # self.sma_short = row['sma_short']
         self.sma_long = row['sma_long']
         self.ema_short = row["ema_short"]
+        self.ema_short_slope = row["ema_short_slope"]
 
         self.bb_low = row['bb_lower']
         self.bb_high = row['bb_upper']
@@ -265,6 +270,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
 
         self.macd_crossover = row["macd_crossover"]
+        self.macd_crossover_recent = row["macd_crossover_recent"]
+
 
 
         # Volume Momentum
@@ -280,8 +287,11 @@ class TradingStrategyCalc(TradingStrategyBase):
        
     def print_indicators(self):
 
-        logger.info(f'price: {round(self.price, 6)}, std_dev: {round(self.std_dev, 6)}, price_volatility: {round(self.price_volatility, 5)}, bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}')
-        logger.info(f'rsi: {round(self.rsi_short, 6)}, rsi_max: {round(self.rsi_short_max, 6)}, rsi_min: {round(self.rsi_short_min, 5)}, rsi_pct_change: {round(self.rsi_short_pct_change, 6)}')
+        logger.info(f'price: {round(self.price, 6)}, std_dev: {round(self.std_dev, 6)}, price_volatility: {round(self.price_volatility, 5)}, price_min: {round(self.price_min, 6)}, price_max: {round(self.price_max, 6)}')
+        logger.info(f'sma_long: {round(self.sma_long, 6)} bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}, ema_short: {round(self.ema_short, 6)}, ema_short_slope: {round(self.ema_short_slope, 6)}')
+        logger.info(f'rsi_short: {round(self.rsi_short, 2)}, rsi_max: {round(self.rsi_short_max, 2)}, rsi_min: {round(self.rsi_short_min, 2)}, rsi_pct_change: {round(self.rsi_short_pct_change, 2)}')
+        logger.info(f'macd_crossover: {round(self.macd_crossover, 0)}, macd_crossover_recent: {round(self.macd_crossover_recent, 0)}')
+
         # logger.info("\n" + self.data.tail(5).to_string(header=True))
         # price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]
         # price_headers = ["ASK PRICE", "BID PRICE", "MID PRICE", "PRICE STD"]
