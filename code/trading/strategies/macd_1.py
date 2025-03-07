@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional
+from numpy import take
 import pandas as pd
 
 file = Path(__file__).resolve()
@@ -60,34 +61,12 @@ class TradingStrategy(TradingStrategyExec):
             if self.macd_crossover_recent == 1 and self.rsi_short_max > self.high_rsi and self.price < self.bb_high:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-                return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False)                    
+                return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
             elif self.macd_crossover_recent == -1 and self.rsi_short_min < self.low_rsi and self.price > self.bb_low:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
-                return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False)
+                return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
 
-
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
-
-        have_units = self.trading_session.have_units
-
-        open_trade_price = self.get_open_trade_price()
-        close_trade = self.need_close_trade(trading_time)
-
-        if have_units > 0:  # long position
-            target_price = open_trade_price * (1 + self.tp_perc) if open_trade_price is not None else None
-            if close_trade or (target_price is not None and self.price > target_price):
-                if not self.backtest:
-                    logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
-                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False)
-                
-        elif have_units < 0:  # short position
-            target_price = open_trade_price * (1 - self.tp_perc) if open_trade_price is not None else None
-            if close_trade or (target_price is not None and self.price < target_price):
-
-                if not self.backtest:
-                   logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False) 
 

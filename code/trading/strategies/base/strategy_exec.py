@@ -77,12 +77,6 @@ class TradingStrategyExec(TradingStrategyCalc):
         # For now, return a default Trade_Action or raise an exception
         raise NotImplementedError("This method needs to be implemented")
 
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action:
-        # Implement the logic to determine if a new trade needs to be opened
-        # For now, return a default Trade_Action or raise an exception
-        raise NotImplementedError("This method needs to be implemented")
-    
-    
 
     def check_for_sl(self, trading_time, have_units) -> Trade_Action:
 
@@ -104,7 +98,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                 if not self.backtest:
                     logger.info(
                         f"Close short position, - Stop Loss Buy, short price {base_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
-                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, True)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, True, False)
 
         elif have_units > 0:
             if self.trailing_sl:
@@ -117,7 +111,7 @@ class TradingStrategyExec(TradingStrategyCalc):
                 if not self.backtest:
                     logger.info(
                         f"Close long position, - Stop Loss Sell, long price {base_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
-                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, True)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, True, False)
         
         return None # type: ignore
     
@@ -199,3 +193,42 @@ class TradingStrategyExec(TradingStrategyCalc):
         trade: Trade_Action = self.get_open_trade()
         if trade and trade.open_trade:
             return trade.time
+
+    def take_profit(self):
+
+        tp = False
+        tp_price = 0
+
+        have_units = self.trading_session.have_units
+        open_trade_price = self.get_open_trade_price()
+
+        if have_units > 0 and open_trade_price is not None:  # long position
+            target_price = open_trade_price * (1 + self.tp_perc)
+            tp = self.price_high > target_price
+            tp_price = target_price
+        elif have_units < 0 and open_trade_price is not None:  # short position
+            target_price = open_trade_price * (1 - self.tp_perc)
+            tp = self.price_low < target_price
+            tp_price = target_price
+        
+        return tp, tp_price
+    
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
+
+        have_units = self.trading_session.have_units
+        close_trade = self.need_close_trade(trading_time)
+        take_profit, tp_price = self.take_profit()
+
+        if have_units > 0:  # long position
+            if close_trade or take_profit:
+                if not self.backtest:
+                    logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
+                return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.bid, False, False, take_profit)
+                
+        elif have_units < 0:  # short position
+            if close_trade or take_profit:
+
+                if not self.backtest:
+                   logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
+                return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.ask, False, False, take_profit) 
+

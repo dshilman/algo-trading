@@ -69,7 +69,12 @@ class Trading_Session():
             trade_pl_pct = 0 if self.outstanding == 0 else trade_pl / self.outstanding * 100 
             self.long_trades_close = self.long_trades_close + 1
             self.outstanding = self.have_units + trade_action.units
-            trade = "Close Long" + (" (SL)" if trade_action.sl_trade else "")
+            if trade_action.sl_trade:
+                trade = "Close Long (SL)"
+            elif trade_action.tp_trade:
+                trade = "Close Long (TP)"
+            else:
+                trade = "Close Long"
             action = "Sell"
         elif not trade_action.open_trade and trade_action.units > 0:
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
@@ -78,7 +83,12 @@ class Trading_Session():
             trade_pl_pct = 0 if self.outstanding == 0 else trade_pl / self.outstanding * 100
             self.short_trades_close = self.short_trades_close + 1
             self.outstanding = self.have_units + trade_action.units
-            trade = "Close Short" + (" (SL)" if trade_action.sl_trade else "")
+            if trade_action.sl_trade:
+                trade = "Close Short (SL)"
+            elif trade_action.tp_trade:
+                trade = "Close Short (TP)"
+            else:
+                trade = "Close Short"
             action = "Buy"
         
         self.have_units = self.have_units + trade_action.units
