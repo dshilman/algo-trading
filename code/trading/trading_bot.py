@@ -183,11 +183,13 @@ class Trader():
                     trading_time = datetime.now(tz=timezone.utc)
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
-                        logger.info("")
-                        logger.info(f"Start executing strategy... {exec_counter}, data size: {len(self.ticker_data_deque)}")
-
+                        
                         ticker_data_list = list(self.ticker_data_deque.copy())                        
                         ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list)
+
+                        logger.info("")
+                        logger.info(f"Start executing strategy... {exec_counter}, data queue size: {len(self.ticker_data_deque)}, ticker data size: {len(ticker_data_df.index)}")
+
                         status = self.exec_strategy(ticker_data_df)
                         
                         if status:
@@ -201,10 +203,13 @@ class Trader():
                     logger.debug (f"Refresh Strategy... {trading_time}")
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
-                        logger.debug (f"Start executing strategy... {exec_counter}")
 
                         logger.debug (f"Get candles for {self.strategy.instrument}")
                         ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
+
+                        logger.info("")
+                        logger.info(f"Start executing strategy... {exec_counter}, ticker data size: {len(ticker_data_df.index)}")
+
                         status = self.exec_strategy(ticker_data_df)
 
                         if status:
