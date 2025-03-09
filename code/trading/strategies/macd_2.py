@@ -57,13 +57,13 @@ class TradingStrategy(TradingStrategyExec):
 
         if  self.std_dev < self.trading_std and .00035 < self.price_volatility < .00075:
 
-            if self.macd_crossover_recent == 1 and self.rsi_short > self.high_rsi and self.price < self.bb_high:
+            if self.macd_crossover_recent == 1 and self.rsi_short > self.high_rsi and self.price < self.bb_high and self.rsi_short_pct_change > -0.15:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                 return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
-            elif self.macd_crossover_recent == -1 and self.rsi_short < self.low_rsi and self.price > self.bb_low:
+            elif self.macd_crossover_recent == -1 and self.rsi_short < self.low_rsi and self.price > self.bb_low and self.rsi_short_pct_change < 0.25:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)

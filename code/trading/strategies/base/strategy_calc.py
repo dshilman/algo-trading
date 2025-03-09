@@ -6,6 +6,7 @@ from trading.strategies.base.strategy_base import TradingStrategyBase
 from trading.utils import utils
 import logging
 import sys
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 import pandas as pd
@@ -76,8 +77,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         # logger.info(f"Last candle time {df.index[-1]}")
 
         return df
-
-
 
     def calc_indicators(self):
 
@@ -163,9 +162,16 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None) # type: ignore
 
+        # df['macd_crossover'] = 0  # Initialize signal column
+        # df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) < df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
+        # df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) > df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
+
+        buffer = 0.0000025  # 1/1000% buffer
+
         df['macd_crossover'] = 0  # Initialize signal column
-        df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) <= df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
-        df.loc[(df['ema_short'] < df['sma_long']) & (df['ema_short'].shift(1) >= df['sma_long'].shift(1)), 'macd_crossover'] = -1  # Bearish crossover
+
+        df.loc[(df['ema_short'].shift(1) * (1 + buffer) < df['sma_long'].shift(1)) & (df['ema_short'] * (1 - buffer) > df['sma_long']), 'macd_crossover'] = 1  # Bullish crossover
+        df.loc[(df['ema_short'].shift(1) * (1 - buffer) > df['sma_long'].shift(1)) & (df['ema_short'] * (1 + buffer) < df['sma_long']), 'macd_crossover'] = -1  # Bearish crossover
 
         df['macd_crossover_recent'] = df['macd_crossover'].rolling(5).sum()
 
@@ -290,7 +296,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         logger.info(f'price: {round(self.price, 6)}, std_dev: {round(self.std_dev, 6)}, price_volatility: {round(self.price_volatility, 5)}, price_min: {round(self.price_min, 6)}, price_max: {round(self.price_max, 6)}')
         logger.info(f'sma_long: {round(self.sma_long, 6)} bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}, ema_short: {round(self.ema_short, 6)}, ema_short_slope: {round(self.ema_short_slope, 6)}')
         logger.info(f'rsi_short: {round(self.rsi_short, 2)}, rsi_max: {round(self.rsi_short_max, 2)}, rsi_min: {round(self.rsi_short_min, 2)}, rsi_pct_change: {round(self.rsi_short_pct_change, 2)}')
-        logger.info(f'macd_crossover: {int(self.macd_crossover)}, macd_crossover_recent: {int(self.macd_crossover_recent)}')
+        logger.info(f'macd_crossover: {self.macd_crossover}, macd_crossover_recent: {self.macd_crossover_recent}')
 
         # logger.info("\n" + self.data.tail(5).to_string(header=True))
         # price_data = [[self.ask, self.bid, self.price, round(self.price_std, 6)]]
