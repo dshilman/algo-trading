@@ -1,56 +1,30 @@
 #!/bin/bash
 
-# EUR_USD MACD
-if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD_1.sh' >/dev/null
-then
-    echo $(date) " EUR_USD#1 Trading bot is already running." 
-    echo $(date) " EUR_USD#1 Trading bot is already running." >>~/algo-trading/logs/trading/time_check.txt
-else
-    echo $(date) " EUR_USD#1 Trading bot is not running. Starting it now..." 
-    echo $(date) " EUR_USD#1 Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
-    ~/algo-trading/trader_oanda_EUR_USD_1.sh &
-fi
+# Define array of Forex pairs and strategy identifiers
+declare -A forex_pairs
+forex_pairs=(
+    ["EUR_USD_1"]="MACD"
+    ["EUR_GBP_1"]="MACD"
+    ["AUD_USD_1"]="MACD"
+    ["USD_CAD_1"]="MACD"
 
-# EUR_GBP MACD
-if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_GBP_1.sh' >/dev/null
-then
-    echo $(date) " EUR_USD#1 Trading bot is already running." 
-    echo $(date) " EUR_USD#1 Trading bot is already running." >>~/algo-trading/logs/trading/time_check.txt
-else
-    echo $(date) " EUR_USD#1 Trading bot is not running. Starting it now..." 
-    echo $(date) " EUR_USD#1 Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
-    ~/algo-trading/trader_oanda_EUR_GBP_1.sh &
-fi
+    ["EUR_USD_2"]="Mean Reverse"
+    ["GBP_USD_2"]="Mean Reverse"
+    ["USD_CAD_2"]="Mean Reverse"
+    ["AUD_USD_2"]="Mean Reverse"
+)
 
-# AUD_USD MACD
-if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_AUD_USD_1.sh' >/dev/null
-then
-    echo $(date) " EUR_USD#1 Trading bot is already running." 
-    echo $(date) " EUR_USD#1 Trading bot is already running." >>~/algo-trading/logs/trading/time_check.txt
-else
-    echo $(date) " EUR_USD#1 Trading bot is not running. Starting it now..." 
-    echo $(date) " EUR_USD#1 Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
-    ~/algo-trading/trader_oanda_AUD_USD_1.sh &
-fi
-
-# EUR_USD Mean Reverse
-if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_EUR_USD_2.sh' >/dev/null
-then
-    echo $(date) " EUR_USD#2 Trading bot is already running." 
-    echo $(date) " EUR_USD#2 Trading bot is already running." >>~/algo-trading/logs/trading/time_check.txt
-else
-    echo $(date) " EUR_USD#2 Trading bot is not running. Starting it now..." 
-    echo $(date) " EUR_USD#2 Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
-    ~/algo-trading/trader_oanda_EUR_USD_2.sh &
-fi
-
-# GBP_USD Mean Reverse
-if pgrep -f '/bin/sh /home/ec2-user/algo-trading/trader_oanda_GBP_USD_2.sh' >/dev/null
-then
-    echo $(date) " GBP_USD#2 Trading bot is already running." 
-    echo $(date) " GBP_USD#2 Trading bot is already running." >>~/algo-trading/logs/trading/time_check.txt
-else
-    echo $(date) " GBP_USD#2 Trading bot is not running. Starting it now..." 
-    echo $(date) " GBP_USD#2 Trading bot is not running. Starting it now..."  >>~/algo-trading/logs/trading/time_check.txt
-    ~/algo-trading/trader_oanda_GBP_USD_2.sh &
-fi
+# Loop through each Forex pair and start the trading process if not running
+for pair in "${!forex_pairs[@]}"; do
+    script="/home/ec2-user/algo-trading/trader_oanda_${pair}.sh"
+    log_file="~/algo-trading/logs/trading/time_check.txt"
+    
+    if pgrep -f "/bin/sh $script" >/dev/null; then
+        echo "$(date) $pair Trading bot is already running."
+        echo "$(date) $pair Trading bot is already running." >> $log_file
+    else
+        echo "$(date) $pair Trading bot is not running. Starting it now..."
+        echo "$(date) $pair Trading bot is not running. Starting it now..." >> $log_file
+        $script &
+    fi
+done

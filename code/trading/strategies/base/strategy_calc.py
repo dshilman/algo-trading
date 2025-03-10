@@ -160,7 +160,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         # df["price_pct_change"] = df["close"].pct_change(fill_method=None)
         # df["ema_short_pct_change"] = df["ema_short"].pct_change(fill_method=None)
-        df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None) # type: ignore
+        df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None).rolling(3).sum() # type: ignore
 
         # df['macd_crossover'] = 0  # Initialize signal column
         # df.loc[(df['ema_short'] > df['sma_long']) & (df['ema_short'].shift(1) < df['sma_long'].shift(1)), 'macd_crossover'] = 1  # Bullish crossover
