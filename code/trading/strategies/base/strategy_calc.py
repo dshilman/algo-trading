@@ -92,8 +92,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # df["change_rate"] = df["close"].pct_change()
         # df["change_rate_1h"] = df["close"].pct_change(periods=period_short)
         df["std_dev"] = df["close"].rolling(period_long).std(numeric_only=True)
-        df['price_volatility'] = (df['high'] - df['low'])/ df['close']
-        df['price_volatility'] = df['price_volatility'].rolling(self.period_short).mean()    
+        df['price_volatility'] = ((df['high'] - df['low']) / df['close']).rolling(self.period_short).mean()    
  
         # df["std_dev_mean"] = df["std_dev"].rolling(period_short).mean(numeric_only=True)
 

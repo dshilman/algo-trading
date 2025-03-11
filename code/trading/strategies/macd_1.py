@@ -34,6 +34,8 @@ class TradingStrategy(TradingStrategyExec):
  
         df["rsi_short_min"] = df["rsi_short"].rolling(5).min()
         df["rsi_short_max"] = df["rsi_short"].rolling(5).max()
+        df['price_volatility'] = ((df['high'] - df['low']) / df['close']).rolling(5).mean()    
+
 
         self.data = df
 
