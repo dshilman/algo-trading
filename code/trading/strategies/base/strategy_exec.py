@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pandas as pd
 from tabulate import tabulate
+import pytz
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
@@ -168,22 +169,26 @@ class TradingStrategyExec(TradingStrategyCalc):
 
 
     def is_trading_time(self, date_time: datetime) -> bool:
+        logger.debug(f"Date time (UTC): {date_time}")
 
-        logger.debug(f"Date time: {date_time}")
+        # Convert UTC to EST
+        est = pytz.timezone('US/Eastern')
+        date_time_est = date_time.astimezone(est)
+        logger.debug(f"Date time (EST): {date_time_est}")
 
-        day = date_time.weekday()
-        hour = date_time.hour
+        # day = date_time_est.weekday()
+        # hour = date_time_est.hour
 
-        if day == 4 and hour >= 20:
-            return False
+        # if day == 4 and hour >= 20:
+        #     return False
 
-        pause_from_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_start, '%H:%M:%S').time(), tzinfo=timezone.utc)
-        pause_to_dt = datetime.combine(date_time.date(), datetime.strptime(self.pause_end, '%H:%M:%S').time(), tzinfo=timezone.utc)
+        pause_from_dt = datetime.combine(date_time_est.date(), datetime.strptime(self.pause_start_est, '%H:%M:%S').time(), tzinfo=est)
+        pause_to_dt = datetime.combine(date_time_est.date(), datetime.strptime(self.pause_end_est, '%H:%M:%S').time(), tzinfo=est)
 
         if pause_from_dt > pause_to_dt:
             pause_from_dt = pause_from_dt - pd.DateOffset(days=1)
 
-        if pause_from_dt < date_time < pause_to_dt:
+        if pause_from_dt < date_time_est < pause_to_dt:
             return False
 
         return True
@@ -230,5 +235,5 @@ class TradingStrategyExec(TradingStrategyCalc):
 
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.ask, False, False, take_profit) 
+                return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.ask, False, False, take_profit)
 
