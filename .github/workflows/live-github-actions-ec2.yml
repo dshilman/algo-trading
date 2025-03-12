@@ -31,7 +31,7 @@ jobs:
           TARGET: ${{ vars.TARGET }}
 
       - name: restart trading
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ vars.LIVE_REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
