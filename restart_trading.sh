@@ -30,3 +30,4 @@ else
     echo "Failed to start trading."
     exit 1
 fi
+exit 0
