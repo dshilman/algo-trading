@@ -25,7 +25,6 @@ for pair in "${!forex_pairs[@]}"; do
     else
         echo "$(date) $pair Trading bot is not running. Starting it now..."
         echo "$(date) $pair Trading bot is not running. Starting it now..." >> $log_file
-        $script &
     fi
 done
 exit 0
