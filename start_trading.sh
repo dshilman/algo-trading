@@ -28,3 +28,4 @@ for pair in "${!forex_pairs[@]}"; do
         $script &
     fi
 done
+exit 0
