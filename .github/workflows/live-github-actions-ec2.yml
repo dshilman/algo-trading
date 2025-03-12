@@ -31,7 +31,7 @@ jobs:
           TARGET: ${{ vars.TARGET }}
 
       - name: restart trading
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action
         with:
           host: ${{ vars.LIVE_REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
@@ -40,5 +40,6 @@ jobs:
           command_timeout: 30s
           script: |
             cd ${{ vars.TARGET }}
-            ./restart_trading.sh&
-            exit 0
+            ./restart_trading.sh
+            exit
+          
