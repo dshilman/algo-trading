@@ -37,7 +37,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 2222
-          command_timeout: 30m
+          command_timeout: 1m
           script: |
-            ${{ vars.TARGET }}/restart_trading.sh 
+            ./${{ vars.TARGET }}/restart_trading.sh& 
             echo "Nice Job!!!"
