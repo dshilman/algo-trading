@@ -22,11 +22,22 @@ jobs:
           ${{ secrets.OANDA_CONFIG_LIVE }}
           EOF
 
-      - name: Deploy to Server 1
+      - name: Deploy to Server live trading server
         uses: easingthemes/ssh-deploy@main
-        env:
+        with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           REMOTE_HOST: ${{ vars.LIVE_REMOTE_HOST }}
           TARGET: ${{ vars.TARGET }}
 
+      - name: restart trading
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ vars.LIVE_REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 2222
+          command_timeout: 30m
+          script: |
+            ${{ vars.TARGET }}/restart_trading.sh 
+            echo "Nice Job!!!"
