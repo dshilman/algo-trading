@@ -14,23 +14,20 @@ forex_pairs=(
     ["AUD_USD_2"]="Mean Reverse"
 )
 
-echo "Current directory: $(pwd)"
+echo "$(date) "Current directory: $(pwd)"
 
 # Loop through each Forex pair and start the trading process if not running
 for pair in "${!forex_pairs[@]}"; do
     script="trader_oanda_${pair}.sh"
-    log_file="logs/trading/time_check.txt"
     
     if pgrep -f "/bin/sh $script" >/dev/null; then
         echo "$(date) $script Trading bot is already running."
-        echo "$(date) $script Trading bot is already running." >> $log_file
     else
         echo "$(date) $script Trading bot is not running. Starting it now..."
-        echo "$(date) $script Trading bot is not running. Starting it now..." >> $log_file
     fi
 
     if [ ! -x $script ]; then
-        echo "$script script not found or not executable."
+        echo "$(date) "$script script not found or not executable."
         exit 1
     fi
 
