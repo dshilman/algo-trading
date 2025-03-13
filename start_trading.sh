@@ -18,7 +18,7 @@ echo "Current directory: $(pwd)"
 
 # Loop through each Forex pair and start the trading process if not running
 for pair in "${!forex_pairs[@]}"; do
-    script="./trader_oanda_${pair}.sh"
+    script="trader_oanda_${pair}.sh"
     log_file="logs/trading/time_check.txt"
     
     if pgrep -f "/bin/sh $script" >/dev/null; then
