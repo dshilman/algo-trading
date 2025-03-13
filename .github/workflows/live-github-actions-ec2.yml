@@ -38,11 +38,11 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           command_timeout: 30s
-          script_path: "/${{ vars.TARGET }}"
           script: |
+            cd ${{ vars.TARGET }}
             ./restart_trading.sh
             echo "Done!!!"
-            exit
+            exit 0
 
 
             
