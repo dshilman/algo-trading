@@ -14,7 +14,7 @@ forex_pairs=(
     ["AUD_USD_2"]="Mean Reverse"
 )
 
-echo "$(date) "Current directory: $(pwd)"
+echo "$(date) Current directory: $(pwd)"
 
 # Loop through each Forex pair and start the trading process if not running
 for pair in "${!forex_pairs[@]}"; do
@@ -27,7 +27,7 @@ for pair in "${!forex_pairs[@]}"; do
     fi
 
     if [ ! -x $script ]; then
-        echo "$(date) "$script script not found or not executable."
+        echo "$(date) $script script not found or not executable."
         exit 1
     fi
 
