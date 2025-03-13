@@ -15,4 +15,3 @@ for pair in "${forex_pairs[@]}"; do
     pkill -f "/bin/sh /home/ec2-user/algo-trading/trader_oanda_${pair}_*.sh"
     pkill -f "python3 trading_bot.py ${pair}#*"
 done
-exit 0

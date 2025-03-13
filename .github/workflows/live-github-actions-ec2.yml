@@ -41,5 +41,4 @@ jobs:
           script: |
             cd ${{ vars.TARGET }}
             ./restart_trading.sh
-            exit
             
