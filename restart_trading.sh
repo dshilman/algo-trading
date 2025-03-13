@@ -26,8 +26,8 @@ echo "Starting trading..."
 ./start_trading.sh
 if [ $? -eq 0 ]; then
     echo "Trading started successfully."
+    exit 0
 else
     echo "Failed to start trading."
     exit 1
 fi
-exit 0
