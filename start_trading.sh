@@ -15,9 +15,10 @@ forex_pairs=(
 )
 
 # Loop through each Forex pair and start the trading process if not running
+cd algo-trading
 for pair in "${!forex_pairs[@]}"; do
-    script="/algo-trading/trader_oanda_${pair}.sh"
-    log_file="/algo-trading/logs/trading/time_check.txt"
+    script="./trader_oanda_${pair}.sh"
+    log_file="logs/trading/time_check.txt"
     
     if pgrep -f "/bin/sh $script" >/dev/null; then
         echo "$(date) $pair Trading bot is already running."
