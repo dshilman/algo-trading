@@ -22,11 +22,11 @@ for pair in "${!forex_pairs[@]}"; do
     log_file="logs/trading/time_check.txt"
     
     if pgrep -f "/bin/sh $script" >/dev/null; then
-        echo "$(date) $pair Trading bot is already running."
-        echo "$(date) $pair Trading bot is already running." >> $log_file
+        echo "$(date) $script Trading bot is already running."
+        # echo "$(date) $script Trading bot is already running." >> $log_file
     else
-        echo "$(date) $pair Trading bot is not running. Starting it now..."
-        echo "$(date) $pair Trading bot is not running. Starting it now..." >> $log_file
+        echo "$(date) $script Trading bot is not running. Starting it now..."
+        # echo "$(date) $script Trading bot is not running. Starting it now..." >> $log_file
     fi
 
     if [ ! -x $script ]; then
@@ -35,5 +35,6 @@ for pair in "${!forex_pairs[@]}"; do
     fi
 
     ./$script
+    
 done
 exit 0
