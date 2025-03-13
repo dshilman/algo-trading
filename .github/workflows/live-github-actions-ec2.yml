@@ -37,10 +37,11 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          command_timeout: 15s
+          timeout: 15s
+          sync: True
           script: |            
             cd ${{ vars.TARGET }}
             sudo ./restart_trading.sh&
-            ~.
+            
 
             
