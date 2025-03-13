@@ -1,3 +1,2 @@
 #!/bin/sh
-cd /home/ec2-user/algo-trading/code/trading
-python3 trading_bot.py EUR_USD#2
+python3 home/ec2-user/algo-trading/code/trading/trading_bot.py EUR_USD#2

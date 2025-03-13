@@ -13,6 +13,6 @@ forex_pairs=(
 for pair in "${forex_pairs[@]}"; do
     echo "Stopping processes for $pair..."
     pkill -f "/bin/sh /home/ec2-user/algo-trading/trader_oanda_${pair}_*.sh"
-    pkill -f "python3 trading_bot.py ${pair}#*"
+    pkill -f "python3 home/ec2-user/algo-trading/code/trading/trading_bot.py ${pair}#*"
 done
 exit 0
