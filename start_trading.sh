@@ -28,6 +28,12 @@ for pair in "${!forex_pairs[@]}"; do
         echo "$(date) $pair Trading bot is not running. Starting it now..."
         echo "$(date) $pair Trading bot is not running. Starting it now..." >> $log_file
     fi
-    $script
+
+    if [ ! -x $script ]; then
+        echo "$script script not found or not executable."
+        exit 1
+    fi
+
+    ./$script
 done
 exit 0
