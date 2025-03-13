@@ -13,8 +13,8 @@ if [ ! -x start_trading.sh ]; then
 fi
 
 echo "Stopping trading..."
-./stop_trading.sh
-
+./stop_trading.sh&
+sleep 5
 if [ $? -eq 0 ]; then
     echo "Trading stopped successfully."
 else
@@ -23,7 +23,7 @@ fi
 
 echo "Starting trading..."
 
-./start_trading.sh
+./start_trading.sh&
 if [ $? -eq 0 ]; then
     echo "Trading started successfully."
 else

@@ -39,7 +39,7 @@ jobs:
           port: 22
           script: |            
             cd ${{ vars.TARGET }}
-            sudo ./restart_trading.sh&
+            ./restart_trading.sh&
             
 
             
