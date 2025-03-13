@@ -39,7 +39,6 @@ jobs:
           port: 22
           script: |            
             cd ${{ vars.TARGET }}
-            ./restart_trading.sh&
-            
+            nohup ./restart_trading.sh > restart_trading.log 2>&1 &            
 
             
