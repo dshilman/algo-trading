@@ -40,7 +40,7 @@ jobs:
           command_timeout: 15s
           script: |            
             cd ${{ vars.TARGET }}
-            ./restart_trading.sh
+            ./restart_trading.sh&
             echo "Done!!!"
             whoami
 
