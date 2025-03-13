@@ -16,7 +16,7 @@ forex_pairs=(
 
 # Loop through each Forex pair and start the trading process if not running
 for pair in "${!forex_pairs[@]}"; do
-    script="/home/ec2-user/algo-trading/trader_oanda_${pair}.sh"
+    script="./home/ec2-user/algo-trading/trader_oanda_${pair}.sh"
     log_file="/home/ec2-user/algo-trading/logs/trading/time_check.txt"
     
     if pgrep -f "/bin/sh $script" >/dev/null; then
@@ -26,6 +26,6 @@ for pair in "${!forex_pairs[@]}"; do
         echo "$(date) $pair Trading bot is not running. Starting it now..."
         echo "$(date) $pair Trading bot is not running. Starting it now..." >> $log_file
     fi
-    $script&
+    $script
 done
 exit 0
