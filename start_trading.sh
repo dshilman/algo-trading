@@ -14,8 +14,14 @@ forex_pairs=(
     ["AUD_USD_2"]="Mean Reverse"
 )
 
+echo "Current directory: $(pwd)"
+# Navigate to the algo-trading directory (absolute path recommended)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+echo "Targrt directory: $(SCRIPT_DIR)/trading"
+cd "$SCRIPT_DIR/algo-trading" || { echo "Directory algo-trading not found"; exit 1; }
+
 # Loop through each Forex pair and start the trading process if not running
-cd "home/ec2-user/algo-trading"
 for pair in "${!forex_pairs[@]}"; do
     script="./trader_oanda_${pair}.sh"
     log_file="logs/trading/time_check.txt"
