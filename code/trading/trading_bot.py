@@ -339,7 +339,7 @@ if __name__ == "__main__":
     
     trader = Trader(
         conf_file=config_file,
-        pair_file="pairs.ini",
+        pair_file="code/trading/pairs.ini",
         trading_strategy=args.trading_strategy,
         unit_test=False
     )
