@@ -34,6 +34,6 @@ for pair in "${!forex_pairs[@]}"; do
         exit 1
     fi
 
-    ./$script&
+    ./$script
 
 done
