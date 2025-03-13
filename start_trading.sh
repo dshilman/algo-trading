@@ -35,12 +35,6 @@ for pair in "${!forex_pairs[@]}"; do
     fi
 
     ./$script&
-    if pgrep -f "/bin/sh $script" >/dev/null; then
-        echo "$(date) $script Trading bot is running."
-    else
-        echo "$(date) $script Trading bot is not running."
-    fi
 
 done
-
 exit 0

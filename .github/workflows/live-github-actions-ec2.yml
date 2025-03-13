@@ -40,6 +40,6 @@ jobs:
           command_timeout: 15s
           script: |            
             cd ${{ vars.TARGET }}
-            ./restart_trading.sh&
+            sudo ./restart_trading.sh&
 
             
