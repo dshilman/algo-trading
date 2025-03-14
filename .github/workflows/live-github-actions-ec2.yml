@@ -40,3 +40,15 @@ jobs:
           script: |            
             cd ${{ vars.TARGET }}
             nohup ./restart_trading.sh > restart_trading.log 2>&1 &
+
+      - name: Update Crontab on Remote Server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ vars.LIVE_REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd ${{ vars.TARGET }}/config
+            crontab crontab.txt
+            echo "Crontab updated successfully!"
