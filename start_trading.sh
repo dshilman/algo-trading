@@ -20,7 +20,7 @@ echo "$(date) Current directory: $(pwd)"
 for pair in "${!forex_pairs[@]}"; do
     script="trader_oanda_${pair}.sh"
     
-    if pgrep -f "/bin/sh $script" >/dev/null; then
+    if pgrep -f "/bin/sh ./$script" >/dev/null; then
         echo "$(date) $script Trading bot is already running."
     else
         echo "$(date) $script Trading bot is not running. Starting it now..."
