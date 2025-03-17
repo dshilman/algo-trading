@@ -43,6 +43,7 @@ class TradingStrategyBase():
         self.low_rsi = config.getfloat(trading_strategy, 'low_rsi', fallback=30)
         self.period_short = config.getint(trading_strategy, 'period_short', fallback=15)
         self.trading_std = config.getfloat(trading_strategy, 'trading_std')
+        self.trading_price_volatility = config.getfloat(trading_strategy, 'trading_price_volatility')
         self.units_to_trade = config.getint(trading_strategy, 'units_to_trade')
         self.sl_perc = config.getfloat(trading_strategy, 'sl_perc')
         self.trailing_sl = config.getboolean(trading_strategy, 'trailing_sl', fallback=True)
@@ -115,10 +116,6 @@ class TradingStrategyBase():
         logger.info("")
         logger.info(json.dumps(order, indent=2))
         logger.info("\n" + 100 * "-" + "\n")
-
-    def terminate(self):
-
-        self.trading_session.print_trades()
 
 
     def __str__(self):
