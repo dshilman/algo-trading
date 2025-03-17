@@ -41,7 +41,7 @@ class TradingStrategy(TradingStrategyExec):
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
-        if  self.std_dev <= self.trading_std and .00035 < self.price_volatility:
+        if  self.std_dev_long <= self.trading_std and .00035 < self.price_volatility:
 
             if (self.macd_crossover == 1 or self.macd_crossover_recent == 1) and self.rsi_short_max > self.high_rsi and self.price < self.bb_high:
                 if not self.backtest:

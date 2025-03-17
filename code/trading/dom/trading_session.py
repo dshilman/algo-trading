@@ -97,6 +97,9 @@ class Trading_Session():
        
         return
 
+    def has_trades(self) -> bool:
+        return len(self.trades) > 0
+
     def print_trades(self):
 
         logger.info(f"Finished Trading {self.instrument} with PL: {'${:,.2f}'.format(self.pl)}, # of long trades: {self.long_trades}, # of short trades: {self.short_trades}, open trades: {self.long_trades - self.long_trades_close + self.short_trades - self.short_trades_close}")
@@ -104,6 +107,7 @@ class Trading_Session():
         logger.info("\n" + tabulate(self.trades, headers = self.columns))
         logger.info("\n" + 100 * "-")
         logger.info(f"Finished Trading {self.instrument} with PL: {'${:,.2f}'.format(self.pl)}, # of long trades: {self.long_trades}, # of short trades: {self.short_trades}, open trades: {self.long_trades - self.long_trades_close + self.short_trades - self.short_trades_close}")
+        self.trades.clear()
 
     def to_excel(self, file_name):
 

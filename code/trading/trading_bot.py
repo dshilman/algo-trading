@@ -264,6 +264,9 @@ class Trader():
         self.strategy.trading_session.have_units = int(self.api.get_position(instrument = self.strategy.instrument))
         self.strategy.execute_strategy(trading_time)
 
+        if not self.strategy.is_trading_time(trading_time) and self.strategy.trading_session.has_trades():
+            self.strategy.trading_session.print_trades()
+
         return True
 
 

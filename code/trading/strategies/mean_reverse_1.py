@@ -54,7 +54,7 @@ class TradingStrategy(TradingStrategyExec):
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
    
-        if  self.std_dev > self.trading_std and round(self.price_volatility, 5) >= .00035:
+        if  self.std_dev_long > self.trading_std and round(self.price_volatility, 5) >= .00035:
 
             if self.rsi_short_max > self.high_rsi and self.price_max > self.bb_high and self.price > self.sma_long and self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean:
                 if not self.backtest:
