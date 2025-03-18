@@ -27,16 +27,15 @@ class TradingStrategy(TradingStrategyExec):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
+
     def calc_indicators(self):
         super().calc_indicators()
 
         df: pd.DataFrame = self.data
- 
+
         df["rsi_short_min"] = df["rsi_short"].rolling(5).min()
         df["rsi_short_max"] = df["rsi_short"].rolling(5).max()
-        df['price_volatility'] = ((df['high'] - df['low']) / df['close']).rolling(5).mean()    
-
-
+       
         self.data = df
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
@@ -53,5 +52,3 @@ class TradingStrategy(TradingStrategyExec):
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
-
-
