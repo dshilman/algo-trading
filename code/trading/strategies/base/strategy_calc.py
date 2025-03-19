@@ -76,7 +76,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Bollinger Band
         df["close"] = df["close"].fillna(0)
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
-        df["price_volatility"] = ((df["high"] - df["low"]) / df["close"]).rolling(self.period_short).mean()    
+        df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean()
         # df["ema_short_slope"] = df["ema_short"].rolling(self.period_short).apply(lambda x: calculate_slope(x))

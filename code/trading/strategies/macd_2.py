@@ -39,7 +39,8 @@ class TradingStrategy(TradingStrategyExec):
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
         df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
 
-        
+        # df['price_volatility'] = ((df['high'] - df['low']) / (df['high'] + df['low']) / 2).rolling(5).mean()    
+
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):
@@ -53,7 +54,7 @@ class TradingStrategy(TradingStrategyExec):
     
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
-        if  self.std_dev_long < self.trading_std and self.trading_price_volatility < self.price_volatility < .00075:
+        if  self.std_dev_long < self.trading_std and self.price_volatility > self.trading_price_volatility:
 
             if self.macd_crossover == 1 and self.rsi_short > self.high_rsi and self.price < self.bb_high and self.rsi_short_pct_change > 0:
                 if not self.backtest:

@@ -33,14 +33,13 @@ class TradingStrategy(TradingStrategyExec):
  
         df["rsi_short_min"] = df["rsi_short"].rolling(5).min()
         df["rsi_short_max"] = df["rsi_short"].rolling(5).max()
-        df['price_volatility'] = ((df['high'] - df['low']) / df['close']).rolling(5).mean()    
-
+        df['price_volatility'] = ((df['high'] - df['low']) / (df['high'] + df['low']) / 2).rolling(5).mean()    
 
         self.data = df
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
-        if  self.std_dev_long <= self.trading_std and self.trading_price_volatility < self.price_volatility:
+        if  self.std_dev_long <= self.trading_std and self.price_volatility > self.trading_price_volatility:
 
             if self.macd_crossover == 1 and self.rsi_short_max > self.high_rsi and self.price < self.bb_high:
                 if not self.backtest:
