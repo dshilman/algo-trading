@@ -11,7 +11,6 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.utils.tech_indicators import calculate_slope, count_sma_crossover
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 from trading.dom.trade import Trade_Action
 
