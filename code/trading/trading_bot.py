@@ -84,7 +84,7 @@ class Trader():
         logger.addHandler(log_handler)
 
 
-    def start_trading(self, stop_after = 999999999999999999999):
+    def start_trading(self, stop_after = 9999):
 
         logger.info("\n" + 100 * "-")
         logger.info ("Started New Trading Session")
@@ -323,7 +323,7 @@ class Trader():
         # self.stop_stream = True
         logger.info (cause)
 
-        self.strategy.terminate()
+        self.strategy.trading_session.print_trades()
 
 
     
