@@ -7,9 +7,10 @@ on:
   push:
     branches:
       - live
+
 jobs:
   deploy:
-    name: Deploy to EC2 on master branch push
+    name: Deploy to EC2 on live branch push
     runs-on: ubuntu-latest
 
     steps:
