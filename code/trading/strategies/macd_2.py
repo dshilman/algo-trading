@@ -20,6 +20,7 @@ Go Long (buy) when the ask price is below the low Bollinger Band and close trade
 
 Go Short (sell) when the bid price is above the high Bollinger Band and close trade (buy) when the ask price below the low Bollinger Band
 
+
 """
 class TradingStrategy(TradingStrategyExec):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
