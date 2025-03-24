@@ -1,13 +1,17 @@
-name: Push-to-DEMO-EC2
+name: Push-code-to-DEMO-EC2
 
 on:
   pull_request:
     branches:
       - demo
+    paths:
+      - '*code/trading/*'
   push:
     branches:
       - demo
-
+    paths:
+      - '*code/trading/*'
+  
 jobs:
   deploy:
     name: Deploy to EC2 on demo branch push
@@ -41,15 +45,3 @@ jobs:
           script: |            
             cd ${{ vars.TARGET }}
             nohup ./restart_trading.sh > restart_trading.log 2>&1 &
-
-      - name: Update Crontab on Remote Server
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ vars.DEMO_REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            cd ${{ vars.TARGET }}/config
-            crontab crontab.txt
-            echo "Crontab updated successfully!"

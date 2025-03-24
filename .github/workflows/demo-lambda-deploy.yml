@@ -1,0 +1,45 @@
+name: Deploy-lambda
+
+on:
+  pull_request:
+    branches:
+      - demo
+    paths:
+      - '*code/lambda/*'
+  push:
+    branches:
+      - demo
+    paths:
+      - '*code/lambda/*'
+  
+jobs:
+  deploy:
+    name: Deploy to EC2 on demo branch push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the files
+        uses: actions/checkout@v2
+
+      - name: Deploy to demo trading server
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          REMOTE_HOST: ${{ vars.DEMO_REMOTE_HOST }}
+          TARGET: ${{ vars.TARGET }}
+
+      - name: deploy lambda
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ vars.DEMO_REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |            
+            cd ${{ vars.TARGET }}/code/lambda
+            zip start_ec2_lambda.zip -r start_ec2_lambda.py
+            zip stop_ec2_lambda.zip -r stop_ec2_lambda.py
+            aws lambda update-function-code --function-name start_ec2_lambda --zip-file fileb://start_ec2_lambda.zip
+            aws lambda update-function-code --function-name stop_ec2_lambda --zip-file fileb://stop_ec2_lambda.zip
+
