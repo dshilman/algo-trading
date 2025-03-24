@@ -38,7 +38,9 @@ jobs:
           port: 22
           script: |            
             cd ${{ vars.TARGET }}/code
+            echo "create lambda zip"
             zip start_ec2_lambda.zip -r lambda
+            echo "deploy lambda"
             aws lambda update-function-code --function-name start_ec2_lambda --zip-file fileb://lambda.zip
             aws lambda update-function-code --function-name stop_ec2_lambda --zip-file fileb://lambda.zip
 
