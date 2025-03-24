@@ -1,5 +1,3 @@
-# Start the instances in the dev environment:
-
 import boto3
 
 # AWS region and tag details

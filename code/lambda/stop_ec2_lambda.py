@@ -1,4 +1,3 @@
-
 import boto3
 
 # AWS region and tag details

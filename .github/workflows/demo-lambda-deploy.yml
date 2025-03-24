@@ -37,10 +37,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |            
-            cd ${{ vars.TARGET }}/code
+            cd ${{ vars.TARGET }}/code/lambda
             echo "create lambda zip"
-            zip lambda.zip -r lambda
-            echo "deploy"
-            aws lambda update-function-code --function-name start_ec2_lambda --zip-file fileb://lambda.zip
-            aws lambda update-function-code --function-name stop_ec2_lambda --zip-file fileb://lambda.zip
+            zip start_ec2_lambda.zip -r start_ec2_lambda.py
+            zip stop_ec2_lambda.zip -r stop_ec2_lambda.py
+
+            echo "deploy lambda"
+            aws lambda update-function-code --function-name start_ec2_lambda --zip-file fileb://start_ec2_lambda.zip
+            aws lambda update-function-code --function-name stop_ec2_lambda --zip-file fileb://stop_ec2_lambda.zip
 
