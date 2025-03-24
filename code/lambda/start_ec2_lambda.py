@@ -17,11 +17,14 @@ def lambda_handler(event, context):
     if instances_to_start:
         # Start the instances
         start_instances(instances_to_start)
+
         return {
             'statusCode': 200,
             'body': 'Started instances: {}'.format(instances_to_start)
         }
+
     else:
+
         print('No instances')
         return {
             'statusCode': 200,
@@ -29,6 +32,7 @@ def lambda_handler(event, context):
         }
 
 def get_instances_with_tag(key, value):
+
     try:
         response = ec2.describe_instances(
             Filters=[
