@@ -256,7 +256,9 @@ class Trader():
 
         last_candle_time: pd.Timestamp = ticker_data_df.index[-1]
         if trading_time - last_candle_time > timedelta(seconds=30):
-            logger.info(f"Ticker data is too stale: {last_candle_time}, trading time: {trading_time}. Continue execution in case if need to close a trade.")
+            logger.info(f"Ticker data is too stale: {last_candle_time}, trading time: {trading_time}. Try again soon.")
+            return False
+
 
         self.strategy.data = ticker_data_df
         self.strategy.calc_indicators()                
