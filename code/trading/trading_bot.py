@@ -108,12 +108,18 @@ class Trader():
         self.terminate_session("Finished Trading Session")
 
     
+    def reset_dequeue(self, candles: pd.DataFrame):
+
+        self.ticker_data_deque.clear()
+        for index, row in candles.iterrows():
+            self.ticker_data_deque.append((index, row["close"], row["bid"], row["ask"]))    
+
+
     def start_streaming(self, stop_after):
 
         candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
-        for index, row in candles.iterrows():
-            self.ticker_data_deque.append([index, row["close"], row["bid"], row["ask"]])    
-
+        self.reset_dequeue(candles)
+        
         self.streaming = True
         i: int = 0
 
@@ -184,10 +190,11 @@ class Trader():
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
                         
-                        ticker_data_list = list(self.ticker_data_deque.copy())                        
+                        logger.info("")
+
+                        ticker_data_list = list(self.ticker_data_deque)                        
                         ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list)
 
-                        logger.info("")
                         logger.info(f"Start executing strategy... {exec_counter}, data queue size: {len(self.ticker_data_deque)}, ticker data size: {len(ticker_data_df.index)}")
 
                         status = self.exec_strategy(ticker_data_df)
@@ -249,7 +256,9 @@ class Trader():
 
         last_candle_time: pd.Timestamp = ticker_data_df.index[-1]
         if trading_time - last_candle_time > timedelta(seconds=30):
-            logger.info(f"Ticker data is too stale: {last_candle_time}, trading time: {trading_time}. Continue execution in case if need to close a trade.")
+            logger.info(f"Ticker data is too stale: {last_candle_time}, trading time: {trading_time}. Try again soon.")
+            return False
+
 
         self.strategy.data = ticker_data_df
         self.strategy.calc_indicators()                
