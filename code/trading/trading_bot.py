@@ -112,7 +112,7 @@ class Trader():
 
         self.ticker_data_deque.clear()
         for index, row in candles.iterrows():
-            self.ticker_data_deque.append([index, row["close"], row["bid"], row["ask"]])    
+            self.ticker_data_deque.append((index, row["close"], row["bid"], row["ask"]))    
 
 
     def start_streaming(self, stop_after):
@@ -192,7 +192,7 @@ class Trader():
                         
                         logger.info("")
 
-                        ticker_data_list = list(self.ticker_data_deque.copy())                        
+                        ticker_data_list = list(self.ticker_data_deque)                        
                         ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list)
 
                         logger.info(f"Start executing strategy... {exec_counter}, data queue size: {len(self.ticker_data_deque)}, ticker data size: {len(ticker_data_df.index)}")
