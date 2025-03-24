@@ -108,12 +108,18 @@ class Trader():
         self.terminate_session("Finished Trading Session")
 
     
-    def start_streaming(self, stop_after):
+    def reset_dequeue(self, candles: pd.DataFrame):
 
-        candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
+        self.ticker_data_deque.clear()
         for index, row in candles.iterrows():
             self.ticker_data_deque.append([index, row["close"], row["bid"], row["ask"]])    
 
+
+    def start_streaming(self, stop_after):
+
+        candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
+        self.reset_dequeue(candles)
+        
         self.streaming = True
         i: int = 0
 
@@ -184,10 +190,11 @@ class Trader():
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
                         
+                        logger.info("")
+
                         ticker_data_list = list(self.ticker_data_deque.copy())                        
                         ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list)
 
-                        logger.info("")
                         logger.info(f"Start executing strategy... {exec_counter}, data queue size: {len(self.ticker_data_deque)}, ticker data size: {len(ticker_data_df.index)}")
 
                         status = self.exec_strategy(ticker_data_df)

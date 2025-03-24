@@ -1,16 +1,13 @@
-name: Push-to-LIVE-EC2
+name: LIVE-TRADING-EC2-DEPLOY
 
 on:
   pull_request:
     branches:
       - live
-    paths:
-      - '*code/trading/*'
   push:
     branches:
       - live
-    paths:
-      - '*code/trading/*'
+
 jobs:
   deploy:
     name: Deploy to EC2 on live branch push
@@ -34,7 +31,7 @@ jobs:
           REMOTE_HOST: ${{ vars.LIVE_REMOTE_HOST }}
           TARGET: ${{ vars.TARGET }}
 
-      - name: restart trading
+      - name: Restart Trading
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ vars.LIVE_REMOTE_HOST }}
