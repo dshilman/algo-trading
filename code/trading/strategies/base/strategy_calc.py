@@ -66,7 +66,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     def calc_indicators(self):
 
-        df: pd.DataFrame = self.data
+        df: pd.DataFrame = self.data.tail(utils.ticker_data_size)
 
         # DEV = self.DEV
         std_dev_long = self.DEV
