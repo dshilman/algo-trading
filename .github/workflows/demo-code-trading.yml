@@ -4,13 +4,9 @@ on:
   pull_request:
     branches:
       - demo
-    paths:
-      - '*code/trading/*'
   push:
     branches:
       - demo
-    paths:
-      - '*code/trading/*'
   
 jobs:
   deploy:
