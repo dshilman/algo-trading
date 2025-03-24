@@ -31,6 +31,7 @@ def lambda_handler(event, context):
             'body': 'No instances found with tag "{}" and value "{}".'.format(tag_key, tag_value)
         }
 
+
 def get_instances_with_tag(key, value):
 
     try:
