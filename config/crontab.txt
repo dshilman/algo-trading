@@ -46,3 +46,4 @@
 30 22 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 00 23 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 30 23 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
+ 
