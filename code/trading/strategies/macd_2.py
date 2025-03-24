@@ -39,8 +39,6 @@ class TradingStrategy(TradingStrategyExec):
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
         df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
 
-        # df['price_volatility'] = ((df['high'] - df['low']) / (df['high'] + df['low']) / 2).rolling(5).mean()    
-
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):

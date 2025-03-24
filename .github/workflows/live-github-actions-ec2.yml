@@ -4,12 +4,16 @@ on:
   pull_request:
     branches:
       - live
+    paths:
+      - '*code/trading/*'
   push:
     branches:
       - live
+    paths:
+      - '*code/trading/*'
 jobs:
   deploy:
-    name: Deploy to EC2 on master branch push
+    name: Deploy to EC2 on live branch push
     runs-on: ubuntu-latest
 
     steps:

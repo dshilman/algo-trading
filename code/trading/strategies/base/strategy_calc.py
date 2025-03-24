@@ -62,7 +62,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Resample to 5-minute intervals and fill missing values
         df = df.resample("5min").last().ffill()
 
-        return df
+        return df.tail(utils.ticker_data_size)
 
     def calc_indicators(self):
 
@@ -79,7 +79,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean()
-        # df["ema_short_slope"] = df["ema_short"].rolling(self.period_short).apply(lambda x: calculate_slope(x))
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
         df["price_max"] = df["high"].rolling(period_short).max()
@@ -123,7 +122,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.price_volatility = row["price_volatility"]
         self.sma_long = row["sma_long"]
         self.ema_short = row["ema_short"]
-        # self.ema_short_slope = row["ema_short_slope"]
         self.bb_low = row["bb_lower"]
         self.bb_high = row["bb_upper"]
         self.rsi_short = round(row["rsi_short"], 4)

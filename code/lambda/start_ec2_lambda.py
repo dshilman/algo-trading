@@ -1,11 +1,9 @@
-# Start the instances in the dev environment:
-
 import boto3
 
 # AWS region and tag details
 aws_region = 'us-east-1'
-tag_key = 'Name'
-tag_value = 'live-trading-bot-linux'
+tag_key = 'application'
+tag_value = 'forex-trading-bot'
 
 # Create an EC2 client
 ec2 = boto3.client('ec2', region_name=aws_region)
@@ -17,18 +15,23 @@ def lambda_handler(event, context):
     if instances_to_start:
         # Start the instances
         start_instances(instances_to_start)
+
         return {
             'statusCode': 200,
             'body': 'Started instances: {}'.format(instances_to_start)
         }
+
     else:
+
         print('No instances')
         return {
             'statusCode': 200,
             'body': 'No instances found with tag "{}" and value "{}".'.format(tag_key, tag_value)
         }
 
+
 def get_instances_with_tag(key, value):
+
     try:
         response = ec2.describe_instances(
             Filters=[
@@ -53,8 +56,11 @@ def get_instances_with_tag(key, value):
 
  
 def start_instances(instance_ids):
+    
     try:
+    
         ec2.start_instances(InstanceIds=instance_ids)
         print('Starting instances:', instance_ids)
+    
     except Exception as e:
         print('Error:', e)

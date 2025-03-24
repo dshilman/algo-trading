@@ -1,4 +1,3 @@
-
 import boto3
 
 # AWS region and tag details
@@ -16,16 +15,20 @@ def lambda_handler(event, context):
     if instances_to_stop:
         # Stop the instances
         stop_instances(instances_to_stop)
+
         return {
             'statusCode': 200,
             'body': 'Stopped instances: {}'.format(instances_to_stop)
         }
+    
     else:
+
         print('No instances')
         return {
             'statusCode': 200,
             'body': 'No instances found with tag "{}" and value "{}".'.format(tag_key, tag_value)
         }
+
 
 def get_instances_with_tag(key, value):
     try:
@@ -50,8 +53,11 @@ def get_instances_with_tag(key, value):
         return []
 
 def stop_instances(instance_ids):
+    
     try:
+        
         ec2.stop_instances(InstanceIds=instance_ids)
         print('Stopping instances:', instance_ids)
+    
     except Exception as e:
         print('Error:', e)
