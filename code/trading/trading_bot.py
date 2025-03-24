@@ -319,7 +319,7 @@ class Trader():
 
         pd_timestamp: pd.Timestamp = pd.to_datetime(date_time, utc=True)
         
-        recent_tick = [pd_timestamp, (ask + bid)/2, bid, ask] # type: ignore
+        recent_tick = (pd_timestamp, (ask + bid)/2, bid, ask) # type: ignore
         self.ticker_data_deque.append(recent_tick)
         
         
