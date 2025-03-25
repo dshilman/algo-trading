@@ -92,7 +92,6 @@ class Trader():
 
         threads = []
         # threads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
-        # threads.append(threading.Thread(target=self.check_trading_time, args=(1 * 60,)))
         threads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
         threads.append(threading.Thread(target=self.refresh_strategy, args=(5, stop_after)))
 
@@ -134,41 +133,13 @@ class Trader():
             except Exception as e:
                 logger.error(f"Error in start_streaming")
                 logger.exception(e)
-                # i = i + 1
-                # if i > 30:
-                #     self.terminate = True
-                #     break
+
 
     def stop_streaming(self):
 
         logger.info ("Stop Stream")
         self.api.stop_streaming()
 
-
-    def check_trading_time(self, refresh = 60):
-        pass
-        # while not self.terminate:
-
-        #     now = datetime.now(tz=timezone.utc)
-        #     logger.debug(f"Check Trading Time: {now}, from: {self.from_dt}, to: {self.to_dt}")
-            
-        #     day = now.weekday()
-        #     hour = now.hour
-        #     if day == 4 and hour >= 19 and not self.strategy.stop_trading:
-        #         logger.info("Friday after Trading Time - Terminating Trading")
-        #         self.strategy.stop_trading = True
-            
-
-            # if self.from_dt - timedelta(minutes=90) <= now <= self.to_dt:
-            #    self.strategy.stop_trading = True
-            # elif not self.from_dt <= now <= self.to_dt:
-            #     logger.info(f"Now: {now}, Trading Time: {self.from_dt} - {self.to_dt}")
-            #     logger.info("Not Trading Time - Terminating Trading")
-            #     self.terminate = True
-            #     self.stop_streaming()
-            #     break
-
-            # time.sleep(refresh)
 
 
     def refresh_strategy(self, refresh = 5, stop_after=999999999999999999):

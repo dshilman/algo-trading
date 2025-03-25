@@ -43,7 +43,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         ticker_df = ticker_df.set_index("time")
 
         # Handle timezone
-        if isinstance(ticker_df.index, pd.DatetimeIndex) and ticker_df.index.tz is not None:
+        if isinstance(ticker_df.index, pd.DatetimeIndex) and ticker_df.index.tz is None:
             ticker_df.index = ticker_df.index.tz_convert(timezone.utc)
 
         # Resample to 1-minute intervals
@@ -60,7 +60,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["low"] = ticker_df["mid"].rolling(5, min_periods=1).min()
 
         # Resample to 5-minute intervals and fill missing values
-        df = df.resample("5min").last().ffill()
+        df = df.resample("5min").last().ffill().sort_index(axis=0)
 
         return df.tail(utils.ticker_data_size)
 
