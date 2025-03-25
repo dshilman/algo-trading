@@ -60,9 +60,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["low"] = ticker_df["mid"].rolling(5, min_periods=1).min()
 
         # Resample to 5-minute intervals and fill missing values
-        df = df.resample("5min").last().ffill().sort_index(axis=0)
+        df = df.resample("5min").last().ffill()
 
-        return df.tail(utils.ticker_data_size)
+        return df
 
     def calc_indicators(self):
 
