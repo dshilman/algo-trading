@@ -125,7 +125,7 @@ class Trader():
         while not self.terminate:
 
             try:
-                logger.info ("Stopped streaming prices")
+                logger.info ("Start streaming prices")
                 self.api.stream_prices(instrument=self.strategy.instrument, stop = stop_after, callback=self.new_price_ticker)
                 logger.info("Stopped streaming prices")
                 self.terminate = True
