@@ -21,6 +21,10 @@ from utils import utils
 
 logger = logging.getLogger()
 
+class StopTradingEvent(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
 
 class OandaApi:
 
@@ -177,45 +181,49 @@ class OandaApi:
         response = self.session.request(url=f"{self.stream_hostname}/{url}", method = "get", params=params, stream=True)
 
         # Handle the streaming response
-        result = self.__handle_response(response, callback, stop)
+        self.__handle_response(response, callback, stop)
 
-        return result
+
     def __on_success(self, **kwargs):
         
         logger.debug(f"Instrument: {kwargs.get('instrument')} | Time: {kwargs.get('time')} | \
             Bid: {kwargs.get('bid')} | \
                 Ask: {kwargs.get('ask')}")
 
+
     def __handle_response(self, response, callback, stop):
 
-        count = 0
-        for line in response.iter_lines():
-            if line:
-                data = json.loads(line.decode('utf-8'))
-                logger.debug (data)
-                if data.get("type") == "PRICE":
-                    count += 1
-                    instrument = data["instrument"]
-                    time = data["time"]
-                    if len(data["bids"]) > 0:
-                        bid = float(data["bids"][0]["price"])
-                    else: 
-                        bid = float(data["closeoutBid"])
+        try:
+            count = 0
+            for line in response.iter_lines():
+                if line:
+                    data = json.loads(line.decode('utf-8'))
+                    logger.debug (data)
+                    if data.get("type") == "PRICE":
+                        count += 1
+                        instrument = data["instrument"]
+                        time = data["time"]
+                        if len(data["bids"]) > 0:
+                            bid = float(data["bids"][0]["price"])
+                        else: 
+                            bid = float(data["closeoutBid"])
 
-                    if len(data["asks"]) > 0:
-                        ask = float(data["asks"][0]["price"])
-                    else: 
-                        ask = float(data["closeoutAsk"])
+                        if len(data["asks"]) > 0:
+                            ask = float(data["asks"][0]["price"])
+                        else: 
+                            ask = float(data["closeoutAsk"])
 
-                    if callback:
-                        callback(instrument=instrument, time=time, bid=bid, ask=ask)
-                    else:
-                        self.__on_success(instrument=instrument, time=time, bid=bid)
-                
-                    if self.stop_stream or stop is not None and count >= stop:
-                        break
+                        if callback:
+                            callback(instrument=instrument, time=time, bid=bid, ask=ask)
+                        else:
+                            self.__on_success(instrument=instrument, time=time, bid=bid)
+                    
+                        if self.stop_stream or stop is not None and count >= stop:
+                            break
 
-        return
+        except StopTradingEvent:
+            logger.info("Stopped Trading")
+
 
     def __make_request(self, url, verb='get', code=200, params=None, data=None, headers=None):
         

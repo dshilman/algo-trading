@@ -7,7 +7,7 @@ from trading.utils import utils
 import logging
 import sys
 import math
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import pandas as pd
 from tabulate import tabulate
@@ -33,10 +33,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         super().__init__(trading_strategy=trading_strategy,pair_file=pair_file, api=api, unit_test=unit_test)
 
     
-    def to_5_min_candles(self, ticker_data_list) -> pd.DataFrame:
+    def to_5_min_candles(self, ticker_data_list, trading_time) -> pd.DataFrame:
 
         # Create DataFrame
-        ticker_df: pd.DataFrame = pd.DataFrame(ticker_data_list, columns=["time", "mid", "bid", "ask"])
+        filtered_ticker_data_list = [item for item in ticker_data_list if item[0] >= trading_time - timedelta(minutes=utils.ticker_data_size * 5)]
+
+        ticker_df: pd.DataFrame = pd.DataFrame(filtered_ticker_data_list, columns=["time", "mid", "bid", "ask"])
 
         # Ensure "time" is in datetime format and set as index
         ticker_df["time"] = pd.to_datetime(ticker_df["time"], utc=True)

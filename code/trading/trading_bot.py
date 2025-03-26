@@ -18,7 +18,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.api.oanda_api import OandaApi
+from trading.api.oanda_api import OandaApi, StopTradingEvent
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 from trading.utils import utils
 
@@ -41,7 +41,7 @@ class Trader():
         # self.start = config.get(self.strategy.instrument, 'start')
         # self.end = config.get(self.strategy.instrument, 'end')
 
-        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 60 * 10)
+        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 250)
         
         class_ = None
         strategy = config.get(trading_strategy, 'strategy')
@@ -92,7 +92,7 @@ class Trader():
 
         threads = []
         # threads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
-        threads.append(threading.Thread(target=self.start_streaming, args=(stop_after,)))
+        threads.append(threading.Thread(target=self.start_streaming, args=()))
         threads.append(threading.Thread(target=self.refresh_strategy, args=(5, stop_after)))
 
         # self.refresh_strategy(refresh=5, stop_after=999999999999999999999999999999999999999999)
@@ -114,7 +114,7 @@ class Trader():
             self.ticker_data_deque.append((index, row["close"], row["bid"], row["ask"]))    
 
 
-    def start_streaming(self, stop_after):
+    def start_streaming(self):
 
         candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
         self.reset_dequeue(candles)
@@ -126,7 +126,7 @@ class Trader():
 
             try:
                 logger.info ("Start streaming prices")
-                self.api.stream_prices(instrument=self.strategy.instrument, stop = stop_after, callback=self.new_price_ticker)
+                self.api.stream_prices(instrument=self.strategy.instrument, callback=self.new_price_ticker)
                 logger.info("Stopped streaming prices")
                 self.terminate = True
                 break
@@ -154,22 +154,21 @@ class Trader():
 
             try:
 
-                ticker_data_df = None
+                trading_time = datetime.now(tz=timezone.utc)
+                logger.debug (f"Refresh Strategy... {trading_time}")
 
                 if self.streaming:
-
-                    trading_time = datetime.now(tz=timezone.utc)
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
                         
                         logger.info("")
 
                         ticker_data_list = list(self.ticker_data_deque)                        
-                        ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list)
+                        ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list, trading_time)
 
                         logger.info(f"Start executing strategy... {exec_counter}, data queue size: {len(self.ticker_data_deque)}, ticker data size: {len(ticker_data_df.index)}")
 
-                        status = self.exec_strategy(ticker_data_df)
+                        status = self.exec_strategy(ticker_data_df, trading_time)
                         
                         if status:
                             self.strategy.print_indicators()
@@ -177,9 +176,6 @@ class Trader():
                             sleep(10)
 
                 else:
-
-                    trading_time = datetime.now(tz=timezone.utc)
-                    logger.debug (f"Refresh Strategy... {trading_time}")
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
 
@@ -189,7 +185,7 @@ class Trader():
                         logger.info("")
                         logger.info(f"Start executing strategy... {exec_counter}, ticker data size: {len(ticker_data_df.index)}")
 
-                        status = self.exec_strategy(ticker_data_df)
+                        status = self.exec_strategy(ticker_data_df, trading_time)
 
                         if status:
                             self.strategy.print_indicators()
@@ -216,15 +212,15 @@ class Trader():
 
             sleep(refresh)
 
-    def exec_strategy(self, ticker_data_df: pd.DataFrame) -> bool:
+        self.terminate = True
+
+    def exec_strategy(self, ticker_data_df: pd.DataFrame, trading_time) -> bool:
 
         logger.debug(f"Ticker data: {ticker_data_df}")
 
         if len(ticker_data_df.index) < utils.ticker_data_size:
             logger.info(f"Skip strategy execution, {len(ticker_data_df.index)} ticker data size is too small. From: {ticker_data_df.index [0]}, to: {ticker_data_df.index [-1]}")
             return False
-
-        trading_time = datetime.now(timezone.utc)
 
         last_candle_time: pd.Timestamp = ticker_data_df.index[-1]
         if trading_time - last_candle_time > timedelta(seconds=30):
@@ -277,6 +273,9 @@ class Trader():
  
     def new_price_ticker(self, **kwargs):
 
+        if self.terminate:
+            raise StopTradingEvent("Stop Trading")
+        
         instrument = kwargs.get('instrument')
         date_time = kwargs.get('time')
         ask = kwargs.get('ask')
