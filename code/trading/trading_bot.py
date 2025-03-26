@@ -84,7 +84,7 @@ class Trader():
         logger.addHandler(log_handler)
 
 
-    def start_trading(self, stop_after = 9999):
+    def start_trading(self, stop_after = 999999999999999999999999999999999999999999999999999999):
 
         logger.info("\n" + 100 * "-")
         logger.info ("Started New Trading Session")
