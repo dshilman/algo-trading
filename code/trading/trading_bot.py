@@ -125,8 +125,9 @@ class Trader():
         while not self.terminate:
 
             try:
-                logger.info ("Start Stream")
+                logger.info ("Start streaming prices")
                 self.api.stream_prices(instrument=self.strategy.instrument, stop = stop_after, callback=self.new_price_ticker)
+                logger.info("Stopped streaming prices")
                 self.terminate = True
                 break
 
@@ -142,12 +143,12 @@ class Trader():
 
 
 
-    def refresh_strategy(self, refresh = 5, stop_after=999999999999999999):
+    def refresh_strategy(self, refresh = 5, stop_after=99999999999999999999999999):
 
         error_counter: int = 0
         exec_counter: int = 0
 
-        while exec_counter < stop_after or not self.terminate:
+        while exec_counter < stop_after and not self.terminate:
             
             logger.debug("Inside refresh strategy loop")
 
