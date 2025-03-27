@@ -160,7 +160,7 @@ class Trader():
                 if self.streaming:
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
-                        
+                        exec_counter = exec_counter + 1                        
                         logger.info("")
 
                         ticker_data_list = list(self.ticker_data_deque)                        
@@ -172,13 +172,13 @@ class Trader():
                         
                         if status:
                             self.strategy.print_indicators()
-                            exec_counter = exec_counter + 1
+
                             sleep(10)
 
                 else:
 
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
-
+                        exec_counter = exec_counter + 1
                         logger.debug (f"Get candles for {self.strategy.instrument}")
                         ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
 
@@ -189,13 +189,6 @@ class Trader():
 
                         if status:
                             self.strategy.print_indicators()
-                            exec_counter = exec_counter + 1
-
-                            # logger.info (f"Heartbeat... {exec_counter}")
-                            # if  exec_counter % 10 == 0:
-                            #     self.strategy.print_indicators()
-                            
-                            # sleep(5)
                     else:
                         logger.debug (f"Skipping strategy execution... {trading_time}")
 
