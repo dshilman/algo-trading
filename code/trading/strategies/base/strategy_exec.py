@@ -188,7 +188,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         if pause_from_dt > pause_to_dt:
             pause_from_dt = pause_from_dt - pd.DateOffset(days=1)
 
-        if pause_from_dt < date_time_est < pause_to_dt:
+        if pause_from_dt <= date_time_est <= pause_to_dt:
             return False
 
         return True
