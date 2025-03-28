@@ -162,12 +162,13 @@ class Trader():
                     if trading_time.minute % 5 == 0 and trading_time.second < 10:
                         exec_counter = exec_counter + 1                        
                         logger.info("")
+                        logger.info(f"Start executing strategy... {exec_counter}")
 
+                        logger.info("Prep pricing data")
                         ticker_data_list = list(self.ticker_data_deque)                        
                         ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list, trading_time)
 
-                        logger.info(f"Start executing strategy... {exec_counter}, data queue size: {len(self.ticker_data_deque)}, ticker data size: {len(ticker_data_df.index)}")
-
+                        logger.info("Excute strategy")
                         status = self.exec_strategy(ticker_data_df, trading_time)
                         
                         if status:

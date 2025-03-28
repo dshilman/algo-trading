@@ -64,6 +64,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Resample to 5-minute intervals and fill missing values
         df = df.resample("5min").last().ffill()
 
+        logger.info(f"price data queue size: {len(ticker_data_list)}, filtered price data size: {len(filtered_ticker_data_list)},  ticker data size: {len(df.index)}")
+
         return df
 
     def calc_indicators(self):
