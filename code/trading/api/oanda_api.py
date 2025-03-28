@@ -52,14 +52,14 @@ class OandaApi:
         self.session.headers.update(self.SECURE_HEADER)
         self.stop_stream = False
 
-    def get_latest_price_candles(self, pair_name) -> pd.DataFrame:
+    def get_latest_price_candles(self, pair_name, granularity="M5", count=utils.ticker_data_size) -> pd.DataFrame:
 
         url = f"accounts/{self.account_id}/candles/latest"
         params = dict(
             instrument=pair_name,
-            granularity="M5",
+            granularity=granularity,
             price="MBA",
-            count=utils.ticker_data_size
+            count=count
         )
 
         ok, data = self.__make_request(url, params=params)
