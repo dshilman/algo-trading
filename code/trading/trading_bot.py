@@ -210,7 +210,7 @@ class Trader():
 
     def exec_strategy(self, ticker_data_df: pd.DataFrame, trading_time) -> bool:
 
-        logger.debug(f"Ticker data: {ticker_data_df}")
+        # logger.debug(f"Ticker data: {ticker_data_df}")
 
         if len(ticker_data_df.index) < utils.ticker_data_size:
             logger.info(f"Skip strategy execution, {len(ticker_data_df.index)} ticker data size is too small. From: {ticker_data_df.index [0]}, to: {ticker_data_df.index [-1]}")
@@ -275,7 +275,7 @@ class Trader():
         ask = kwargs.get('ask')
         bid = kwargs.get('bid')
         
-        logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask}")
+        # logger.debug(f"Instrument: {instrument} | Time: {date_time} | Bid: {bid} | Ask: {ask}")
 
          # 2023-12-19T13:28:35.194571445Z
         if date_time is None:
