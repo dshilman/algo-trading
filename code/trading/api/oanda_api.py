@@ -66,17 +66,17 @@ class OandaApi:
 
         df: pd.DataFrame = pd.DataFrame()
         if ok and 'candles' in data:
-            logger.debug(f"Latest price candles for {pair_name}:\n{data['candles']}")
+            # logger.debug(f"Latest price candles for {pair_name}:\n{data['candles']}")
 
             if isinstance(data, dict) and 'candles' in data:
                 df = self.__convert_to_df(data['candles']) # type: ignore
                 df = df.set_index('time')
                 if isinstance(df.index, pd.DatetimeIndex):
                     df.index = df.index.tz_convert(tz=timezone.utc)
-                logger.debug(f"Latest price candles for {pair_name}:\n{df}")
+                # logger.debug(f"Latest price candles for {pair_name}:\n{df}")
                 return df
             else:
-                logger.debug("ERROR converting candles to DataFrame", data['candles'])
+                # logger.debug("ERROR converting candles to DataFrame", data['candles'])
                 return df
         else:
             logger.error("ERROR fetch_candles()", params, data)
@@ -198,7 +198,7 @@ class OandaApi:
             for line in response.iter_lines():
                 if line:
                     data = json.loads(line.decode('utf-8'))
-                    logger.debug (data)
+                    # logger.debug (data)
                     if data.get("type") == "PRICE":
                         count += 1
                         instrument = data["instrument"]
