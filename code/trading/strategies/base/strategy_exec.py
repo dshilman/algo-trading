@@ -138,7 +138,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         open_trade_time = self.get_open_trade_time()        
 
-        if open_trade_time is not None and (open_trade_time + timedelta(minutes=self.keep_trade_open_time)) <= trading_time:
+        if open_trade_time is not None and (open_trade_time + timedelta(minutes=self.keep_trade_open_time, seconds=-open_trade_time.second)) <= trading_time:
             return True
 
         return False
