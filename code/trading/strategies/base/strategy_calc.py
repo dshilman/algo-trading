@@ -33,10 +33,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         super().__init__(trading_strategy=trading_strategy,pair_file=pair_file, api=api, unit_test=unit_test)
 
     
-    def to_5_min_candles(self, ticker_data_list, trading_time) -> pd.DataFrame:
+    def to_5_min_candles(self, ticker_data_list, trading_time: datetime) -> pd.DataFrame:
 
         # Create DataFrame
-        filtered_ticker_data_list = [item for item in ticker_data_list if item[0] > trading_time - timedelta(minutes=utils.ticker_data_size * 5)]
+        cut_off_time = trading_time - timedelta(minutes=utils.ticker_data_size * 5, seconds=trading_time.second)
+        filtered_ticker_data_list = [item for item in ticker_data_list if item[0] > cut_off_time]
 
         ticker_df: pd.DataFrame = pd.DataFrame(filtered_ticker_data_list, columns=["time", "mid", "bid", "ask"])
 
