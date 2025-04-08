@@ -66,3 +66,7 @@ class TradingStrategy(TradingStrategyExec):
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                 return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
+
+    def print_indicators(self):
+        super().print_indicators()
+        logger.info(f"low_bb_diverge: {self.ema_bb_low_divergance > self.ema_bb_low_divergance_mean}, high_bb_diverge: {self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean}")
