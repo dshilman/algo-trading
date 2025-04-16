@@ -101,11 +101,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         
 
         df["upper_bb_crossover"] = 0  # Initialize signal column
-        df.loc[(df["close"].shift() < df["bb_upper"]) & (df["close"] > df["bb_upper"]), "upper_bb_crossover"] = 1  # Bullish crossover
+        df.loc[(df["close"].shift() < df["bb_upper"].shift()) & (df["close"] > df["bb_upper"]), "upper_bb_crossover"] = 1  # Bullish crossover
         df["upper_bb_crossover"] = df["upper_bb_crossover"].rolling(5).apply(lambda x: 1 in x.values)
 
         df["lower_bb_crossover"] = 0  # Initialize signal column
-        df.loc[(df["close"].shift() > df["bb_lower"]) & (df["close"] < df["bb_lower"]), "lower_bb_crossover"] = -1  # Bearish crossover
+        df.loc[(df["close"].shift() > df["bb_lower"].shift()) & (df["close"] < df["bb_lower"]), "lower_bb_crossover"] = -1  # Bearish crossover
         df["lower_bb_crossover"] = df["lower_bb_crossover"].rolling(5).apply(lambda x: -1 in x.values)
 
         if self.unit_test:
