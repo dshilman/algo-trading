@@ -30,9 +30,6 @@ class TradingStrategy(TradingStrategyExec):
 
         df: pd.DataFrame = self.data
 
-        df["rsi_short_min"] = df["rsi_short"].rolling(5).min()
-        df["rsi_short_max"] = df["rsi_short"].rolling(5).max()
-
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
         df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).mean()
 
