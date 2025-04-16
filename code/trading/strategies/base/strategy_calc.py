@@ -94,19 +94,19 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None).rolling(3).sum() # type: ignore
 
         df["macd_crossover"] = 0  # Initialize signal column
-        df.loc[(df["ema_short"].shift() < df["sma_long"].shift()) & (df["ema_short"] > df["sma_long"]), "macd_crossover"] = 1  # Bullish crossover
-        df.loc[(df["ema_short"].shift() > df["sma_long"].shift()) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
-        df["macd_crossover"] = df["macd_crossover"].rolling(5).sum()
+        df.loc[(df["ema_short"].shift() < df["sma_long"]) & (df["ema_short"] > df["sma_long"]), "macd_crossover"] = 1  # Bullish crossover
+        df.loc[(df["ema_short"].shift() > df["sma_long"]) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
+        df["macd_crossover_bull"] = df["macd_crossover"].rolling(5).apply(lambda x: 1 in x.values)
+        df["macd_crossover_bear"] = df["macd_crossover"].rolling(5).apply(lambda x: -1 in x.values)
+        
 
         df["upper_bb_crossover"] = 0  # Initialize signal column
-        df.loc[(df["close"].shift() < df["bb_upper"].shift()) & (df["close"] > df["bb_upper"]), "upper_bb_crossover"] = 1  # Bullish crossover
-        df.loc[(df["close"].shift() > df["bb_upper"].shift()) & (df["close"] < df["bb_upper"]), "upper_bb_crossover"] = -1  # Bearish crossover
-        df["upper_bb_crossover"] = df["upper_bb_crossover"].rolling(5).sum()
+        df.loc[(df["close"].shift() < df["bb_upper"]) & (df["close"] > df["bb_upper"]), "upper_bb_crossover"] = 1  # Bullish crossover
+        df["upper_bb_crossover"] = df["upper_bb_crossover"].rolling(5).apply(lambda x: 1 in x.values)
 
         df["lower_bb_crossover"] = 0  # Initialize signal column
-        df.loc[(df["close"].shift() < df["bb_lower"].shift()) & (df["close"] > df["bb_lower"]), "lower_bb_crossover"] = 1  # Bullish crossover
-        df.loc[(df["close"].shift() > df["bb_lower"].shift()) & (df["close"] < df["bb_lower"]), "lower_bb_crossover"] = -1  # Bearish crossover
-        df["lower_bb_crossover"] = df["lower_bb_crossover"].rolling(5).sum()
+        df.loc[(df["close"].shift() > df["bb_lower"]) & (df["close"] < df["bb_lower"]), "lower_bb_crossover"] = -1  # Bearish crossover
+        df["lower_bb_crossover"] = df["lower_bb_crossover"].rolling(5).apply(lambda x: -1 in x.values)
 
         if self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
@@ -139,8 +139,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_short_min = round(row["rsi_short_min"], 4)
         self.rsi_short_pct_change = row["rsi_short_pct_change"]
         self.macd_crossover = row["macd_crossover"]
-        self.upper_bb_crossover = row["upper_bb_crossover"]
-        self.lower_bb_crossover = row["lower_bb_crossover"]
+        self.macd_crossover_bull = bool(row["macd_crossover_bull"])
+        self.macd_crossover_bear = bool(row["macd_crossover_bear"])
+        self.upper_bb_crossover = bool(row["upper_bb_crossover"])
+        self.lower_bb_crossover = bool(row["lower_bb_crossover"])
                
        
     def print_indicators(self):
@@ -148,5 +150,5 @@ class TradingStrategyCalc(TradingStrategyBase):
         logger.info(f"price: {round(self.price, 6)}, std_dev_long: {round(self.std_dev_long, 6)}, price_volatility: {round(self.price_volatility, 5)}, price_min: {round(self.price_min, 6)}, price_max: {round(self.price_max, 6)}")
         logger.info(f"sma_long: {round(self.sma_long, 6)} bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}, ema_short: {round(self.ema_short, 6)}")
         logger.info(f"rsi_short: {round(self.rsi_short, 2)}, rsi_max: {round(self.rsi_short_max, 2)}, rsi_min: {round(self.rsi_short_min, 2)}, rsi_pct_change: {round(self.rsi_short_pct_change, 2)}")
-        logger.info(f"macd_crossover: {self.macd_crossover}, lower_bb_crossover: {self.lower_bb_crossover}, upper_bb_crossover: {self.upper_bb_crossover}")
+        logger.info(f"macd_crossover: {self.macd_crossover}, macd_crossover_bull: {self.macd_crossover_bull}, macd_crossover_bear: {self.macd_crossover_bear}, lower_bb_crossover: {self.lower_bb_crossover}, upper_bb_crossover: {self.upper_bb_crossover}")
 
