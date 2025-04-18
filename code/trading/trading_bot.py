@@ -120,7 +120,7 @@ class Trader():
         self.reset_dequeue(candles)
         
         self.streaming = True
-        i: int = 0
+        error_count: int = 0
 
         while not self.terminate:
 
@@ -134,6 +134,11 @@ class Trader():
             except Exception as e:
                 logger.error(f"Error in start_streaming")
                 logger.exception(e)
+                error_count = error_count + 1
+                if error_count > 100:
+                    logger.info("Too many errors. Stopped streaming prices")
+                    self.terminate = True
+                    break
 
 
     def stop_streaming(self):
