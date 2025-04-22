@@ -58,15 +58,13 @@ class TradingStrategyCalc(TradingStrategyBase):
             ticker_df.index = ticker_df.index.tz_convert("UTC") # type: ignore
 
         ticker_df["close"] = ticker_df["mid"]
-        ticker_df["open"] = ticker_df["close"].shift(1)  # type: ignore # or fillna(value=df["close"].iloc[0])
    
-        # Resample to higher time frame
-        df_mid = ticker_df[["close", "open", "ask", "bid"]].resample(f"{minutes}min").last()
+        df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{minutes}min").last()
+        df_mid.insert(0, 'open', df_mid["close"].shift()) 
 
-        # Resample highs and lows (already 1Min granularity)
-        df_high = ticker_df["mid"].resample(f"{minutes}min").max()
+        df_high = ticker_df["close"].resample(f"{minutes}min").max()
         df_high.name = "high"
-        df_low = ticker_df["mid"].resample(f"{minutes}min").min()
+        df_low = ticker_df["close"].resample(f"{minutes}min").min()
         df_low.name = "low"
 
         # Merge all into one DataFrame
