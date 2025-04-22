@@ -35,39 +35,50 @@ class TradingStrategyCalc(TradingStrategyBase):
     
     def to_5_min_candles(self, ticker_data_list, trading_time: datetime) -> pd.DataFrame:
 
-        # Create DataFrame
-        cut_off_time = trading_time - timedelta(minutes=utils.ticker_data_size * 5, seconds=trading_time.second)
-        filtered_ticker_data_list = [item for item in ticker_data_list if item[0] > cut_off_time]
+        minutes = 5
 
-        ticker_df: pd.DataFrame = pd.DataFrame(filtered_ticker_data_list, columns=["time", "mid", "bid", "ask"])
+        # Filter raw data to the window
+        cut_off_time = trading_time - timedelta(
+            minutes=utils.ticker_data_size * minutes,
+            seconds=trading_time.second
+        )
+        filtered_ticker_data_list = [
+            item for item in ticker_data_list if item[0] > cut_off_time
+        ]
 
-        # Ensure "time" is in datetime format and set as index
+        # Create initial DataFrame
+        ticker_df = pd.DataFrame(filtered_ticker_data_list, columns=["time", "mid", "bid", "ask"])
         ticker_df["time"] = pd.to_datetime(ticker_df["time"], utc=True)
-        ticker_df = ticker_df.set_index("time")
+        ticker_df = ticker_df.set_index("time").sort_index()
 
-        # Handle timezone
-        if isinstance(ticker_df.index, pd.DatetimeIndex) and ticker_df.index.tz is None:
-            ticker_df.index = ticker_df.index.tz_convert(timezone.utc)
+        # Ensure timezone
+        if ticker_df.index.tz is None: # type: ignore
+            ticker_df.index = ticker_df.index.tz_localize("UTC") # type: ignore
+        else:
+            ticker_df.index = ticker_df.index.tz_convert("UTC") # type: ignore
 
-        # Resample to 1-minute intervals
-        ticker_df = ticker_df.resample("1Min").last().ffill()
+        ticker_df["close"] = ticker_df["mid"]
+   
+        df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{minutes}min").last()
+        df_mid.insert(0, 'open', df_mid["close"].shift()) 
 
-        # Create a new DataFrame
-        df = pd.DataFrame(index=ticker_df.index)
+        df_high = ticker_df["close"].resample(f"{minutes}min").max()
+        df_high.name = "high"
+        df_low = ticker_df["close"].resample(f"{minutes}min").min()
+        df_low.name = "low"
 
-        df["close"] = ticker_df["mid"]
-        df["open"] = df["close"].shift(1)
-        df["ask"] = ticker_df["ask"]
-        df["bid"] = ticker_df["bid"]
-        df["high"] = ticker_df["mid"].rolling(5, min_periods=1).max()
-        df["low"] = ticker_df["mid"].rolling(5, min_periods=1).min()
+        # Merge all into one DataFrame
+        df_consolidated = pd.concat([df_mid, df_low, df_high], axis=1).sort_index()
 
-        # Resample to 5-minute intervals and fill missing values
-        df = df.resample("5min").last().ffill()
+        # Logging
+        logger.info(
+            f"price data queue size: {len(ticker_data_list)}, "
+            f"filtered price data size: {len(filtered_ticker_data_list)}, "
+            f"ticker data size: {len(df_consolidated.index)}"
+        )
 
-        logger.info(f"price data queue size: {len(ticker_data_list)}, filtered price data size: {len(filtered_ticker_data_list)},  ticker data size: {len(df.index)}")
+        return df_consolidated
 
-        return df
 
     def calc_indicators(self):
 
@@ -83,7 +94,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
-        df["sma_long_slope"] =df["sma_long"].rolling(period_long).apply(lambda x: calculate_slope(x))
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean()
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
@@ -133,7 +143,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.std_dev_long = row["std_dev_long"]
         self.price_volatility = row["price_volatility"]
         self.sma_long = row["sma_long"]
-        self.sma_long_slope =row["sma_long_slope"]
         self.ema_short = row["ema_short"]
         self.bb_low = row["bb_lower"]
         self.bb_high = row["bb_upper"]
