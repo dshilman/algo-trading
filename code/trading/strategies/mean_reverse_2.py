@@ -55,13 +55,13 @@ class TradingStrategy(TradingStrategyExec):
    
         if  self.std_dev_long > self.trading_std and round(self.price_volatility, 5) >= self.trading_price_volatility:
 
-            if self.price_max > self.bb_high and self.price > self.sma_long and self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean:
+            if self.price_max > self.bb_high and self.price > self.sma_long and self.ema_bb_high_divergance > 0 and self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean:
                 if not self.backtest:
                     logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                 return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
                     
 
-            elif self.price_min < self.bb_low and self.price < self.sma_long and self.ema_bb_low_divergance > self.ema_bb_low_divergance_mean:
+            elif self.price_min < self.bb_low and self.price < self.sma_long and self.ema_bb_high_divergance > 0 and self.ema_bb_low_divergance > self.ema_bb_low_divergance_mean:
                 if not self.backtest:
                     logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                 return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    

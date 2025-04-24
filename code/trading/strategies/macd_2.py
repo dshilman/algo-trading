@@ -70,13 +70,13 @@ class TradingStrategy(TradingStrategyExec):
         take_profit, tp_price = self.take_profit()
 
         if have_units > 0:  # long position
-            if close_trade or take_profit or self.price_max > self.bb_high and round(self.ema_bb_high_divergance, 2) > round(self.ema_bb_high_divergance_mean, 2):
+            if close_trade or take_profit or self.price_max > self.bb_high and self.ema_bb_high_divergance > 0 and round(self.ema_bb_high_divergance, 2) > round(self.ema_bb_high_divergance_mean, 2):
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
                 return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.bid, False, False, take_profit)
                 
         elif have_units < 0:  # short position
-            if close_trade or take_profit or self.price_min > self.bb_low and round(self.ema_bb_low_divergance, 2) > round(self.ema_bb_low_divergance_mean, 2):
+            if close_trade or take_profit or self.price_min > self.bb_low and self.ema_bb_high_divergance > 0 and round(self.ema_bb_low_divergance, 2) > round(self.ema_bb_low_divergance_mean, 2):
 
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
