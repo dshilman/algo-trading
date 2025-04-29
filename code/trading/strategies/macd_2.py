@@ -51,16 +51,20 @@ class TradingStrategy(TradingStrategyExec):
 
         if  self.std_dev_long < self.trading_std and self.price_volatility > self.trading_price_volatility:
 
-            if self.macd_crossover_bull and not self.macd_crossover_bear and self.rsi_short > self.high_rsi and self.price < self.bb_high and self.rsi_short_pct_change > 0:
-                if not self.backtest:
-                    logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-                return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
+            if self.macd_crossover_bull and not self.macd_crossover_bear \
+                and self.rsi_short > self.high_rsi \
+                    and self.price < self.bb_high and self.price_min > self.bb_low and self.rsi_short_pct_change > 0:
+                        if not self.backtest:
+                            logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
+                        return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
-            elif self.macd_crossover_bear and not self.macd_crossover_bull and self.rsi_short < self.low_rsi and self.price > self.bb_low and self.rsi_short_pct_change < 0:
-                if not self.backtest:
-                    logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
-                return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
+            elif self.macd_crossover_bear and not self.macd_crossover_bull \
+                and self.rsi_short < self.low_rsi \
+                    and self.price > self.bb_low and self.price_max < self.bb_high and self.rsi_short_pct_change < 0:
+                        if not self.backtest:
+                            logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
+                        return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
 
 
     def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
