@@ -135,7 +135,7 @@ class Trader():
                 logger.error(f"Error in start_streaming")
                 logger.exception(e)
                 error_count = error_count + 1
-                if error_count > 100:
+                if error_count > 20:
                     logger.info("Too many errors. Stopped streaming prices")
                     self.terminate = True
                     break
