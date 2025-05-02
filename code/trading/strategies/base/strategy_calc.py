@@ -58,17 +58,18 @@ class TradingStrategyCalc(TradingStrategyBase):
             ticker_df.index = ticker_df.index.tz_convert("UTC") # type: ignore
 
         ticker_df["close"] = ticker_df["mid"]
+        ticker_df["open"] = ticker_df["mid"]
+
    
         df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{minutes}min").last()
-        df_mid.insert(0, 'open', df_mid["close"].shift()) 
-
+        df_open = ticker_df["open"].resample(f"{minutes}min").first()
         df_high = ticker_df["close"].resample(f"{minutes}min").max()
         df_high.name = "high"
         df_low = ticker_df["close"].resample(f"{minutes}min").min()
         df_low.name = "low"
 
         # Merge all into one DataFrame
-        df_consolidated = pd.concat([df_mid, df_low, df_high], axis=1).sort_index()
+        df_consolidated = pd.concat([df_open, df_mid, df_low, df_high], axis=1).sort_index()
 
         # Logging
         logger.info(
