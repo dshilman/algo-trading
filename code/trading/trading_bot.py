@@ -206,7 +206,7 @@ class Trader():
         # logger.debug(f"Ticker data: {ticker_data_df}")
 
         if len(ticker_data_df.index) < utils.ticker_data_size:
-            logger.info(f"Skip strategy execution, {len(ticker_data_df.index)} ticker data size is too small. From: {ticker_data_df.index [0]}, to: {ticker_data_df.index [-1]}")
+            logger.info(f"Skip strategy execution, {len(ticker_data_df.index)} ticker data size is too small. From: {ticker_data_df.index [0] if len(ticker_data_df.index) > 0 else 'N/A'}, to: {ticker_data_df.index [-1] if len(ticker_data_df.index) > 0 else 'N/A'}")
             return False
 
         last_candle_time: pd.Timestamp = ticker_data_df.index[-1]
