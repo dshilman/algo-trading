@@ -162,58 +162,43 @@ class Trader():
                 trading_time = datetime.now(tz=timezone.utc)
                 logger.debug (f"Refresh Strategy... {trading_time}")
 
-                if self.streaming:
+                if trading_time.minute % 5 == 0 and trading_time.second < 10:
+                    exec_counter = exec_counter + 1                        
+                    logger.info("")
+                    logger.info(f"Start executing strategy... {exec_counter}")
 
-                    if trading_time.minute % 5 == 0 and trading_time.second < 10:
-                        exec_counter = exec_counter + 1                        
-                        logger.info("")
-                        logger.info(f"Start executing strategy... {exec_counter}")
-
+                    if self.streaming:
                         logger.info("Prep pricing data")
                         ticker_data_list = list(self.ticker_data_deque)                        
                         ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list, trading_time)
-
-                        logger.info("Excute strategy")
-                        status = self.exec_strategy(ticker_data_df, trading_time)
-
-                        if exec_counter % 20 == 0:
-                            logger.info("\n" + self.strategy.data[-5:].to_string(header=True))
-                            logger.info("")
-
-                        if status:
-                            # self.strategy.print_indicators()
-                            sleep(10)
-
-                else:
-
-                    if trading_time.minute % 5 == 0 and trading_time.second < 10:
-                        exec_counter = exec_counter + 1
-                        logger.debug (f"Get candles for {self.strategy.instrument}")
+                    else:
+                        logger.info(f"Get candles for {self.strategy.instrument}")
                         ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
 
+                    logger.info("Excute strategy")
+                    status = self.exec_strategy(ticker_data_df, trading_time)
+
+                    if exec_counter % 20 == 0:
+                        logger.info("\n" + self.strategy.data[-10:].to_string(header=True))
                         logger.info("")
-                        logger.info(f"Start executing strategy... {exec_counter}, ticker data size: {len(ticker_data_df.index)}")
 
-                        status = self.exec_strategy(ticker_data_df, trading_time)
+                    if status:
+                        # self.strategy.print_indicators()
+                        sleep(30)
 
-                        if status:
-                            self.strategy.print_indicators()
-                    else:
-                        logger.debug (f"Skipping strategy execution... {trading_time}")
+                else:
+                    logger.debug (f"Skipping strategy execution... {trading_time}")
 
-    
+                sleep(refresh)
+ 
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")
                 logger.exception(e)
                 error_counter = error_counter + 1                
                 if error_counter > 10:
                     logger.error(f"Too many errors: {error_counter}")
-                    # the next two lines are redundant, but I am leaving them in place
-                    self.terminate = True
                     break
-
-            sleep(refresh)
-
+   
         self.terminate = True
 
     def exec_strategy(self, ticker_data_df: pd.DataFrame, trading_time) -> bool:
