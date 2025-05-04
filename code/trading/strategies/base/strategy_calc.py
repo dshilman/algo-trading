@@ -57,12 +57,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         else:
             ticker_df.index = ticker_df.index.tz_convert("UTC") # type: ignore
 
-        ticker_df["close"] = ticker_df["mid"]
-        ticker_df["open"] = ticker_df["mid"]
+        ticker_df.rename(columns={"mid": "close"}, inplace=True)
 
-   
+        df_open = ticker_df["close"].resample(f"{minutes}min").first()
+        df_open.name = "open"
         df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{minutes}min").last()
-        df_open = ticker_df["open"].resample(f"{minutes}min").first()
         df_high = ticker_df["close"].resample(f"{minutes}min").max()
         df_high.name = "high"
         df_low = ticker_df["close"].resample(f"{minutes}min").min()
