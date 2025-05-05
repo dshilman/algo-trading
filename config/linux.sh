@@ -10,5 +10,5 @@ sudo systemctl enable crond.service
 sudo systemctl start crond.service
 
 mkdir ~/tmp
-cd /algo-trading/code
+cd algo-trading/code
 sudo TMPDIR=~/tmp/ python3 -m pip install -r requirements.txt --no-cache-dir
