@@ -25,27 +25,6 @@ class TradingStrategy(TradingStrategyExec):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
-    def calc_indicators(self):
-        super().calc_indicators()
-
-        df: pd.DataFrame = self.data
-
-        df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
-        df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).mean()
-
-        df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
-        df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
-
-        self.data = df
-
-    def set_strategy_indicators(self, row: pd.Series):
-        super().set_strategy_indicators(row)
-
-        self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
-        self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
-
-        self.ema_bb_high_divergance_mean = row["ema_bb_high_divergance_mean"]
-        self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
     
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
@@ -65,23 +44,3 @@ class TradingStrategy(TradingStrategyExec):
                         if not self.backtest:
                             logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                         return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
-
-
-    def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
-
-        have_units = self.trading_session.have_units
-        close_trade = self.need_close_trade(trading_time)
-        take_profit, tp_price = self.take_profit()
-
-        if have_units > 0:  # long position
-            if close_trade or take_profit or self.price_max > self.bb_high and self.ema_bb_high_divergance > 0 and round(self.ema_bb_high_divergance, 2) > round(self.ema_bb_high_divergance_mean, 2):
-                if not self.backtest:
-                    logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
-                return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.bid, False, False, take_profit)
-                
-        elif have_units < 0:  # short position
-            if close_trade or take_profit or self.price_min > self.bb_low and self.ema_bb_high_divergance > 0 and round(self.ema_bb_low_divergance, 2) > round(self.ema_bb_low_divergance_mean, 2):
-
-                if not self.backtest:
-                   logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.ask, False, False, take_profit)

@@ -34,7 +34,7 @@ class TradingStrategy(TradingStrategyExec):
         df["rsi_short_min"] = df["rsi_short"].rolling(5).min()
         df["rsi_short_max"] = df["rsi_short"].rolling(5).max()
         df['price_volatility'] = ((df['high'] - df['low']) / (df['high'] + df['low']) / 2).rolling(5).mean()    
-
+       
         self.data = df
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
@@ -53,3 +53,4 @@ class TradingStrategy(TradingStrategyExec):
                     if not self.backtest:
                         logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                     return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
+            
