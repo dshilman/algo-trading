@@ -184,7 +184,7 @@ class Trader():
 
                     if status:
                         # self.strategy.print_indicators()
-                        sleep(30)
+                        sleep(4 * 60 + 50)
 
                 else:
                     logger.debug (f"Skipping strategy execution... {trading_time}")
