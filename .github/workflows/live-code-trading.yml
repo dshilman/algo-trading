@@ -1,13 +1,10 @@
 name: LIVE-TRADING-EC2-DEPLOY
 
 on:
-  pull_request:
-    branches:
-      - live
   push:
     branches:
       - live
-
+  
 jobs:
   deploy:
     name: Deploy to EC2 on live branch push
