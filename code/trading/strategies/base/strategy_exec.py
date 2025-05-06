@@ -90,7 +90,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         
         if have_units < 0:
             if self.trailing_sl:
-                base_price = min(self.price_min, open_trade_price)
+                base_price = min(self.price_low, open_trade_price)
             else: 
                 base_price = open_trade_price
              
@@ -103,7 +103,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         elif have_units > 0:
             if self.trailing_sl:
-                base_price = max(self.price_max, open_trade_price)
+                base_price = max(self.price_high, open_trade_price)
             else: 
                 base_price = open_trade_price
 
