@@ -28,7 +28,7 @@ class TradingStrategy(TradingStrategyExec):
     
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
-        if  self.std_dev_long < self.trading_std and self.price_volatility > self.trading_price_volatility:
+        if  self.price_volatility > self.trading_price_volatility:
 
             if self.macd_crossover_bull and not self.macd_crossover_bear \
                 and self.rsi_short > self.high_rsi \
@@ -44,3 +44,4 @@ class TradingStrategy(TradingStrategyExec):
                         if not self.backtest:
                             logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                         return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
+
