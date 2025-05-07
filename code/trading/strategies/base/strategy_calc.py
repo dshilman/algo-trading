@@ -99,7 +99,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean()
-        df["ema_short_slope"] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
+        # df["ema_short_slope"] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
 
@@ -159,7 +159,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.price_volatility = row["price_volatility"]
         self.sma_long = row["sma_long"]
         self.ema_short = row["ema_short"]
-        self.ema_short_slope = row["ema_short_slope"]
+        # self.ema_short_slope = row["ema_short_slope"]
         self.bb_low = row["bb_lower"]
         self.bb_high = row["bb_upper"]
         self.rsi_short = round(row["rsi_short"], 4)
