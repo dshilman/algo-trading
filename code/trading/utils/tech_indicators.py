@@ -30,13 +30,22 @@ def calculate_rsi(prices: pd.Series, period=14):
     gain = delta.where(delta.gt(0), 0)
     loss = -delta.where(delta.lt(0), 0)
 
-    avg_gain = gain.ewm(com=period - 1, min_periods=period).mean().iloc[-1]
-    avg_loss = loss.ewm(com=period - 1, min_periods=period).mean().iloc[-1]
+    avg_gain = gain.ewm(com=period , min_periods=period).mean().iloc[-1]
+    avg_loss = loss.ewm(com=period , min_periods=period).mean().iloc[-1]
 
     rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
     
     return round(rsi, 4)
+
+def compute_rsi(close: pd.Series, period: int = 14) -> pd.Series:
+    delta = close.diff()
+    gain = delta.clip(lower=0).rolling(window=period).mean()
+    loss = -delta.clip(upper=0).rolling(window=period).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
 
 def calculate_rsi_new(S, period=14):
     
