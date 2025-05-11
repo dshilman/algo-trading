@@ -115,23 +115,23 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["macd_crossover_bear"] = df["macd_crossover"].rolling(5).apply(lambda x: -1 in x.values)
         
 
-        df["ema_upper_bb_crossover_down"] = 0  # Initialize signal column
-        df.loc[(df["ema_short"].shift() > df["bb_upper"]) & (df["ema_short"] < df["bb_upper"]), "ema_upper_bb_crossover_down"] = 1  # Bullish crossover
+        # df["ema_upper_bb_crossover_down"] = 0  # Initialize signal column
+        # df.loc[(df["ema_short"].shift() > df["bb_upper"]) & (df["ema_short"] < df["bb_upper"]), "ema_upper_bb_crossover_down"] = 1  # Bullish crossover
 
-        df["ema_lower_bb_crossover_up"] = 0  # Initialize signal column
-        df.loc[(df["ema_short"].shift() < df["bb_lower"]) & (df["ema_short"] > df["bb_lower"]), "ema_lower_bb_crossover_up"] = 1  # Bearish crossover
+        # df["ema_lower_bb_crossover_up"] = 0  # Initialize signal column
+        # df.loc[(df["ema_short"].shift() < df["bb_lower"]) & (df["ema_short"] > df["bb_lower"]), "ema_lower_bb_crossover_up"] = 1  # Bearish crossover
 
-        df["price_upper_bb_crossover_down"] = 0  # Initialize signal column
-        df.loc[(df["open"] > df["bb_upper"]) & (df["close"] <= df["bb_upper"]), "price_upper_bb_crossover_down"] = 1  # Bullish crossover
+        # df["price_upper_bb_crossover_down"] = 0  # Initialize signal column
+        # df.loc[(df["open"] > df["bb_upper"]) & (df["close"] <= df["bb_upper"]), "price_upper_bb_crossover_down"] = 1  # Bullish crossover
 
-        df["price_lower_bb_crossover_up"] = 0  # Initialize signal column
-        df.loc[(df["open"] < df["bb_lower"]) & (df["close"] >= df["bb_lower"]), "price_lower_bb_crossover_up"] = 1  # Bearish crossover
+        # df["price_lower_bb_crossover_up"] = 0  # Initialize signal column
+        # df.loc[(df["open"] < df["bb_lower"]) & (df["close"] >= df["bb_lower"]), "price_lower_bb_crossover_up"] = 1  # Bearish crossover
 
-        df["price_ema_crossover_down"] = 0  # Initialize signal column
-        df.loc[(df["open"] > df["ema_short"]) & (df["close"] <= df["ema_short"]), "price_ema_crossover_down"] = 1  # Bullish crossover
+        # df["price_ema_crossover_down"] = 0  # Initialize signal column
+        # df.loc[(df["open"] > df["ema_short"]) & (df["close"] <= df["ema_short"]), "price_ema_crossover_down"] = 1  # Bullish crossover
 
-        df["price_ema_crossover_up"] = 0  # Initialize signal column
-        df.loc[(df["open"] < df["ema_short"]) & (df["close"] >= df["ema_short"]), "price_ema_crossover_up"] = 1  # Bearish crossover
+        # df["price_ema_crossover_up"] = 0  # Initialize signal column
+        # df.loc[(df["open"] < df["ema_short"]) & (df["close"] >= df["ema_short"]), "price_ema_crossover_up"] = 1  # Bearish crossover
 
 
         if self.unit_test:
@@ -169,12 +169,13 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.macd_crossover = row["macd_crossover"]
         self.macd_crossover_bull = bool(row["macd_crossover_bull"])
         self.macd_crossover_bear = bool(row["macd_crossover_bear"])
-        self.ema_upper_bb_crossover_down = bool(row["ema_upper_bb_crossover_down"])
-        self.ema_lower_bb_crossover_up = bool(row["ema_lower_bb_crossover_up"])
-        self.price_upper_bb_crossover_down = bool(row["price_upper_bb_crossover_down"])
-        self.price_lower_bb_crossover_up = bool(row["price_lower_bb_crossover_up"])
-        self.price_ema_crossover_up = bool(row["price_ema_crossover_up"])
-        self.price_ema_crossover_down = bool(row["price_ema_crossover_down"])
+
+        # self.ema_upper_bb_crossover_down = bool(row["ema_upper_bb_crossover_down"])
+        # self.ema_lower_bb_crossover_up = bool(row["ema_lower_bb_crossover_up"])
+        # self.price_upper_bb_crossover_down = bool(row["price_upper_bb_crossover_down"])
+        # self.price_lower_bb_crossover_up = bool(row["price_lower_bb_crossover_up"])
+        # self.price_ema_crossover_up = bool(row["price_ema_crossover_up"])
+        # self.price_ema_crossover_down = bool(row["price_ema_crossover_down"])
 
         
     def print_indicators(self):
@@ -182,5 +183,5 @@ class TradingStrategyCalc(TradingStrategyBase):
         logger.info(f"price: {round(self.price, 6)}, std_dev_long: {round(self.std_dev_long, 6)}, price_volatility: {round(self.price_volatility, 5)}, price_min: {round(self.price_min, 6)}, price_max: {round(self.price_max, 6)}")
         logger.info(f"sma_long: {round(self.sma_long, 6)} bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}, ema_short: {round(self.ema_short, 6)}")
         logger.info(f"rsi_short: {round(self.rsi_short, 2)}, rsi_max: {round(self.rsi_short_max, 2)}, rsi_min: {round(self.rsi_short_min, 2)}, rsi_pct_change: {round(self.rsi_short_pct_change, 2)}")
-        logger.info(f"macd_crossover: {self.macd_crossover}, macd_crossover_bull: {self.macd_crossover_bull}, macd_crossover_bear: {self.macd_crossover_bear}, ema_lower_bb_crossover_up: {self.ema_lower_bb_crossover_up}, ema_upper_bb_crossover_down: {self.ema_upper_bb_crossover_down}")
+        # logger.info(f"macd_crossover: {self.macd_crossover}, macd_crossover_bull: {self.macd_crossover_bull}, macd_crossover_bear: {self.macd_crossover_bear}, ema_lower_bb_crossover_up: {self.ema_lower_bb_crossover_up}, ema_upper_bb_crossover_down: {self.ema_upper_bb_crossover_down}")
 
