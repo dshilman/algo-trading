@@ -103,13 +103,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None).rolling(3).sum() # type: ignore
 
-        df["macd_crossover"] = 0  # Initialize signal column
-        df.loc[(df["ema_short"].shift() < df["sma_long"]) & (df["ema_short"] > df["sma_long"]), "macd_crossover"] = 1  # Bullish crossover
-        df.loc[(df["ema_short"].shift() > df["sma_long"]) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
-        df["macd_crossover_bull"] = df["macd_crossover"].rolling(5).apply(lambda x: 1 in x.values)
-        df["macd_crossover_bear"] = df["macd_crossover"].rolling(5).apply(lambda x: -1 in x.values)
-        
-
         # df["ema_upper_bb_crossover_down"] = 0  # Initialize signal column
         # df.loc[(df["ema_short"].shift() > df["bb_upper"]) & (df["ema_short"] < df["bb_upper"]), "ema_upper_bb_crossover_down"] = 1  # Bullish crossover
 
@@ -161,9 +154,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.rsi_short_max = round(row["rsi_short_max"], 4)
         self.rsi_short_min = round(row["rsi_short_min"], 4)
         self.rsi_short_pct_change = row["rsi_short_pct_change"]
-        self.macd_crossover = row["macd_crossover"]
-        self.macd_crossover_bull = bool(row["macd_crossover_bull"])
-        self.macd_crossover_bear = bool(row["macd_crossover_bear"])
 
         # self.ema_upper_bb_crossover_down = bool(row["ema_upper_bb_crossover_down"])
         # self.ema_lower_bb_crossover_up = bool(row["ema_lower_bb_crossover_up"])
