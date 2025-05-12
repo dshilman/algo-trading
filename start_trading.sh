@@ -4,14 +4,14 @@
 declare -A forex_pairs
 forex_pairs=(
     ["EUR_USD_1"]="MACD"
-    ["EUR_GBP_1"]="MACD"
+    # ["EUR_GBP_1"]="MACD"
     # ["AUD_USD_1"]="MACD"
     ["USD_CAD_1"]="MACD"
 
     ["EUR_USD_2"]="Mean Reverse"
     ["GBP_USD_2"]="Mean Reverse"
     # ["USD_CAD_2"]="Mean Reverse"
-    ["AUD_USD_2"]="Mean Reverse"
+    # ["AUD_USD_2"]="Mean Reverse"
 )
 
 echo "$(date) Current directory: $(pwd)"
