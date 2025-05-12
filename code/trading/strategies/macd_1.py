@@ -11,7 +11,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.strategies.base.strategy_exec import TradingStrategyExec
+from trading.strategies.base.strategy_macd_base import TradingStrategyMACD
 from trading.dom.trade import Trade_Action
 
 logger = logging.getLogger()
@@ -22,7 +22,7 @@ Go Long (buy) when the ask price is below the low Bollinger Band and close trade
 Go Short (sell) when the bid price is above the high Bollinger Band and close trade (buy) when the ask price below the low Bollinger Band
 
 """
-class TradingStrategy(TradingStrategyExec):
+class TradingStrategy(TradingStrategyMACD):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
@@ -39,7 +39,7 @@ class TradingStrategy(TradingStrategyExec):
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
-        if  self.std_dev_long <= self.trading_std and self.price_volatility > self.trading_price_volatility:
+        if  self.std_dev_long < self.trading_std and self.price_volatility > self.trading_price_volatility:
 
             if self.macd_crossover_bull and not self.macd_crossover_bear and \
                 self.rsi_short_max > self.high_rsi and self.price < self.bb_high:
