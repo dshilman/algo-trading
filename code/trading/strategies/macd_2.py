@@ -32,7 +32,7 @@ class TradingStrategy(TradingStrategyMACD):
 
             if self.macd_crossover_bull and not self.macd_crossover_bear \
                 and self.rsi_short > self.high_rsi \
-                    and self.bid < self.bb_high and self.price_min > self.bb_low and self.rsi_short_pct_change > 0:
+                    and self.bid < self.bb_high and self.is_up:
                         if not self.backtest:
                             logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                         return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
@@ -40,7 +40,7 @@ class TradingStrategy(TradingStrategyMACD):
 
             elif self.macd_crossover_bear and not self.macd_crossover_bull \
                 and self.rsi_short < self.low_rsi \
-                    and self.ask > self.bb_low and self.price_max < self.bb_high and self.rsi_short_pct_change < 0:
+                    and self.ask > self.bb_low and not self.is_up:
                         if not self.backtest:
                             logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                         return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
