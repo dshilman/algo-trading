@@ -87,10 +87,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         # Bollinger Band
         df["close"] = df["close"].fillna(0)
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
-        df["std_dev_long_min"] = df["std_dev_long"].rolling(period_short).min()
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
         df["price_max"] = df["high"].rolling(self.period_short).max()
         df["price_min"] = df["low"].rolling(self.period_short).min()
+        df['is_up'] = (df['close'] > df['open']).astype(int)
 
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean()
@@ -142,8 +142,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.price_high = row["high"]
         self.price_max = row["price_max"]
         self.price_min = row["price_min"]
+        self.is_up = bool(row["is_up"])
+
         self.std_dev_long = row["std_dev_long"]
-        self.std_dev_long_min = row["std_dev_long_min"]
         self.price_volatility = row["price_volatility"]
         self.sma_long = row["sma_long"]
         self.ema_short = row["ema_short"]
