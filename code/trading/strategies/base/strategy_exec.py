@@ -47,13 +47,14 @@ class TradingStrategyExec(TradingStrategyCalc):
         have_units = self.trading_session.have_units
 
         spread = round((self.ask - self.bid), 5)
+        is_trading_time = self.is_trading_time(trading_time)
 
         if not self.backtest:
-            logger.info(f"is trading: {self.is_trading_time(trading_time)}, have_unit: {have_units}, spread: {spread}, trading spread: {self.trading_spread}")
+            logger.info(f"is trading: {is_trading_time}, have_unit: {have_units}, spread: {spread}, trading spread: {self.trading_spread}")
 
         trade = None
         
-        if have_units == 0 and self.is_trading_time(trading_time) and (self.trading_spread == 0 or spread <= self.trading_spread):
+        if have_units == 0 and is_trading_time and (self.trading_spread == 0 or spread <= self.trading_spread):
       
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)
