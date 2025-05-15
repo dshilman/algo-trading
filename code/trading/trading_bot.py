@@ -178,7 +178,7 @@ class Trader():
                     logger.info("Excute strategy")
                     status = self.exec_strategy(ticker_data_df, trading_time)
 
-                    if exec_counter % 20 == 0:
+                    if exec_counter % 10 == 0:
                         logger.info("\n" + self.strategy.data[-10:].to_string(header=True))
                         logger.info("")
 
