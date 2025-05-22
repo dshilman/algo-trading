@@ -32,6 +32,7 @@
 30 15 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 00 16 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 30 16 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
+00 17 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 30 17 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 00 18 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 30 18 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
@@ -45,6 +46,5 @@
 30 22 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 00 23 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
 30 23 * * 1-6 cd algo-trading && nohup ./start_trading.sh >> restart_trading.log 2>&1
-00 17 * * 1-6 cd algo-trading && nohup ./restart_trading.sh >> restart_trading.log 2>&1
-00 17 * * 1-6 cd algo-trading && nohup ./clean_logs.sh >> restart_trading.log 2>&1
+00 00 * * 1-6 cd algo-trading && nohup ./clean_logs.sh >> restart_trading.log 2>&1
  
