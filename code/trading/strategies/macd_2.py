@@ -30,7 +30,7 @@ class TradingStrategy(TradingStrategyMACD):
 
         if  self.price_volatility > self.trading_price_volatility:
 
-            if self.macd_crossover_bull and not self.macd_crossover_bear \
+            if self.macd_crossover_bull \
                 and self.rsi_short > self.high_rsi \
                     and self.bid < self.bb_high and self.is_up:
                         if not self.backtest:
@@ -38,7 +38,7 @@ class TradingStrategy(TradingStrategyMACD):
                         return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
-            elif self.macd_crossover_bear and not self.macd_crossover_bull \
+            elif self.macd_crossover_bear \
                 and self.rsi_short < self.low_rsi \
                     and self.ask > self.bb_low and not self.is_up:
                         if not self.backtest:
