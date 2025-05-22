@@ -36,7 +36,7 @@ class TradingStrategyCalc(TradingStrategyBase):
     def to_5_min_candles(self, ticker_data_list, trading_time: datetime) -> pd.DataFrame:
 
         # Filter raw data to the window
-        cut_off_time = trading_time - timedelta(minutes=utils.ticker_data_size * (utils.frequency_min + 5), seconds=trading_time.second)
+        cut_off_time = trading_time - timedelta(minutes=utils.ticker_data_size * utils.frequency_min, seconds=trading_time.second)
         filtered_ticker_data_list = [
             item for item in ticker_data_list if item[0] > cut_off_time
         ]

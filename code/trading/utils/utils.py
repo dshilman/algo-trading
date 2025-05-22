@@ -1,5 +1,5 @@
 date_format = "%Y-%m-%d %H:%M:%S"
-ticker_data_size=100
+ticker_data_size=110
 frequency_min = 5
 
 def convert_perc_to_pips(units, perc, price):
