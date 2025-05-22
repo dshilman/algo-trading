@@ -37,7 +37,7 @@ jobs:
           port: 22
           script: |            
             cd ${{ vars.TARGET }}
-            nohup ./restart_trading.sh > restart_trading.log 2>&1 &
+            nohup ./restart_trading.sh >> restart_trading.log 2>&1 &
 
       - name: Update Crontab on Remote Server
         uses: appleboy/ssh-action@v1.2.2
