@@ -129,13 +129,10 @@ class TradingStrategyExec(TradingStrategyCalc):
         return 0
 
 
-    def need_close_trade(self, trading_time) -> bool:
+    def need_close_trade(self, trading_time: datetime) -> bool:
 
         if not self.is_trading_time(trading_time):
             return True
-
-        # if self.calc_trade_open_duration(trading_time) > 240 and round(self.calc_open_trade_profit(self.trading_session.have_units), 4) <= 0:
-        #     return True
 
         open_trade_time = self.get_open_trade_time()        
 
@@ -177,11 +174,11 @@ class TradingStrategyExec(TradingStrategyCalc):
         date_time_est = date_time.astimezone(est)
         logger.debug(f"Date time (EST): {date_time_est}")
 
-        # day = date_time_est.weekday()
-        # hour = date_time_est.hour
+        day = date_time_est.weekday()
+        hour = date_time_est.hour
 
-        # if day == 4 and hour >= 20:
-        #     return False
+        if day > 4 or day == 4 and hour >= 15:
+            return False
 
         pause_from_dt = datetime.combine(date_time_est.date(), datetime.strptime(self.pause_start_est, '%H:%M:%S').time(), tzinfo=est)
         pause_to_dt = datetime.combine(date_time_est.date(), datetime.strptime(self.pause_end_est, '%H:%M:%S').time(), tzinfo=est)
