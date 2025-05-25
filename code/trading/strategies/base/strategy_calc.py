@@ -54,12 +54,12 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         ticker_df.rename(columns={"mid": "close"}, inplace=True)
 
-        df_open = ticker_df["close"].resample(f"{utils.frequency_min}min").first()
+        df_open = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').first()
         df_open.name = "open"
-        df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{utils.frequency_min}min").last()
-        df_high = ticker_df["close"].resample(f"{utils.frequency_min}min").max()
+        df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{utils.frequency_min}min", label='right', closed='right').last()
+        df_high = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').max()
         df_high.name = "high"
-        df_low = ticker_df["close"].resample(f"{utils.frequency_min}min").min()
+        df_low = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').min()
         df_low.name = "low"
 
         # Merge all into one DataFrame
