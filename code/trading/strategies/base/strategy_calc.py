@@ -66,11 +66,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         df_consolidated = pd.concat([df_open, df_mid, df_low, df_high], axis=1).sort_index()
 
         # Logging
-        logger.info(
-            f"price data queue size: {len(ticker_data_list)}, "
-            f"filtered price data size: {len(filtered_ticker_data_list)}, "
-            f"ticker data size: {len(df_consolidated.index)}"
-        )
+        # logger.info(
+        #     f"price data queue size: {len(ticker_data_list)}, "
+        #     f"filtered price data size: {len(filtered_ticker_data_list)}, "
+        #     f"ticker data size: {len(df_consolidated.index)}"
+        # )
 
         return df_consolidated
 
