@@ -98,7 +98,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
 
-        df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
+        df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x))
         df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
         df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None).rolling(3).sum() # type: ignore
