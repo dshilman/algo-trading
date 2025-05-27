@@ -162,34 +162,34 @@ class Trader():
                 trading_time = datetime.now(tz=timezone.utc)
                 logger.debug (f"Refresh Strategy... {trading_time}")
 
-                if trading_time.minute % 5 == 0 and trading_time.second < 10:
+                if trading_time.second <= 60:
                     exec_counter = exec_counter + 1                        
                     logger.info("")
-                    logger.info(f"Start executing strategy... {exec_counter}")
+                    # logger.info(f"Start executing strategy... {exec_counter}")
 
                     if self.streaming:
-                        logger.info("Prep pricing data")
+                        # logger.info("Prep pricing data")
                         ticker_data_list = list(self.ticker_data_deque)                        
                         ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list, trading_time)
                     else:
-                        logger.info(f"Get candles for {self.strategy.instrument}")
+                        # logger.info(f"Get candles for {self.strategy.instrument}")
                         ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
 
-                    logger.info("Excute strategy")
+                    # logger.info("Excute strategy")
                     status = self.exec_strategy(ticker_data_df, trading_time)
 
-                    if exec_counter % 10 == 0:
+                    if exec_counter % 100 == 0:
                         logger.info("\n" + self.strategy.data[-10:].to_string(header=True))
                         logger.info("")
 
                     if status:
                         # self.strategy.print_indicators()
-                        sleep(utils.frequency_min * 60 - 10)
+                        sleep(30)
 
                 else:
                     logger.debug (f"Skipping strategy execution... {trading_time}")
 
-                sleep(refresh)
+                sleep(5)
  
             except Exception as e:
                 logger.error("Exception occurred in refresh_strategy")

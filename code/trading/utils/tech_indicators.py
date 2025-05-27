@@ -24,8 +24,9 @@ def calculate_momentum(S: pd.Series, n):
     return (S - S.shift(n)).mean()
 
 # Calculate RSI
-def calculate_rsi(prices: pd.Series, period=14):
-    
+def calculate_rsi(prices: pd.Series):
+
+    period = prices.size
     delta = prices.diff()
     gain = delta.where(delta.gt(0), 0)
     loss = -delta.where(delta.lt(0), 0)
@@ -38,7 +39,9 @@ def calculate_rsi(prices: pd.Series, period=14):
     
     return round(rsi, 4)
 
-def compute_rsi(close: pd.Series, period: int = 14) -> pd.Series:
+def compute_rsi(close: pd.Series) -> pd.Series:
+
+    period = close.size
     delta = close.diff()
     gain = delta.clip(lower=0).rolling(window=period).mean()
     loss = -delta.clip(upper=0).rolling(window=period).mean()
@@ -47,7 +50,7 @@ def compute_rsi(close: pd.Series, period: int = 14) -> pd.Series:
     return rsi
 
 
-def calculate_rsi_new(S, period=14):
+def calculate_rsi_new(S):
     
     prices = pd.Series(S)
     delta = prices.diff()

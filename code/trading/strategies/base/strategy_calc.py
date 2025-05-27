@@ -54,23 +54,23 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         ticker_df.rename(columns={"mid": "close"}, inplace=True)
 
-        df_open = ticker_df["close"].resample(f"{utils.frequency_min}min").first()
+        df_open = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').first()
         df_open.name = "open"
-        df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{utils.frequency_min}min").last()
-        df_high = ticker_df["close"].resample(f"{utils.frequency_min}min").max()
+        df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{utils.frequency_min}min", label='right', closed='right').last()
+        df_high = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').max()
         df_high.name = "high"
-        df_low = ticker_df["close"].resample(f"{utils.frequency_min}min").min()
+        df_low = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').min()
         df_low.name = "low"
 
         # Merge all into one DataFrame
         df_consolidated = pd.concat([df_open, df_mid, df_low, df_high], axis=1).sort_index()
 
         # Logging
-        logger.info(
-            f"price data queue size: {len(ticker_data_list)}, "
-            f"filtered price data size: {len(filtered_ticker_data_list)}, "
-            f"ticker data size: {len(df_consolidated.index)}"
-        )
+        # logger.info(
+        #     f"price data queue size: {len(ticker_data_list)}, "
+        #     f"filtered price data size: {len(filtered_ticker_data_list)}, "
+        #     f"ticker data size: {len(df_consolidated.index)}"
+        # )
 
         return df_consolidated
 
@@ -98,7 +98,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
 
-        df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x, period_short))
+        df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x))
         df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
         df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None).rolling(3).sum() # type: ignore
