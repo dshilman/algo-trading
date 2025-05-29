@@ -116,7 +116,7 @@ class Trader():
 
     def start_streaming(self):
 
-        candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
+        candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument, granularity="S30", count=utils.frequency_min * 2 * utils.ticker_data_size)
         self.reset_dequeue(candles)
         
         self.streaming = True
@@ -172,7 +172,7 @@ class Trader():
                     ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list, trading_time)
                 else:
                     # logger.info(f"Get candles for {self.strategy.instrument}")
-                    ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument)
+                    ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument, granularity="M5", count=utils.ticker_data_size + 1)
 
                 # logger.info("Excute strategy")
                 status = self.exec_strategy(ticker_data_df, trading_time)
