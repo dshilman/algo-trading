@@ -35,10 +35,10 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
         df: pd.DataFrame = self.data
        
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
-        df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).mean()
+        df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).apply(lambda x: x.ffill().mean())
 
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
-        df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
+        df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).apply(lambda x: x.ffill().mean())
         
         self.data = df
 
