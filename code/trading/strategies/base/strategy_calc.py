@@ -1,16 +1,13 @@
 from math import log
 
-from trading.utils.tech_indicators import (
-    count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema, predict_next)
+from trading.utils.tech_indicators import calculate_rsi
 from trading.strategies.base.strategy_base import TradingStrategyBase
 from trading.utils import utils
 import logging
 import sys
-import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 import pandas as pd
-from tabulate import tabulate
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
@@ -86,9 +83,6 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # Bollinger Band
         df["close"] = df["close"].fillna(0)
-        df['predicted'] = df['close'].rolling(window=period_short).apply(predict_next)
-        df['error'] = df['predicted'] - df['close']
-
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
         df["price_max"] = df["high"].rolling(self.period_short).max()
@@ -136,7 +130,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         if row is None:
             row = self.data.iloc[-1]
 
-        self.error = row["error"]
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row["close"]

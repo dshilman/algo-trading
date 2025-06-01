@@ -1,18 +1,13 @@
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Optional
-
 import pandas as pd
-
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.utils.tech_indicators import (
-    count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema)
+from trading.utils.tech_indicators import predict_next
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 from trading.dom.trade import Trade_Action
 
@@ -33,7 +28,9 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
         super().calc_indicators()
 
         df: pd.DataFrame = self.data
-       
+        df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
+        df['error'] = df['predicted'] - df['close']
+
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
         df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).mean()
 
@@ -44,6 +41,8 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
 
     def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
+
+        self.error = row["error"]
 
         self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
         self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
