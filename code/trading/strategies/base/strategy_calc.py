@@ -1,6 +1,6 @@
 from math import log
 
-from trading.utils.tech_indicators import calculate_rsi
+from trading.utils.tech_indicators import calculate_rsi, predict_next
 from trading.strategies.base.strategy_base import TradingStrategyBase
 from trading.utils import utils
 import logging
@@ -81,13 +81,13 @@ class TradingStrategyCalc(TradingStrategyBase):
         period_long = self.SMA
         period_short = self.period_short
 
-        # Bollinger Band
         df["close"] = df["close"].fillna(0)
+        df['is_up'] = (df['close'] > df['open']).astype(int)
+
+        df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
+        df['error'] = df['predicted'] - df['close']
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
-        df["price_max"] = df["high"].rolling(self.period_short).max()
-        df["price_min"] = df["low"].rolling(self.period_short).min()
-        df['is_up'] = (df['close'] > df['open']).astype(int)
 
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean()
@@ -95,27 +95,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
 
         df["rsi_short"] = df["close"].rolling(period_short).apply(calculate_rsi)
-        df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
-        df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
-        df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None).rolling(3).sum() # type: ignore
-
-        # df["ema_upper_bb_crossover_down"] = 0  # Initialize signal column
-        # df.loc[(df["ema_short"].shift() > df["bb_upper"]) & (df["ema_short"] < df["bb_upper"]), "ema_upper_bb_crossover_down"] = 1  # Bullish crossover
-
-        # df["ema_lower_bb_crossover_up"] = 0  # Initialize signal column
-        # df.loc[(df["ema_short"].shift() < df["bb_lower"]) & (df["ema_short"] > df["bb_lower"]), "ema_lower_bb_crossover_up"] = 1  # Bearish crossover
-
-        # df["price_upper_bb_crossover_down"] = 0  # Initialize signal column
-        # df.loc[(df["open"] > df["bb_upper"]) & (df["close"] <= df["bb_upper"]), "price_upper_bb_crossover_down"] = 1  # Bullish crossover
-
-        # df["price_lower_bb_crossover_up"] = 0  # Initialize signal column
-        # df.loc[(df["open"] < df["bb_lower"]) & (df["close"] >= df["bb_lower"]), "price_lower_bb_crossover_up"] = 1  # Bearish crossover
-
-        # df["price_ema_crossover_down"] = 0  # Initialize signal column
-        # df.loc[(df["open"] > df["ema_short"]) & (df["close"] <= df["ema_short"]), "price_ema_crossover_down"] = 1  # Bullish crossover
-
-        # df["price_ema_crossover_up"] = 0  # Initialize signal column
-        # df.loc[(df["open"] < df["ema_short"]) & (df["close"] >= df["ema_short"]), "price_ema_crossover_up"] = 1  # Bearish crossover
 
 
         if self.unit_test:
@@ -130,40 +109,20 @@ class TradingStrategyCalc(TradingStrategyBase):
         if row is None:
             row = self.data.iloc[-1]
 
+        self.is_up = bool(row["is_up"])
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row["close"]
+        self.error = row["error"]
+        self.predicted = row["predicted"]
         self.price_open = row["open"]
         self.price_low = row["low"]
         self.price_high = row["high"]
-        self.price_max = row["price_max"]
-        self.price_min = row["price_min"]
-        self.is_up = bool(row["is_up"])
 
         self.std_dev_long = row["std_dev_long"]
         self.price_volatility = row["price_volatility"]
         self.sma_long = row["sma_long"]
         self.ema_short = row["ema_short"]
-        # self.ema_short_slope = row["ema_short_slope"]
         self.bb_low = row["bb_lower"]
         self.bb_high = row["bb_upper"]
         self.rsi_short = round(row["rsi_short"], 4)
-        self.rsi_short_max = round(row["rsi_short_max"], 4)
-        self.rsi_short_min = round(row["rsi_short_min"], 4)
-        self.rsi_short_pct_change = row["rsi_short_pct_change"]
-
-        # self.ema_upper_bb_crossover_down = bool(row["ema_upper_bb_crossover_down"])
-        # self.ema_lower_bb_crossover_up = bool(row["ema_lower_bb_crossover_up"])
-        # self.price_upper_bb_crossover_down = bool(row["price_upper_bb_crossover_down"])
-        # self.price_lower_bb_crossover_up = bool(row["price_lower_bb_crossover_up"])
-        # self.price_ema_crossover_up = bool(row["price_ema_crossover_up"])
-        # self.price_ema_crossover_down = bool(row["price_ema_crossover_down"])
-
-        
-    def print_indicators(self):
-
-        logger.info(f"price: {round(self.price, 6)}, std_dev_long: {round(self.std_dev_long, 6)}, price_volatility: {round(self.price_volatility, 5)}, price_min: {round(self.price_min, 6)}, price_max: {round(self.price_max, 6)}")
-        logger.info(f"sma_long: {round(self.sma_long, 6)} bb_low: {round(self.bb_low, 6)}, bb_high: {round(self.bb_high, 6)}, ema_short: {round(self.ema_short, 6)}")
-        logger.info(f"rsi_short: {round(self.rsi_short, 2)}, rsi_max: {round(self.rsi_short_max, 2)}, rsi_min: {round(self.rsi_short_min, 2)}, rsi_pct_change: {round(self.rsi_short_pct_change, 2)}")
-        # logger.info(f"macd_crossover: {self.macd_crossover}, macd_crossover_bull: {self.macd_crossover_bull}, macd_crossover_bear: {self.macd_crossover_bear}, ema_lower_bb_crossover_up: {self.ema_lower_bb_crossover_up}, ema_upper_bb_crossover_down: {self.ema_upper_bb_crossover_down}")
-

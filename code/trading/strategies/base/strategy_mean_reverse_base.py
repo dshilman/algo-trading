@@ -7,7 +7,6 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.utils.tech_indicators import predict_next
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 from trading.dom.trade import Trade_Action
 
@@ -28,8 +27,12 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
         super().calc_indicators()
 
         df: pd.DataFrame = self.data
-        df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
-        df['error'] = df['predicted'] - df['close']
+
+        df["price_max"] = df["high"].rolling(self.period_short).max()
+        df["price_min"] = df["low"].rolling(self.period_short).min()
+
+        df["rsi_short_max"] = df["rsi_short"].rolling(self.period_short).max()
+        df["rsi_short_min"] = df["rsi_short"].rolling(self.period_short).min()
 
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
         df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).mean()
@@ -42,11 +45,14 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
     def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
 
-        self.error = row["error"]
+        self.price_max = row["price_max"]
+        self.price_min = row["price_min"]
+
+        self.rsi_short_max = round(row["rsi_short_max"], 4)
+        self.rsi_short_min = round(row["rsi_short_min"], 4)
 
         self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
         self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
 
         self.ema_bb_high_divergance_mean = row["ema_bb_high_divergance_mean"]
         self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
-
