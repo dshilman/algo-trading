@@ -11,8 +11,6 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.utils.tech_indicators import (
-    count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema)
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 from trading.dom.trade import Trade_Action
 
@@ -28,13 +26,11 @@ class TradingStrategyMACD(TradingStrategyExec):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
-
-
     def calc_indicators(self):
         super().calc_indicators()
 
         df: pd.DataFrame = self.data
- 
+
         df["macd_crossover"] = 0  # Initialize signal column
         df.loc[(df["ema_short"].shift() < df["sma_long"]) & (df["ema_short"] > df["sma_long"]), "macd_crossover"] = 1  # Bullish crossover
         df.loc[(df["ema_short"].shift() > df["sma_long"]) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
