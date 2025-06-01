@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
 
 
@@ -76,3 +79,13 @@ def calculate_ema(S: pd.Series, span=15):
 
    return S.ewm(span=span, adjust=False).mean().iloc[-1]
 
+
+
+def predict_next(y):
+
+    x = np.arange(len(y)).reshape(-1, 1)
+    model = LinearRegression()
+    model.fit(x, y.values.reshape(-1, 1))
+    next_x = np.array([[len(y)]])
+    next_pred = model.predict(next_x)[0, 0]
+    return next_pred

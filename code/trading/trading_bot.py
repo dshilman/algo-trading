@@ -18,6 +18,7 @@ file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
+from trading.dom.trade import Trade_Action
 from trading.api.oanda_api import OandaApi, StopTradingEvent
 from trading.strategies.base.strategy_exec import TradingStrategyExec
 from trading.utils import utils
@@ -175,8 +176,8 @@ class Trader():
                     ticker_data_df = self.api.get_latest_price_candles(pair_name=self.strategy.instrument, granularity="M5", count=utils.ticker_data_size + 1)
 
                 # logger.info("Excute strategy")
-                status = self.exec_strategy(ticker_data_df, trading_time)
-
+                self.exec_strategy(ticker_data_df, trading_time)
+           
                 if exec_counter % 100 == 0:
                     logger.info("\n" + self.strategy.data[-10:].to_string(header=True))
                     logger.info("")
@@ -193,18 +194,18 @@ class Trader():
    
         self.terminate = True
 
-    def exec_strategy(self, ticker_data_df: pd.DataFrame, trading_time) -> bool:
+    def exec_strategy(self, ticker_data_df: pd.DataFrame, trading_time) -> Trade_Action:
 
         # logger.debug(f"Ticker data: {ticker_data_df}")
 
         if len(ticker_data_df.index) < utils.ticker_data_size:
             logger.info(f"Skip strategy execution, {len(ticker_data_df.index)} ticker data size is too small. From: {ticker_data_df.index [0] if len(ticker_data_df.index) > 0 else 'N/A'}, to: {ticker_data_df.index [-1] if len(ticker_data_df.index) > 0 else 'N/A'}")
-            return False
+            return # type: ignore
 
         last_candle_time: pd.Timestamp = ticker_data_df.index[-1]
         if trading_time - last_candle_time > timedelta(seconds=30):
             logger.info(f"Ticker data is too stale: {last_candle_time}, trading time: {trading_time}. Try again soon.")
-            return False
+            return # type: ignore
 
 
         self.strategy.data = ticker_data_df
@@ -212,12 +213,9 @@ class Trader():
         self.strategy.set_strategy_indicators(ticker_data_df.iloc[-1])
 
         self.strategy.trading_session.have_units = int(self.api.get_position(instrument = self.strategy.instrument))
-        self.strategy.execute_strategy(trading_time)
+        trade_action = self.strategy.execute_strategy(trading_time)
 
-        if not self.strategy.is_trading_time(trading_time) and self.strategy.trading_session.has_trades():
-            self.strategy.trading_session.print_trades()
-
-        return True
+        return trade_action
 
 
     def check_positions(self, refresh = 300): 
