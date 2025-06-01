@@ -1,7 +1,7 @@
 from math import log
 
 from trading.utils.tech_indicators import (
-    count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema)
+    count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema, predict_next)
 from trading.strategies.base.strategy_base import TradingStrategyBase
 from trading.utils import utils
 import logging
@@ -86,6 +86,9 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # Bollinger Band
         df["close"] = df["close"].fillna(0)
+        df['predicted'] = df['close'].rolling(window=period_short).apply(predict_next)
+        df['error'] = df['predicted'] - df['close']
+
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
         df["price_max"] = df["high"].rolling(self.period_short).max()
@@ -94,11 +97,10 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean()
-        # df["ema_short_slope"] = df["ema_short"].rolling(period_short).apply(lambda x: calculate_slope(x))
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
 
-        df["rsi_short"] = df["close"].rolling(period_short).apply(lambda x: calculate_rsi(x))
+        df["rsi_short"] = df["close"].rolling(period_short).apply(calculate_rsi)
         df["rsi_short_max"] = df["rsi_short"].rolling(period_short).max()
         df["rsi_short_min"] = df["rsi_short"].rolling(period_short).min()
         df["rsi_short_pct_change"] = df["rsi_short"].pct_change(fill_method=None).rolling(3).sum() # type: ignore
@@ -133,7 +135,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         if row is None:
             row = self.data.iloc[-1]
-    
+
+        self.error = row["error"]
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row["close"]

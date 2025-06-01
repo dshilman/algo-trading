@@ -40,7 +40,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         # if trade_action is not None and trade_action.sl_trade:
         #     raise PauseTradingException(2)
 
-        return
+        return trade_action
 
     def determine_trade_action(self, trading_time) -> Trade_Action:
 

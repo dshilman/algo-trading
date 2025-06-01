@@ -6,3 +6,4 @@ botocore
 tabulate
 openpyxl
 requests
+scikit-learn
