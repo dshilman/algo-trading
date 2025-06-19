@@ -68,18 +68,13 @@ def calculate_rsi_new(S):
     
     return rsi
 
-def calculate_slope(S: pd.Series):
-
-    x = np.arange(S.size)
-    fit = np.polyfit(x, np.asarray(S.values), deg=1)
-    slope = fit[0]
-    return slope
-
 def calculate_ema(S: pd.Series, span=15):
 
    return S.ewm(span=span, adjust=False).mean().iloc[-1]
 
-
+def calculate_slope(S: pd.Series) -> float:
+    x = np.arange(len(S))
+    return np.polyfit(x, np.asarray(S.values), 1)[0]
 
 def predict_next(y):
 
