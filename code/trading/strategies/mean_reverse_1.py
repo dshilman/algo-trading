@@ -1,18 +1,11 @@
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Optional
-
-import pandas as pd
-
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.utils.tech_indicators import (
-    count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema)
 from trading.strategies.base.strategy_mean_reverse_base import TradingStrategyMeanReverse
 from trading.dom.trade import Trade_Action
 
