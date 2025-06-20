@@ -3,13 +3,11 @@ from trading.strategies.base.strategy_calc import TradingStrategyCalc
 from trading.dom.trade import Trade_Action
 import logging
 import sys
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import datetime, timedelta
 
 from pathlib import Path
 
 import pandas as pd
-from tabulate import tabulate
 import pytz
 
 file = Path(__file__).resolve()
