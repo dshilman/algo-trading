@@ -28,12 +28,6 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
 
         df: pd.DataFrame = self.data
 
-        df["price_max"] = df["high"].rolling(self.period_short).max()
-        df["price_min"] = df["low"].rolling(self.period_short).min()
-
-        df["rsi_short_max"] = df["rsi_short"].rolling(self.period_short).max()
-        df["rsi_short_min"] = df["rsi_short"].rolling(self.period_short).min()
-
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
         df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).mean()
 
@@ -44,12 +38,6 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
 
     def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
-
-        self.price_max = row["price_max"]
-        self.price_min = row["price_min"]
-
-        self.rsi_short_max = round(row["rsi_short_max"], 4)
-        self.rsi_short_min = round(row["rsi_short_min"], 4)
 
         self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
         self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
