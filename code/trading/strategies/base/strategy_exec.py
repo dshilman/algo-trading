@@ -48,7 +48,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         is_trading_time = self.is_trading_time(trading_time)
 
         if not self.backtest:
-            logger.info(f"is trading: {is_trading_time}, have_unit: {have_units}, spread: {spread}, trading spread: {self.trading_spread}")
+            logger.debug(f"is trading: {is_trading_time}, have_unit: {have_units}, spread: {spread}, trading spread: {self.trading_spread}")
 
         trade = None
         
