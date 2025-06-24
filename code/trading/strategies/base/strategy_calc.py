@@ -1,6 +1,6 @@
 from math import log
 
-from trading.utils.tech_indicators import calculate_rsi, predict_next, calculate_slope
+from trading.utils.tech_indicators import calculate_rsi, predict_next, calculate_slope, compute_price_momentum
 from trading.strategies.base.strategy_base import TradingStrategyBase
 from trading.utils import utils
 import logging
@@ -82,20 +82,22 @@ class TradingStrategyCalc(TradingStrategyBase):
         period_short = self.period_short
 
         df["close"] = df["close"].fillna(0)
-        df['is_up'] = (df['close'] > df['open']).astype(int)
 
+        df["price_max"] = df["high"].rolling(self.period_short).max()
+        df["price_min"] = df["low"].rolling(self.period_short).min()
+        df["rsi_short"] = df["close"].rolling(period_short).apply(calculate_rsi)
+        df["rsi_short_max"] = df["rsi_short"].rolling(self.period_short).max()
+        df["rsi_short_min"] = df["rsi_short"].rolling(self.period_short).min()
+        df['is_up'] = (df['close'] > df['open']).astype(int)
         df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
         df['error'] = df['predicted'] - df['close']
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
-
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean()
-        # df["ema_short_slope"] = df["ema_short"].rolling(window=period_short).apply(calculate_slope)
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
-
-        df["rsi_short"] = df["close"].rolling(period_short).apply(calculate_rsi)
+        df["momentum"] = df["close"].rolling(period_short).apply(compute_price_momentum)
 
 
         if self.unit_test:
@@ -110,6 +112,11 @@ class TradingStrategyCalc(TradingStrategyBase):
         if row is None:
             row = self.data.iloc[-1]
 
+        self.price_max = row["price_max"]
+        self.price_min = row["price_min"]
+        self.rsi_short = round(row["rsi_short"], 4)
+        self.rsi_short_max = round(row["rsi_short_max"], 4)
+        self.rsi_short_min = round(row["rsi_short_min"], 4)
         self.is_up = bool(row["is_up"])
         self.ask = row["ask"]
         self.bid = row["bid"]
@@ -119,12 +126,10 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.price_open = row["open"]
         self.price_low = row["low"]
         self.price_high = row["high"]
-
         self.std_dev_long = row["std_dev_long"]
         self.price_volatility = row["price_volatility"]
         self.sma_long = row["sma_long"]
         self.ema_short = row["ema_short"]
-        # self.ema_short_slope = row["ema_short_slope"]
         self.bb_low = row["bb_lower"]
         self.bb_high = row["bb_upper"]
-        self.rsi_short = round(row["rsi_short"], 4)
+        self.momentum = round(row["momentum"], 4)

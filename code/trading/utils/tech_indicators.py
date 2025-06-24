@@ -84,3 +84,13 @@ def predict_next(y):
     next_x = np.array([[len(y)]])
     next_pred = model.predict(next_x)[0, 0]
     return next_pred
+
+def compute_price_momentum(close: pd.Series) -> float:
+    window = close.size
+    open = close.shift()
+
+    momemntum =  close.pct_change(window-1)
+    strength = (close > open).astype(int).rolling(window=window, min_periods=window).sum() / window
+    momemntum_strength = momemntum.iloc[-1] * strength.iloc[-1]
+
+    return momemntum_strength

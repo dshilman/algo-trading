@@ -1,18 +1,11 @@
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Optional
-
-import pandas as pd
-
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.utils.tech_indicators import (
-    count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema)
 from trading.strategies.base.strategy_mean_reverse_base import TradingStrategyMeanReverse
 from trading.dom.trade import Trade_Action
 
@@ -33,16 +26,16 @@ class TradingStrategy(TradingStrategyMeanReverse):
    
         if  self.std_dev_long > self.trading_std and self.price_volatility > self.trading_price_volatility and abs(self.error) > .0005:
 
-            if self.rsi_short_max > self.high_rsi \
-                and self.price_max > self.bb_high and self.price > self.sma_long \
+            if self.rsi_short_max > self.high_rsi and self.ema_short_slope_max > .00015 \
+                and self.price_max > self.bb_high and self.bid > self.sma_long \
                     and (self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean > 0):
                         if not self.backtest:
                             logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                         return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
                             
 
-            elif self.rsi_short_min < self.low_rsi \
-                and self.price_min < self.bb_low and self.price < self.sma_long \
+            elif self.rsi_short_min < self.low_rsi and self.ema_short_slope_min < -.00015 \
+                and self.price_min < self.bb_low and self.ask < self.sma_long \
                     and (self.ema_bb_low_divergance > self.ema_bb_low_divergance_mean > 0):
                         if not self.backtest:
                             logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")

@@ -4,7 +4,6 @@ import logging
 import sys
 from pathlib import Path
 import pandas as pd
-from tabulate import tabulate
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]

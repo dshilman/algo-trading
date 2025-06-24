@@ -1,29 +1,18 @@
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Optional
 
-import pandas as pd
-
+from numpy import average
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
 
-from trading.utils.tech_indicators import (
-    count_sma_crossover, calculate_rsi, calculate_slope, calculate_ema)
 from trading.strategies.base.strategy_mean_reverse_base import TradingStrategyMeanReverse
 from trading.dom.trade import Trade_Action
 
 logger = logging.getLogger()
 
-"""
-Go Long (buy) when the ask price is below the low Bollinger Band and close trade (sell) when the bid price above the SMA
-
-Go Short (sell) when the bid price is above the high Bollinger Band and close trade (buy) when the ask price below the low Bollinger Band
-
-"""
 class TradingStrategy(TradingStrategyMeanReverse):
     def __init__(self, trading_strategy, pair_file, api = None, unit_test = False):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
