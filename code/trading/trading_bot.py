@@ -164,7 +164,7 @@ class Trader():
                 logger.debug (f"Refresh Strategy... {trading_time}")
 
                 exec_counter = exec_counter + 1                        
-                logger.info("")
+                # logger.info("")
                 # logger.info(f"Start executing strategy... {exec_counter}")
 
                 if self.streaming:
