@@ -224,12 +224,11 @@ class TradingStrategyExec(TradingStrategyCalc):
             if (close_trade or take_profit) and not self.is_up:
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
-                return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.bid, False, False, take_profit)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                 
         elif have_units < 0:  # short position
             if (close_trade or take_profit) and self.is_up:
-
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
-                return Trade_Action(trading_time, self.instrument, -have_units, tp_price if take_profit else self.ask, False, False, take_profit)
+                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
 

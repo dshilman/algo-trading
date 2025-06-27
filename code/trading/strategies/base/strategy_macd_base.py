@@ -1,15 +1,14 @@
 import logging
 import sys
 from pathlib import Path
-
 import pandas as pd
+from trading.strategies.base.strategy_exec import TradingStrategyExec
+from trading.dom.trade import Trade_Action
 
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
-
-from trading.strategies.base.strategy_exec import TradingStrategyExec
 
 logger = logging.getLogger()
 
@@ -37,3 +36,22 @@ class TradingStrategyMACD(TradingStrategyExec):
         self.macd_crossover_bull = bool(row["macd_crossover_bull"])
         self.macd_crossover_bear = bool(row["macd_crossover_bear"])
 
+    # def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
+
+    #     trade_action = super().check_if_need_close_trade(trading_time=trading_time)
+    #     if trade_action is not None:
+    #         return trade_action
+        
+    #     have_units = self.trading_session.have_units
+
+    #     if have_units > 0:  # long position
+    #         if self.bid < self.bb_low:
+    #             if not self.backtest:
+    #                 logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
+    #             return Trade_Action(trading_time, self.instrument, -have_units, self.bid)
+                
+    #     elif have_units < 0:  # short position
+    #         if self.ask > self.bb_high:
+    #             if not self.backtest:
+    #                logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
+    #             return Trade_Action(trading_time, self.instrument, -have_units, self.ask)

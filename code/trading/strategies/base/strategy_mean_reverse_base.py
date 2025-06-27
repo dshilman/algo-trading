@@ -33,14 +33,6 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
         df["ema_short_slope_max"] = df["ema_short_slope"].rolling(window=self.period_short).max()
         df["ema_short_slope_mean"] = df["ema_short_slope"].rolling(window=self.period_short).mean()
 
-
-        # df["sma_crossover"] = 0  # Initialize signal column
-        # df.loc[(df["open"] < df["sma_long"]) & (df["close"] > df["sma_long"]), "sma_crossover"] = 1  # Bullish crossover
-        # df.loc[(df["open"] > df["sma_long"]) & (df["close"] < df["sma_long"]), "sma_crossover"] = -1  # Bearish crossover
-        # df["sma_crossover_bull"] = df["sma_crossover"].rolling(int(self.SMA/2)).apply(lambda x: 1 in x.values)
-        # df["sma_crossover_bear"] = df["sma_crossover"].rolling(int(self.SMA/2)).apply(lambda x: -1 in x.values)
-
-        
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):
@@ -56,7 +48,3 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
         self.ema_short_slope_min = row["ema_short_slope_min"]
         self.ema_short_slope_max = row["ema_short_slope_max"]
         self.ema_short_slope_mean = row["ema_short_slope_mean"]
-
-
-        # self.sma_crossover_bull = bool(row["sma_crossover_bull"])
-        # self.sma_crossover_bear = bool(row["sma_crossover_bear"])
