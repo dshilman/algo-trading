@@ -1,15 +1,12 @@
 import logging
 import sys
 from pathlib import Path
-
 import pandas as pd
-
+from trading.strategies.base.strategy_exec import TradingStrategyExec
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 sys.path.append(str(root))
-
-from trading.strategies.base.strategy_exec import TradingStrategyExec
 
 logger = logging.getLogger()
 
@@ -27,7 +24,7 @@ class TradingStrategyMACD(TradingStrategyExec):
         df.loc[(df["ema_short"].shift() > df["sma_long"]) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
         df["macd_crossover_bull"] = df["macd_crossover"].rolling(5).apply(lambda x: 1 in x.values)
         df["macd_crossover_bear"] = df["macd_crossover"].rolling(5).apply(lambda x: -1 in x.values)
-        
+
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):
@@ -36,4 +33,3 @@ class TradingStrategyMACD(TradingStrategyExec):
         self.macd_crossover = row["macd_crossover"]
         self.macd_crossover_bull = bool(row["macd_crossover_bull"])
         self.macd_crossover_bear = bool(row["macd_crossover_bear"])
-
