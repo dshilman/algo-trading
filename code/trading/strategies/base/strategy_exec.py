@@ -127,18 +127,6 @@ class TradingStrategyExec(TradingStrategyCalc):
         return 0
 
 
-    def need_close_trade(self, trading_time: datetime) -> bool:
-
-        if not self.is_trading_time(trading_time):
-            return True
-
-        open_trade_time = self.get_open_trade_time()        
-
-        if open_trade_time is not None and (open_trade_time + timedelta(minutes=self.keep_trade_open_time, seconds=-open_trade_time.second)) <= trading_time:
-            return True
-
-        return False
-    
     def calc_trade_open_duration(self, trading_time: pd.Timestamp) -> int:
 
         open_trade_time = self.get_open_trade_time()
@@ -198,27 +186,34 @@ class TradingStrategyExec(TradingStrategyCalc):
     def take_profit(self):
 
         tp = False
-        tp_price = 0
-
         have_units = self.trading_session.have_units
         open_trade_price = self.get_open_trade_price()
+        profit = 0
 
         if have_units > 0 and open_trade_price is not None:  # long position
             target_price = open_trade_price * (1 + self.tp_perc)
             tp = self.price_high > target_price
-            tp_price = target_price
+            profit = self.bid - open_trade_price
         elif have_units < 0 and open_trade_price is not None:  # short position
             target_price = open_trade_price * (1 - self.tp_perc)
             tp = self.price_low < target_price
-            tp_price = target_price
+            profit =  open_trade_price - self.ask
         
-        return tp, tp_price
+        return tp, profit
     
+    def need_close_trade(self, trading_time: datetime):
+
+        open_trade_time = self.get_open_trade_time()        
+        time_diff = timedelta(minutes=self.keep_trade_open_time, seconds=-open_trade_time.second)
+
+        return bool(not self.is_trading_time(trading_time) or open_trade_time is not None and (open_trade_time + time_diff) <= trading_time), (trading_time - open_trade_time).total_seconds()
+
+
     def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
 
         have_units = self.trading_session.have_units
-        close_trade = self.need_close_trade(trading_time)
-        take_profit, tp_price = self.take_profit()
+        close_trade, open_seconds = self.need_close_trade(trading_time)
+        take_profit, trade_pnl = self.take_profit()
 
         if have_units > 0:  # long position
             if (close_trade or take_profit) and not self.is_up:
@@ -231,4 +226,3 @@ class TradingStrategyExec(TradingStrategyCalc):
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
-
