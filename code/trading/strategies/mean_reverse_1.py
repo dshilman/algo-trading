@@ -28,7 +28,7 @@ class TradingStrategy(TradingStrategyMeanReverse):
 
             if self.rsi_short_max > self.high_rsi and self.ema_short_slope_max > .00015 \
                 and self.price_max > self.bb_high and self.bid > self.sma_long \
-                    and (self.ema_bb_high_divergance > self.ema_bb_high_divergance_mean > 0):
+                    and (round(self.ema_short_slope, 3) == 0):
                         if not self.backtest:
                             logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                         return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
@@ -36,7 +36,7 @@ class TradingStrategy(TradingStrategyMeanReverse):
 
             elif self.rsi_short_min < self.low_rsi and self.ema_short_slope_min < -.00015 \
                 and self.price_min < self.bb_low and self.ask < self.sma_long \
-                    and (self.ema_bb_low_divergance > self.ema_bb_low_divergance_mean > 0):
+                    and (round(self.ema_short_slope, 3) == 0):
                         if not self.backtest:
                             logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                         return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
