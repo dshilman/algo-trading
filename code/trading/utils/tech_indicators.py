@@ -83,7 +83,24 @@ def predict_next(y):
     model.fit(x, y.values.reshape(-1, 1))
     next_x = np.array([[len(y)]])
     next_pred = model.predict(next_x)[0, 0]
+
     return next_pred
+
+def slope(y):
+
+    x = np.arange(len(y)).reshape(-1, 1)
+    model = LinearRegression()
+    model.fit(x, y.values.reshape(-1, 1))
+
+    return model.coef_[0][0]
+
+def intercept(y):
+
+    x = np.arange(len(y)).reshape(-1, 1)
+    model = LinearRegression()
+    model.fit(x, y.values.reshape(-1, 1))
+
+    return model.intercept_
 
 def compute_price_momentum(close: pd.Series) -> float:
     window = close.size

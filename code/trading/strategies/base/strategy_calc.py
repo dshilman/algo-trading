@@ -90,7 +90,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["rsi_short_min"] = df["rsi_short"].rolling(self.period_short).min()
         df['is_up'] = (df['close'] > df['open']).astype(int)
         df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
-        df['error'] = df['predicted'] - df['close']
+        df['predicted_error'] = df['predicted'] - df['close']
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True)
@@ -121,8 +121,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ask = row["ask"]
         self.bid = row["bid"]
         self.price = row["close"]
-        self.error = row["error"]
         self.predicted = row["predicted"]
+        self.predicted_error = row["predicted_error"]
         self.price_open = row["open"]
         self.price_low = row["low"]
         self.price_high = row["high"]
