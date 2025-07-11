@@ -24,7 +24,7 @@ class TradingStrategyMACD(TradingStrategyExec):
         df.loc[(df["ema_short"].shift() > df["sma_long"]) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
         df["macd_crossover_bull"] = df["macd_crossover"].rolling(5).apply(lambda x: 1 in x.values)
         df["macd_crossover_bear"] = df["macd_crossover"].rolling(5).apply(lambda x: -1 in x.values)
-
+        
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):

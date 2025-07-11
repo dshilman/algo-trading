@@ -28,11 +28,6 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
         df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
 
-        df["ema_short_slope"] = df["ema_short"].rolling(window=self.period_short).apply(calculate_slope)
-        df["ema_short_slope_min"] = df["ema_short_slope"].rolling(window=self.period_short).min()
-        df["ema_short_slope_max"] = df["ema_short_slope"].rolling(window=self.period_short).max()
-        df["ema_short_slope_mean"] = df["ema_short_slope"].rolling(window=self.period_short).mean()
-
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):
@@ -43,8 +38,3 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
 
         self.ema_bb_high_divergance_mean = row["ema_bb_high_divergance_mean"]
         self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
-
-        self.ema_short_slope = row["ema_short_slope"]
-        self.ema_short_slope_min = row["ema_short_slope_min"]
-        self.ema_short_slope_max = row["ema_short_slope_max"]
-        self.ema_short_slope_mean = row["ema_short_slope_mean"]
