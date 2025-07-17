@@ -60,8 +60,8 @@ class TradingBacktester():
         self.strategy.backtest = True
     
     def get_history_with_all_prices(self):
-        
-        df: pd.DataFrame = self.api.get_price_candles(self.strategy.instrument, self.days)
+                
+        df: pd.DataFrame = self.api.get_price_candles(pair_name=self.strategy.instrument, days=self.days, granularity = "M5")
                
         return df
 
