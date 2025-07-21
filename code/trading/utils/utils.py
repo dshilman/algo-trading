@@ -1,6 +1,8 @@
 date_format = "%Y-%m-%d %H:%M:%S"
 ticker_data_size=120
 frequency_min = 5
+granularity="S30"
+count=frequency_min * 2 * ticker_data_size
 
 def convert_perc_to_pips(units, perc, price):
 

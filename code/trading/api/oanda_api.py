@@ -52,7 +52,7 @@ class OandaApi:
         self.session.headers.update(self.SECURE_HEADER)
         self.stop_stream = False
 
-    def get_latest_price_candles(self, pair_name, granularity="M5", count=utils.ticker_data_size) -> pd.DataFrame:
+    def get_latest_price_candles(self, pair_name, granularity=utils.granularity, count=utils.count) -> pd.DataFrame:
 
         url = f"accounts/{self.account_id}/candles/latest"
         params = dict(
@@ -84,7 +84,7 @@ class OandaApi:
 
 
 
-    def get_price_candles(self, pair_name, days = 0, hours = 0, minutes = 0, seconds = 0):
+    def get_price_candles(self, pair_name, days = 0, hours = 0, minutes = 0, seconds = 0, granularity=utils.granularity):
 
         now = datetime.now(tz=timezone.utc)
         now = now - timedelta(seconds=now.second, microseconds=now.microsecond)
@@ -94,7 +94,7 @@ class OandaApi:
 
         if days == 0:
             logger.debug(f"Getting price candles for {pair_name} from {past} to {now}")
-            data_t: dict = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity="M5", price="MBA")
+            data_t: dict = self.__fetch_candles(date_f=past, date_t=now, pair_name=pair_name, granularity=granularity, price="MBA")
 
             df = self.__convert_to_df(data_t)
         else:
@@ -104,7 +104,7 @@ class OandaApi:
                 end_d = start_d + timedelta(days=1)
 
                 logger.debug(f"Getting price candles for {pair_name} from {start_d} to {end_d}")
-                data_t: dict = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity="M5", price="MBA")
+                data_t: dict = self.__fetch_candles(date_f=start_d, date_t=end_d, pair_name=pair_name, granularity=granularity, price="MBA")
                 df_t = self.__convert_to_df(data_t)
                 df = pd.concat([df, df_t])
 
@@ -252,7 +252,7 @@ class OandaApi:
         except Exception as error:
             return False, {'Exception': error}
 
-    def __fetch_candles(self, pair_name, date_f, date_t, granularity="M5", price="MBA") -> dict:
+    def __fetch_candles(self, pair_name, date_f, date_t, granularity=utils.granularity, price="MBA") -> dict:
 
         url = f"instruments/{pair_name}/candles"
         params = dict(

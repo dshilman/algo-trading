@@ -26,17 +26,15 @@ class TradingStrategy(TradingStrategyMeanReverse):
    
         if  self.std_dev_long > self.trading_std and self.price_volatility > self.trading_price_volatility:
 
-            if self.rsi_short_max > self.high_rsi \
-                and self.price_max > self.bb_high \
-                    and self.ema_short_slope_max > .00015 and self.predicted_error < -.0005:
-                        if not self.backtest:
-                            logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
-                        return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
-                            
+            if self.rsi_short_max > self.high_rsi and self.price_max > self.bb_high \
+                and self.ema_short_slope_max > .00015 and self.predicted_error < -.0005:
+                    if not self.backtest:
+                        logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
+                    return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
+                        
 
-            elif self.rsi_short_min < self.low_rsi \
-                and self.price_min < self.bb_low \
-                    and self.ema_short_slope_min < -.00015 and self.predicted_error > .0005:
-                        if not self.backtest:
-                            logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-                        return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
+            elif self.rsi_short_min < self.low_rsi and self.price_min < self.bb_low \
+                and self.ema_short_slope_min < -.00015 and self.predicted_error > .0005:
+                    if not self.backtest:
+                        logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
+                    return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
