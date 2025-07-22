@@ -26,39 +26,31 @@ class Trading_Session():
         self.short_trades_close: int = 0
         self.trade_cost: float = 0
         self.have_units: int = 0
-        self.trade_id: int = 0
-        self.columns = ["datetime", "trade_id", "trade", "action", "units", "price", "trade_pl", "trade_pl_pct", "pl"]
+        self.columns = ["datetime", "trade", "action", "units", "price", "trade_pl", "trade_duration", "pl"]
 
         super().__init__()
 
-
-    def __get_trade_new_id(self) -> int:
-        
-        self.trade_id = self.trade_id + 1
-        return self.trade_id
 
     def add_trade(self, trade_action: Trade_Action, date_time, **kwargs):
 
         trade = None
         action = None
         trade_pl = None
-        trade_pl_pct = None
+        trade_duration = None
 
         if trade_action.open_trade and trade_action.units > 0:
-            self.trade_id = self.__get_trade_new_id()
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
             self.outstanding = (self.outstanding) + (self.trade_cost)      
             trade_pl = 0
-            trade_pl_pct = 0        
+            trade_duration = "-----------"
             self.long_trades = self.long_trades + 1
             trade = "Open Long"
             action = "Buy"
         elif trade_action.open_trade and trade_action.units < 0:
-            self.trade_id = self.__get_trade_new_id()
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
             self.outstanding = (self.outstanding) + (self.trade_cost)   
             trade_pl = 0
-            trade_pl_pct = 0        
+            trade_duration = "-----------"
             self.short_trades = self.short_trades + 1
             trade = "Open Short"
             action = "Sell"
@@ -66,7 +58,8 @@ class Trading_Session():
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
             trade_pl = (self.trade_cost) - (self.outstanding)
             self.pl = self.pl + trade_pl
-            trade_pl_pct = 0 if self.outstanding == 0 else trade_pl / self.outstanding * 100 
+            duration_divmod = self.calc_duration(date_time)
+            trade_duration = f"{int(duration_divmod[0])} hr {int(duration_divmod[1])//60} min"
             self.long_trades_close = self.long_trades_close + 1
             self.outstanding = self.have_units + trade_action.units
             if trade_action.sl_trade:
@@ -80,7 +73,8 @@ class Trading_Session():
             self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
             trade_pl = (self.outstanding) - (self.trade_cost)
             self.pl = self.pl + trade_pl
-            trade_pl_pct = 0 if self.outstanding == 0 else trade_pl / self.outstanding * 100
+            duration_divmod = self.calc_duration(date_time)
+            trade_duration = f"{int(duration_divmod[0])} hr {int(duration_divmod[1]//60)} min"
             self.short_trades_close = self.short_trades_close + 1
             self.outstanding = self.have_units + trade_action.units
             if trade_action.sl_trade:
@@ -93,15 +87,27 @@ class Trading_Session():
         
         self.have_units = self.have_units + trade_action.units
 
-        self.trades.append([date_time, self.trade_id, trade, action, trade_action.units, trade_action.price, '${:,.2f}'.format(trade_pl), '%{:,.4f}'.format(trade_pl_pct), '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time, trade, action, trade_action.units, trade_action.price, '${:,.2f}'.format(trade_pl), trade_duration, '${:,.2f}'.format(self.pl)])
        
         return
+
+    def calc_duration(self, date_time):
+        trade_duration = divmod((date_time - self.trades[-1][0]).total_seconds(), 3600) if len(self.trades) > 0 else (0, 0)
+        return trade_duration
+
 
     def has_trades(self) -> bool:
         return len(self.trades) > 0
 
+    def convert_datetime_to_str(self):
+
+        for trade in self.trades:
+            trade[0] = trade[0].strftime("%Y-%m-%d %H:%M:%S")
+
+        return
     def print_trades(self):
 
+        self.convert_datetime_to_str()
         logger.info(f"Finished Trading {self.instrument} with PL: {'${:,.2f}'.format(self.pl)}, # of long trades: {self.long_trades}, # of short trades: {self.short_trades}, open trades: {self.long_trades - self.long_trades_close + self.short_trades - self.short_trades_close}")
         logger.info("\n" + 100 * "-") 
         logger.info("\n" + tabulate(self.trades, headers = self.columns))
@@ -110,6 +116,8 @@ class Trading_Session():
         self.trades.clear()
 
     def to_excel(self, file_name):
+
+        self.convert_datetime_to_str()
 
         import pandas as pd
         df = pd.DataFrame(self.trades, columns = self.columns)

@@ -138,18 +138,18 @@ class TradingStrategyExec(TradingStrategyCalc):
         if trade and trade.open_trade:
             return trade.price
 
-       
+
     def get_open_trade(self) -> Trade_Action:
 
         have_units = self.trading_session.have_units
+        trade_action = None
 
         if have_units != 0 and len(self.trading_session.trades) > 0:
-            trade = self.trading_session.trades[-1]
-            if trade[2].startswith("Open"):
-                # ["datetime", "trade_id", "trade", "action", "units", "price", "trade_pl", "trade_pl_pct", "pl"]
-                return Trade_Action(time=trade[0], instrument=self.instrument, units=trade[4], open_trade=True, price=trade[5])
+            trade_raw_data = self.trading_session.trades[-1]
+            # ["datetime", "trade", "action", "units", "price", "trade_pl", "trade_pl_pct", "pl"]
+            trade_action = Trade_Action(time=trade_raw_data[0], instrument=self.instrument, open_trade=trade_raw_data[1].startswith("Open"), units=trade_raw_data[3], price=trade_raw_data[4])
         
-        return None # type: ignore
+        return trade_action if trade_action is not None and trade_action.open_trade else None # type: ignore
 
 
     def is_trading_time(self, date_time: datetime) -> bool:
@@ -212,17 +212,20 @@ class TradingStrategyExec(TradingStrategyCalc):
     def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
 
         have_units = self.trading_session.have_units
-        close_trade, open_seconds = self.need_close_trade(trading_time)
+        close_trade, trade_duration_sec = self.need_close_trade(trading_time)
+        trade_duration_min_sec = divmod(trade_duration_sec, 60)
+        open_min = trade_duration_min_sec[0]
+        open_seconds = trade_duration_min_sec[1]
         take_profit, trade_pnl = self.take_profit()
 
         if have_units > 0:  # long position
             if (close_trade or take_profit) and self.price_change < 0:
                 if not self.backtest:
-                    logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}")
+                    logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                 
         elif have_units < 0:  # short position
             if (close_trade or take_profit) and self.price_change > 0:
                 if not self.backtest:
-                   logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}")
+                   logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
