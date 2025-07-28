@@ -26,7 +26,7 @@ class Trading_Session():
         self.short_trades_close: int = 0
         self.trade_cost: float = 0
         self.have_units: int = 0
-        self.columns = ["datetime", "trade", "action", "units", "price", "trade_pl", "trade_duration", "pl"]
+        self.columns = ["datetime", "trade", "units", "price", "trade_pnl", "trade_duration", "total pnl"]
 
         super().__init__()
 
@@ -34,29 +34,22 @@ class Trading_Session():
     def add_trade(self, trade_action: Trade_Action, date_time, **kwargs):
 
         trade = None
-        action = None
-        trade_pl = None
+        trade_pl: float = 0
         trade_duration = None
 
         if trade_action.open_trade and trade_action.units > 0:
-            self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
+            self.trade_cost = abs(trade_action.units) * trade_action.price
             self.outstanding = (self.outstanding) + (self.trade_cost)      
-            trade_pl = 0
-            trade_duration = "-----------"
             self.long_trades = self.long_trades + 1
             trade = "Open Long"
-            action = "Buy"
         elif trade_action.open_trade and trade_action.units < 0:
-            self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
+            self.trade_cost = abs(trade_action.units) * trade_action.price
             self.outstanding = (self.outstanding) + (self.trade_cost)   
-            trade_pl = 0
-            trade_duration = "-----------"
             self.short_trades = self.short_trades + 1
             trade = "Open Short"
-            action = "Sell"
         elif not trade_action.open_trade and trade_action.units < 0:
-            self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
-            trade_pl = (self.trade_cost) - (self.outstanding)
+            self.trade_cost = abs(trade_action.units) * trade_action.price
+            trade_pl = self.trade_cost - self.outstanding
             self.pl = self.pl + trade_pl
             duration_divmod = self.calc_duration(date_time)
             trade_duration = f"{int(duration_divmod[0])} hr {int(duration_divmod[1])//60} min"
@@ -68,10 +61,9 @@ class Trading_Session():
                 trade = "Close Long (TP)"
             else:
                 trade = "Close Long"
-            action = "Sell"
         elif not trade_action.open_trade and trade_action.units > 0:
-            self.trade_cost = (abs(trade_action.units)) * (trade_action.price)
-            trade_pl = (self.outstanding) - (self.trade_cost)
+            self.trade_cost = abs(trade_action.units) * trade_action.price
+            trade_pl = self.outstanding - self.trade_cost
             self.pl = self.pl + trade_pl
             duration_divmod = self.calc_duration(date_time)
             trade_duration = f"{int(duration_divmod[0])} hr {int(duration_divmod[1]//60)} min"
@@ -83,11 +75,10 @@ class Trading_Session():
                 trade = "Close Short (TP)"
             else:
                 trade = "Close Short"
-            action = "Buy"
         
         self.have_units = self.have_units + trade_action.units
 
-        self.trades.append([date_time, trade, action, trade_action.units, trade_action.price, '${:,.2f}'.format(trade_pl), trade_duration, '${:,.2f}'.format(self.pl)])
+        self.trades.append([date_time, trade, trade_action.units, trade_action.price, ('' if trade_pl == 0 else '${:,.2f}'.format(trade_pl)), (trade_duration if trade_duration is not None else ""), '${:,.2f}'.format(self.pl)])
        
         return
 

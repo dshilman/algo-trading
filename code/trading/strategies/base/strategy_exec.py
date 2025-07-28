@@ -79,9 +79,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
 
     def check_for_sl(self, trading_time, have_units) -> Trade_Action:
-
-        base_price = None
-        
+       
         open_trade_price = self.get_open_trade_price()
         
         if open_trade_price is None:
@@ -89,28 +87,26 @@ class TradingStrategyExec(TradingStrategyCalc):
         
         if have_units < 0:
             if self.trailing_sl:
-                base_price = min(self.price_low, open_trade_price)
+                low_price = min(self.price_low, open_trade_price)
             else: 
-                base_price = open_trade_price
+                low_price = open_trade_price
              
-            current_loss_perc = (self.ask - base_price)/base_price
+            current_loss_perc = (self.ask - low_price)/low_price
             if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
-                    logger.info(
-                        f"Close short position, - Stop Loss Buy, short price {base_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
+                    logger.info(f"Close short position, - Stop Loss Buy, low price {low_price}, current ask price: {self.ask}, loss: {current_loss_perc}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, True, False)
 
         elif have_units > 0:
             if self.trailing_sl:
-                base_price = max(self.price_high, open_trade_price)
+                high_price = max(self.price_high, open_trade_price)
             else: 
-                base_price = open_trade_price
+                high_price = open_trade_price
 
-            current_loss_perc = (base_price - self.bid)/base_price
+            current_loss_perc = (high_price - self.bid)/high_price
             if current_loss_perc >= self.sl_perc:
                 if not self.backtest:
-                    logger.info(
-                        f"Close long position, - Stop Loss Sell, long price {base_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
+                    logger.info(f"Close long position, - Stop Loss Sell, high price {high_price}, current bid price: {self.bid}, lost: {current_loss_perc}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, True, False)
         
         return None # type: ignore
@@ -147,7 +143,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         if have_units != 0 and len(self.trading_session.trades) > 0:
             trade_raw_data = self.trading_session.trades[-1]
             # ["datetime", "trade", "action", "units", "price", "trade_pl", "trade_pl_pct", "pl"]
-            trade_action = Trade_Action(time=trade_raw_data[0], instrument=self.instrument, open_trade=trade_raw_data[1].startswith("Open"), units=trade_raw_data[3], price=trade_raw_data[4])
+            trade_action = Trade_Action(time=trade_raw_data[0], instrument=self.instrument, open_trade=trade_raw_data[1].startswith("Open"), units=trade_raw_data[2], price=trade_raw_data[3])
         
         return trade_action if trade_action is not None and trade_action.open_trade else None # type: ignore
 

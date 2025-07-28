@@ -104,9 +104,9 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["ema_short_slope_min"] = df["ema_short_slope"].rolling(window=self.period_short).min()
         df["ema_short_slope_max"] = df["ema_short_slope"].rolling(window=self.period_short).max()
 
-        df["momentum"] = df["close"].rolling(period_short).apply(compute_price_momentum)
-        df["momentum_min"] = df["momentum"].rolling(period_short).min()
-        df["momentum_max"] = df["momentum"].rolling(period_short).max()
+        df["momentum_short"] = df["close"].rolling(period_short).apply(compute_price_momentum)
+        df["momentum_short_min"] = df["momentum_short"].rolling(period_short).min()
+        df["momentum_short_max"] = df["momentum_short"].rolling(period_short).max()
 
         if self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
@@ -149,6 +149,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ema_short_slope_min = row["ema_short_slope_min"]
         self.ema_short_slope_max = row["ema_short_slope_max"]
 
-        self.momentum = round(row["momentum"], 4)
-        self.momentum_min = round(row["momentum_min"], 4)
-        self.momentum_max = round(row["momentum_max"], 4)
+        self.momentum_short = round(row["momentum_short"], 4)
+        self.momentum_short_min = round(row["momentum_short_min"], 4)
+        self.momentum_short_max = round(row["momentum_short_max"], 4)
+
