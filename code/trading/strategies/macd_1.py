@@ -30,14 +30,14 @@ class TradingStrategy(TradingStrategyMACD):
         if  self.std_dev_long < self.trading_std and self.price_volatility > self.trading_price_volatility:
 
             if self.macd_crossover_bull and self.rsi_short > self.high_rsi \
-                 and self.bid < self.bb_high and self.momentum == self.momentum_max:
+                 and self.bid < self.bb_high and self.momentum_short == self.momentum_short_max:
                     if not self.backtest:
                         logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                     return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
             elif self.macd_crossover_bear and self.rsi_short < self.low_rsi \
-                and self.ask > self.bb_low and self.momentum == self.momentum_min:
+                and self.ask > self.bb_low and self.momentum_short == self.momentum_short_min:
                     if not self.backtest:
                         logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                     return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
