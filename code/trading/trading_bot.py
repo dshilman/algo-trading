@@ -161,7 +161,7 @@ class Trader():
             try:
 
                 trading_time = datetime.now(tz=timezone.utc)
-                logger.debug (f"Refresh Strategy... {trading_time}")
+                logger.debug (f"Refresh Strategy... {trading_time.strftime("%H:%M:%S")}")
 
                 exec_counter = exec_counter + 1                        
                 # logger.info("")
@@ -194,7 +194,7 @@ class Trader():
    
         self.terminate = True
 
-    def exec_strategy(self, ticker_data_df: pd.DataFrame, trading_time) -> Trade_Action:
+    def exec_strategy(self, ticker_data_df: pd.DataFrame, trading_time: datetime) -> Trade_Action:
 
         # logger.debug(f"Ticker data: {ticker_data_df}")
 
@@ -204,7 +204,7 @@ class Trader():
 
         last_candle_time: pd.Timestamp = ticker_data_df.index[-1]
         if trading_time - last_candle_time > timedelta(seconds=30):
-            logger.info(f"Ticker data is too stale: {last_candle_time}, trading time: {trading_time}. Try again soon.")
+            logger.info(f"Ticker data is too stale: {last_candle_time.strftime("%H:%M:%S")}, trading time: {trading_time.strftime("%H:%M:%S")}. Try again soon.")
             return # type: ignore
 
 
