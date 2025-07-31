@@ -24,7 +24,7 @@ class TradingStrategy(TradingStrategyMeanReverse):
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
    
    
-        if  self.std_dev_long > self.trading_std and self.price_volatility > self.trading_price_volatility:
+        if  self.std_dev_long > self.trading_std and self.price_volatility > self.trading_price_volatility and (self.momentum_long == 0 or self.momentum_short/self.momentum_long > .5 or self.momentum_short/self.momentum_long < 0):
 
             # momentum
             if self.rsi_short_max > self.high_rsi and self.price_max > self.bb_high and self.ema_short_slope_max > .0001 \
