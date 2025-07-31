@@ -6,6 +6,7 @@ import logging.handlers as handlers
 import os
 import sys
 import threading
+from requests.exceptions import ChunkedEncodingError
 from time import sleep
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -135,7 +136,8 @@ class Trader():
             except Exception as e:
                 logger.error(f"Error in start_streaming")
                 logger.exception(e)
-                error_count = error_count + 1
+                if not type(e) == ChunkedEncodingError:
+                    error_count = error_count + 1
                 if error_count > 20:
                     logger.info("Too many errors. Stopped streaming prices")
                     self.terminate = True
