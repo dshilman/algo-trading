@@ -77,7 +77,7 @@ class TradingStrategyBase():
             else:
                 sl_price = utils.convert_perc_to_ls_price(trade_action.units, self.sl_perc, trade_action.price)
                 
-            tp_price = utils.convert_perc_to_tp_price(trade_action.units, self.tp_perc + .001, trade_action.price)
+            tp_price = utils.convert_perc_to_tp_price(trade_action.units, self.tp_perc + .002, trade_action.price)
 
 
         order = Order(
