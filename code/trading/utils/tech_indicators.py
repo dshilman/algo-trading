@@ -1,9 +1,6 @@
 import numpy as np
 import pandas as pd
-import pandas as pd
-import numpy as np
 from sklearn.linear_model import LinearRegression
-
 
 
 def count_sma_crossover(S: pd.Series):

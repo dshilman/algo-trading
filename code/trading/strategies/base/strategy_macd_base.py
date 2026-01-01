@@ -22,20 +22,30 @@ class TradingStrategyMACD(TradingStrategyExec):
 
         df: pd.DataFrame = self.data
 
-        df["macd_crossover"] = 0  # Initialize signal column
-        df.loc[(df["ema_short"].shift() < df["sma_long"]) & (df["ema_short"] > df["sma_long"]), "macd_crossover"] = 1  # Bullish crossover
-        df.loc[(df["ema_short"].shift() > df["sma_long"]) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
-        df["macd_crossover_bull"] = df["macd_crossover"].rolling(5).apply(lambda x: 1 in x.values)
-        df["macd_crossover_bear"] = df["macd_crossover"].rolling(5).apply(lambda x: -1 in x.values)
+        df["near_macd_crossover"] = 0  # Initialize signal column
+        df.loc[(df["sma_long"].shift() - df["ema_short"].shift() >= 0.0001) & (df["sma_long"] - df["ema_short"] < 0.0001), "near_macd_crossover"] = 1  # Bullish crossover
+        df.loc[(df["ema_short"].shift() - df["sma_long"].shift() >= 0.0001) & (df["ema_short"] - df["sma_long"] < 0.0001), "near_macd_crossover"] = -1  # Bearish crossover
+        df["near_macd_bull"] = (df["near_macd_crossover"] == 1)
+        df["near_macd_bear"] = (df["near_macd_crossover"] == -1)
         
+        df["macd_crossover"] = 0  # Initialize signal column
+        df.loc[(df["ema_short"].shift() < df["sma_long"].shift()) & (df["ema_short"] > df["sma_long"]), "macd_crossover"] = 1  # Bullish crossover
+        df.loc[(df["ema_short"].shift() > df["sma_long"].shift()) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
+        df["macd_bull"] = (df["macd_crossover"] == 1)
+        df["macd_bear"] = (df["macd_crossover"] == -1)
+
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
 
+        self.near_macd_crossover = row["near_macd_crossover"]
+        self.near_macd_bull = bool(row["near_macd_bull"])
+        self.near_macd_bear = bool(row["near_macd_bear"])
+
         self.macd_crossover = row["macd_crossover"]
-        self.macd_crossover_bull = bool(row["macd_crossover_bull"])
-        self.macd_crossover_bear = bool(row["macd_crossover_bear"])
+        self.macd_bull = bool(row["macd_bull"])
+        self.macd_bear = bool(row["macd_bear"])
 
 
 
@@ -49,13 +59,13 @@ class TradingStrategyMACD(TradingStrategyExec):
     #     take_profit, trade_pnl = self.take_profit()
 
     #     if have_units > 0:  # long position
-    #         if (close_trade or take_profit or (self.price_max > self.bb_high and self.macd_crossover_bear)) and self.price_change < 0:
+    #         if (close_trade or take_profit or (self.price_max > self.bb_high and self.macd_bear)) and self.price_change < 0:
     #             if not self.backtest:
     #                 logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
     #             return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                 
     #     elif have_units < 0:  # short position
-    #         if (close_trade or take_profit or (self.price_min < self.bb_low and self.macd_crossover_bull)) and self.price_change > 0:
+    #         if (close_trade or take_profit or (self.price_min < self.bb_low and self.macd_bull)) and self.price_change > 0:
     #             if not self.backtest:
     #                logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
     #             return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
