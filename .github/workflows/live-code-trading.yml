@@ -1,9 +1,16 @@
 name: LIVE-TRADING-EC2-DEPLOY
 
 on:
+  pull_request:
+    branches:
+      - live
+    paths:
+      - '*code/trading/*'
   push:
     branches:
       - live
+    paths:
+      - '*code/trading/*'
   
 jobs:
   deploy:

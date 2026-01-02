@@ -36,7 +36,7 @@ def get_instances_with_tag(key, value):
         response = ec2.describe_instances(
             Filters=[
                 {
-                    'Name': 'tag:' + key,
+                    'Name': 'tag:{}'.format(key),
                     'Values': [value]
                 }
             ]
@@ -47,7 +47,7 @@ def get_instances_with_tag(key, value):
             for instance in reservation['Instances']:
                 instances.append(instance['InstanceId'])
         
-        print(instances)
+        print('Instances Returned: {}'.format(instances))
         return instances
         
     except Exception as e:
