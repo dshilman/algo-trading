@@ -2,8 +2,8 @@ import boto3
 
 # AWS region and tag details
 aws_region = 'us-east-1'
-tag_key = 'application'
-tag_value = 'forex-trading-bot'
+tag_key = 'Name'
+tag_value = 'demo-trading-server-new'
 
 # Create an EC2 client
 ec2 = boto3.client('ec2', region_name=aws_region)
