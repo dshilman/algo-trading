@@ -1,6 +1,6 @@
 from math import log
 
-from trading.utils.tech_indicators import calculate_rsi, calculate_slope, compute_price_momentum
+from trading.utils.tech_indicators import calculate_rsi, predict_next, calculate_slope, compute_price_momentum
 from trading.strategies.base.strategy_base import TradingStrategyBase
 from trading.utils import utils
 import logging
@@ -85,8 +85,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["price_change"] = df["close"].pct_change()
         df["price_max"] = df["high"].rolling(self.period_short).max()
         df["price_min"] = df["low"].rolling(self.period_short).min()
-        # df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
-        # df['predicted_error'] = df['predicted'] - df['close']
+        df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
+        df['predicted_error'] = df['predicted'] - df['close']
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
 
@@ -131,8 +131,8 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.price_volatility = row["price_volatility"] 
         self.ask = row["ask"]
         self.bid = row["bid"]
-        # self.predicted = row["predicted"]
-        # self.predicted_error = row["predicted_error"]
+        self.predicted = row["predicted"]
+        self.predicted_error = row["predicted_error"]
         self.std_dev_long = row["std_dev_long"]
 
         self.rsi_short = round(row["rsi_short"], 4)

@@ -28,12 +28,18 @@ class TradingStrategyMACD(TradingStrategyExec):
         df.loc[(df["ema_short"].shift() - df["sma_long"].shift() >= macd_delta) & (df["ema_short"] - df["sma_long"] < macd_delta), "near_macd_crossover"] = -1  # Bearish crossover
         df["near_macd_bull"] = (df["near_macd_crossover"] == 1)
         df["near_macd_bear"] = (df["near_macd_crossover"] == -1)
+
+        # df["near_macd_bull"] = df["near_macd_crossover"].rolling(2).apply(lambda x: 1 if 1 in x.values else 0)
+        # df["near_macd_bear"] = df["near_macd_crossover"].rolling(2).apply(lambda x: 1 if -1 in x.values else 0)
         
         df["macd_crossover"] = 0  # Initialize signal column
         df.loc[(df["ema_short"].shift() < df["sma_long"].shift()) & (df["ema_short"] > df["sma_long"]), "macd_crossover"] = 1  # Bullish crossover
         df.loc[(df["ema_short"].shift() > df["sma_long"].shift()) & (df["ema_short"] < df["sma_long"]), "macd_crossover"] = -1  # Bearish crossover
         df["macd_bull"] = (df["macd_crossover"] == 1)
         df["macd_bear"] = (df["macd_crossover"] == -1)
+
+        # df["macd_bull"] = df["macd_crossover"].rolling(2).apply(lambda x: 1 if 1 in x.values else 0)
+        # df["macd_bear"] = df["macd_crossover"].rolling(2).apply(lambda x: 1 if -1 in x.values else 0)
 
         self.data = df
 
