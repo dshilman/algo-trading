@@ -23,6 +23,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-session-name: algo-session
           role-to-assume: arn:aws:iam::597782288487:role/algo-github-actions-role
           aws-region: us-east-1
 
