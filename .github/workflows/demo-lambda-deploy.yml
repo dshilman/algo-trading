@@ -5,12 +5,12 @@ on:
     branches:
       - demo
     paths:
-      - '*code/lambda/*'
+      - 'code/lambda/*'
   push:
     branches:
       - demo
     paths:
-      - '*code/lambda/*'
+      - 'code/lambda/*'
   
 jobs:
   deploy:

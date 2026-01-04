@@ -19,6 +19,7 @@ class TradingStrategy(TradingStrategyMACD):
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
         if  self.price_volatility > self.trading_price_volatility:
+            
 
             if self.macd_bull and self.rsi_short > self.high_rsi \
                 and self.bid < self.bb_high and self.price_change > 0:

@@ -15,7 +15,6 @@ def lambda_handler(event, context):
     if instances_to_stop:
         # Stop the instances
         stop_instances(instances_to_stop)
-
         return {
             'statusCode': 200,
             'body': 'Stopped instances: {}'.format(instances_to_stop)
