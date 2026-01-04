@@ -38,8 +38,7 @@ def get_instances_with_tag(key, value):
                     'Values': [value]
                 }
             ]
-        )
-        
+        )        
         instances = []
         for reservation in response['Reservations']:
             for instance in reservation['Instances']:
