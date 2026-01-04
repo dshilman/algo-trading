@@ -20,16 +20,17 @@ class TradingStrategy(TradingStrategyMACD):
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
 
-        if (self.near_macd_bull or self.macd_bull) and self.ema_short_slope > 0 and self.rsi_short == self.rsi_short_max > 65 and self.price_high < self.bb_high:
-            if not self.backtest:
-                logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
-            return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
+        if self.price_volatility > self.trading_price_volatility:
+            if (self.near_macd_bull or self.macd_bull) and self.ema_short_slope > 0 and self.rsi_short == self.rsi_short_max > 65 and self.price_high < self.bb_high:
+                if not self.backtest:
+                    logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
+                return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
-        elif (self.near_macd_bear or self.macd_bear) and self.ema_short_slope < 0 and self.rsi_short == self.rsi_short_min < 35 and self.price_low > self.bb_low:
-            if not self.backtest:
-                logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
-            return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
+            elif (self.near_macd_bear or self.macd_bear) and self.ema_short_slope < 0 and self.rsi_short == self.rsi_short_min < 35 and self.price_low > self.bb_low:
+                if not self.backtest:
+                    logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
+                return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
         
 
 
@@ -43,13 +44,13 @@ class TradingStrategy(TradingStrategyMACD):
         take_profit, trade_pnl = self.take_profit()
 
         if have_units > 0:  # long position
-            if (close_trade or take_profit or self.near_macd_bear or self.macd_bear or self.ema_short_slope < 0 or self.rsi_short == self.rsi_short_min < 40):
+            if (close_trade or take_profit or self.near_macd_bear or self.macd_bear or self.ema_short_slope <= 0 or self.rsi_short == self.rsi_short_min < 40):
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                 
         elif have_units < 0:  # short position
-            if (close_trade or take_profit or self.near_macd_bull or self.macd_bull or self.ema_short_slope > 0 or self.rsi_short == self.rsi_short_max > 60):
+            if (close_trade or take_profit or self.near_macd_bull or self.macd_bull or self.ema_short_slope >= 0 or self.rsi_short == self.rsi_short_max > 60):
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)

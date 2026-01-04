@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+# from sklearn.linear_model import LinearRegression
 
 
 def count_sma_crossover(S: pd.Series):
@@ -73,31 +73,31 @@ def calculate_slope(S: pd.Series) -> float:
     x = np.arange(len(S))
     return np.polyfit(x, np.asarray(S.values), 1)[0]
 
-def predict_next(y):
+# def predict_next(y):
 
-    x = np.arange(len(y)).reshape(-1, 1)
-    model = LinearRegression()
-    model.fit(x, y.values.reshape(-1, 1))
-    next_x = np.array([[len(y)]])
-    next_pred = model.predict(next_x)[0, 0]
+#     x = np.arange(len(y)).reshape(-1, 1)
+#     model = LinearRegression()
+#     model.fit(x, y.values.reshape(-1, 1))
+#     next_x = np.array([[len(y)]])
+#     next_pred = model.predict(next_x)[0, 0]
 
-    return next_pred
+#     return next_pred
 
-def slope(y):
+# def slope(y):
 
-    x = np.arange(len(y)).reshape(-1, 1)
-    model = LinearRegression()
-    model.fit(x, y.values.reshape(-1, 1))
+#     x = np.arange(len(y)).reshape(-1, 1)
+#     model = LinearRegression()
+#     model.fit(x, y.values.reshape(-1, 1))
 
-    return model.coef_[0][0]
+#     return model.coef_[0][0]
 
-def intercept(y):
+# def intercept(y):
 
-    x = np.arange(len(y)).reshape(-1, 1)
-    model = LinearRegression()
-    model.fit(x, y.values.reshape(-1, 1))
+#     x = np.arange(len(y)).reshape(-1, 1)
+#     model = LinearRegression()
+#     model.fit(x, y.values.reshape(-1, 1))
 
-    return model.intercept_
+#     return model.intercept_
 
 def compute_price_momentum(close: pd.Series) -> float:
     window = close.size
