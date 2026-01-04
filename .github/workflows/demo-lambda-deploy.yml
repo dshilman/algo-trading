@@ -19,17 +19,17 @@ jobs:
 
     steps:
 
-      
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Install AWS CLI
         id: install-aws-cli
         uses: unfor19/install-aws-cli-action@master
 
-      - name: Build
+      
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Lambda packages
+        working-directory: code/lambda
         run: |
-          cd ${{ vars.TARGET }}/code/lambda
           echo "create lambda zip"
           zip start_ec2_lambda.zip -r start_ec2_lambda.py
           zip stop_ec2_lambda.zip -r stop_ec2_lambda.py
