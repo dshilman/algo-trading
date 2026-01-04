@@ -1,16 +1,11 @@
 name: DEMO-TRADING-EC2-DEPLOY
 
 on:
-  pull_request:
-    branches:
-      - demo
-    paths:
-      - '*code/trading'
   push:
     branches:
-      - demo
+    - demo
     paths:
-      - '*code/trading'
+    - '*code/trading/*'
   
 jobs:
   deploy:
