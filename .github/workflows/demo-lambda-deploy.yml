@@ -18,30 +18,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configure AWS Credentials 2
-        uses: aws-actions/configure-aws-credentials@v5.1.0
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-session-name: algo-session
-          role-to-assume: arn:aws:iam::597782288487:role/algo-github-actions-role
-          aws-region: us-east-1
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+      - name: Install AWS CLI
+        id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@master
 
-      - name: Install AWS SAM CLI
-        run: pip install --upgrade aws-sam-cli
-
-      - name: Deploy
+      - name: Build
         run: |
           cd ${{ vars.TARGET }}/code/lambda
           echo "create lambda zip"
           zip start_ec2_lambda.zip -r start_ec2_lambda.py
           zip stop_ec2_lambda.zip -r stop_ec2_lambda.py
 
+      - name: Deploy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
           echo "deploy lambda"
           aws lambda update-function-code --function-name start_ec2_lambda --zip-file fileb://start_ec2_lambda.zip
           aws lambda update-function-code --function-name stop_ec2_lambda --zip-file fileb://stop_ec2_lambda.zip
