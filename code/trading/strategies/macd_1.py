@@ -21,7 +21,7 @@ class TradingStrategy(TradingStrategyMACD):
 
 
         if self.price_volatility > self.trading_price_volatility:
-            logger.debug("Inside check_if_need_open_trade")
+
             if (self.near_macd_bull or self.macd_bull) and self.ema_short_slope > 0 \
                 and self.predicted_error < -0.0001:
                     if not self.backtest:

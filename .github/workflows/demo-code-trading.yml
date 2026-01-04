@@ -5,12 +5,12 @@ on:
     branches:
       - demo
     paths:
-      - '*code/trading/*'
+      - '*code/trading'
   push:
     branches:
       - demo
     paths:
-      - '*code/trading/*'
+      - '*code/trading'
   
 jobs:
   deploy:
