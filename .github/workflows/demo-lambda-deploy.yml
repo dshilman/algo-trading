@@ -14,35 +14,32 @@ on:
   
 jobs:
   deploy:
-    name: Deploy to EC2 on demo branch push
+    name: Deploy lambda
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout the files
-        uses: actions/checkout@v2
-
-      - name: Deploy to demo trading server
-        uses: easingthemes/ssh-deploy@main
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v5
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_HOST: ${{ vars.DEMO_REMOTE_HOST }}
-          TARGET: ${{ vars.TARGET }}
+          role-to-assume: arn:aws:iam::597782288487:role/algo-github-actions-role
+          aws-region: us-east-1
 
-      - name: deploy lambda
-        uses: appleboy/ssh-action@v1.2.2
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          host: ${{ vars.DEMO_REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |            
-            cd ${{ vars.TARGET }}/code/lambda
-            echo "create lambda zip"
-            zip start_ec2_lambda.zip -r start_ec2_lambda.py
-            zip stop_ec2_lambda.zip -r stop_ec2_lambda.py
+          python-version: '3.11'
 
-            echo "deploy lambda"
-            aws lambda update-function-code --function-name start_ec2_lambda --zip-file fileb://start_ec2_lambda.zip
-            aws lambda update-function-code --function-name stop_ec2_lambda --zip-file fileb://stop_ec2_lambda.zip
+      - name: Install AWS SAM CLI
+        run: pip install --upgrade aws-sam-cli
+
+      - name: Deploy
+        run: |
+          cd ${{ vars.TARGET }}/code/lambda
+          echo "create lambda zip"
+          zip start_ec2_lambda.zip -r start_ec2_lambda.py
+          zip stop_ec2_lambda.zip -r stop_ec2_lambda.py
+
+          echo "deploy lambda"
+          aws lambda update-function-code --function-name start_ec2_lambda --zip-file fileb://start_ec2_lambda.zip
+          aws lambda update-function-code --function-name stop_ec2_lambda --zip-file fileb://stop_ec2_lambda.zip
 
