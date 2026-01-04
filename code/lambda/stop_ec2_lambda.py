@@ -31,6 +31,7 @@ def lambda_handler(event, context):
 
 
 def get_instances_with_tag(key, value):
+    
     try:
         response = ec2.describe_instances(
             Filters=[
