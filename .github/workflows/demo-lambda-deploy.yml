@@ -36,12 +36,11 @@ jobs:
 
       - name: Deploy
         working-directory: code/lambda
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
         run: |
           echo "deploy lambda"
           aws lambda update-function-code --function-name start_ec2_lambda --zip-file fileb://start_ec2_lambda.zip
           aws lambda update-function-code --function-name stop_ec2_lambda --zip-file fileb://stop_ec2_lambda.zip
-
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'us-east-1'
