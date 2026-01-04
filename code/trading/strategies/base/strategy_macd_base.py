@@ -22,9 +22,10 @@ class TradingStrategyMACD(TradingStrategyExec):
 
         df: pd.DataFrame = self.data
 
+        macd_delta: float = 0.0001
         df["near_macd_crossover"] = 0  # Initialize signal column
-        df.loc[(df["sma_long"].shift() - df["ema_short"].shift() >= 0.0001) & (df["sma_long"] - df["ema_short"] < 0.0001), "near_macd_crossover"] = 1  # Bullish crossover
-        df.loc[(df["ema_short"].shift() - df["sma_long"].shift() >= 0.0001) & (df["ema_short"] - df["sma_long"] < 0.0001), "near_macd_crossover"] = -1  # Bearish crossover
+        df.loc[(df["sma_long"].shift() - df["ema_short"].shift() >= macd_delta) & (df["sma_long"] - df["ema_short"] < macd_delta), "near_macd_crossover"] = 1  # Bullish crossover
+        df.loc[(df["ema_short"].shift() - df["sma_long"].shift() >= macd_delta) & (df["ema_short"] - df["sma_long"] < macd_delta), "near_macd_crossover"] = -1  # Bearish crossover
         df["near_macd_bull"] = (df["near_macd_crossover"] == 1)
         df["near_macd_bear"] = (df["near_macd_crossover"] == -1)
         

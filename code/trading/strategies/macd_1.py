@@ -43,13 +43,13 @@ class TradingStrategy(TradingStrategyMACD):
         take_profit, trade_pnl = self.take_profit()
 
         if have_units > 0:  # long position
-            if (close_trade or take_profit or self.near_macd_bear or self.macd_bear or self.ema_short_slope < 0):
+            if (close_trade or take_profit or self.near_macd_bear or self.macd_bear or self.ema_short_slope < 0 or self.rsi_short == self.rsi_short_min < 40):
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                 
         elif have_units < 0:  # short position
-            if (close_trade or take_profit or self.near_macd_bull or self.macd_bull or self.ema_short_slope > 0):
+            if (close_trade or take_profit or self.near_macd_bull or self.macd_bull or self.ema_short_slope > 0 or self.rsi_short == self.rsi_short_max > 60):
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
