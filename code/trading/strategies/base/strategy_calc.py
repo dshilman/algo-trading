@@ -87,25 +87,28 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["price_min"] = df["low"].rolling(self.period_short).min()
         df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
         df['predicted_error'] = df['predicted'] - df['close']
-        df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
 
         df["rsi_short"] = df["close"].rolling(period_short).apply(calculate_rsi)
         df["rsi_short_max"] = df["rsi_short"].rolling(self.period_short).max()
         df["rsi_short_min"] = df["rsi_short"].rolling(self.period_short).min()
-        df["rsi_pct_change"] = df["rsi_short"].pct_change()
+        # df["rsi_pct_change"] = df["rsi_short"].pct_change()
 
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True).fillna(0)
+        df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
 
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean().fillna(0)
         df["ema_short_slope"] = df["ema_short"].rolling(window=self.period_short).apply(calculate_slope)
+        df["ema_short_slope_min"] = df["ema_short_slope"].rolling(window=self.period_short).min()
+        df["ema_short_slope_max"] = df["ema_short_slope"].rolling(window=self.period_short).max()
+
         # df["ema_short_slope_mean"] = df["ema_short_slope"].rolling(window=self.period_short).mean()
 
-        df["momentum_short"] = df["close"].rolling(period_short).apply(compute_price_momentum)
-        df["momentum_short_min"] = df["momentum_short"].rolling(period_short).min()
-        df["momentum_short_max"] = df["momentum_short"].rolling(period_short).max()
+        # df["momentum_short"] = df["close"].rolling(period_short).apply(compute_price_momentum)
+        # df["momentum_short_min"] = df["momentum_short"].rolling(period_short).min()
+        # df["momentum_short_max"] = df["momentum_short"].rolling(period_short).max()
 
         # df["momentum_long"] = df["close"].rolling(period_long).apply(compute_price_momentum)
 
@@ -133,12 +136,12 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bid = row["bid"]
         self.predicted = row["predicted"]
         self.predicted_error = row["predicted_error"]
-        self.std_dev_long = row["std_dev_long"]
+        # self.std_dev_long = row["std_dev_long"]
 
         self.rsi_short = round(row["rsi_short"], 4)
         self.rsi_short_max = round(row["rsi_short_max"], 4)
         self.rsi_short_min = round(row["rsi_short_min"], 4)
-        self.rsi_pct_change = round(row["rsi_pct_change"], 4)
+        # self.rsi_pct_change = round(row["rsi_pct_change"], 4)
         
         
         self.sma_long = row["sma_long"]
@@ -147,10 +150,13 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.ema_short = row["ema_short"]
         self.ema_short_slope = row["ema_short_slope"]
+        self.ema_short_slope_min = row["ema_short_slope_min"]
+        self.ema_short_slope_max = row["ema_short_slope_max"]
+
         # self.ema_short_slope_mean = row["ema_short_slope_mean"]
 
-        self.momentum_short = row["momentum_short"]
-        self.momentum_short_min = row["momentum_short_min"]
-        self.momentum_short_max = row["momentum_short_max"]
+        # self.momentum_short = row["momentum_short"]
+        # self.momentum_short_min = row["momentum_short_min"]
+        # self.momentum_short_max = row["momentum_short_max"]
 
         # self.momentum_long = row["momentum_long"]
