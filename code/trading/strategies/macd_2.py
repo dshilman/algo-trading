@@ -56,3 +56,4 @@ class TradingStrategy(TradingStrategyMACD):
                     if not self.backtest:
                         logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                     return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
+
