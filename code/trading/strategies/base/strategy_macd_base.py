@@ -25,8 +25,8 @@ class TradingStrategyMACD(TradingStrategyExec):
         macd_delta: float = 0.0002
 
         df["near_macd_crossover"] = 0  # Initialize signal column
-        df.loc[(df["sma_long"].shift() - df["ema_short"].shift() > 0) & (df["sma_long"].shift() - df["ema_short"].shift() <= macd_delta) & (df["sma_long"] - df["high"] < 0), "near_macd_crossover"] = 1  # Bullish crossover
-        df.loc[(df["ema_short"].shift() - df["sma_long"].shift() > 0) & (df["ema_short"].shift() - df["sma_long"].shift() <= macd_delta) & (df["low"] - df["sma_long"] < 0), "near_macd_crossover"] = -1  # Bearish crossover
+        df.loc[(df["sma_long"].shift() > df["ema_short"].shift()) & (df["sma_long"].shift() - df["ema_short"].shift() <= macd_delta) & (df["close"] > df["sma_long"]), "near_macd_crossover"] = 1  # Bullish crossover
+        df.loc[(df["ema_short"].shift() > df["sma_long"].shift()) & (df["ema_short"].shift() - df["sma_long"].shift() <= macd_delta) & (df["close"] < df["sma_long"]), "near_macd_crossover"] = -1  # Bearish crossover
 
         # df["near_macd_crossover"] = 0  # Initialize signal column
         # df.loc[((df["sma_long"] - df["ema_short"]) < macd_delta) & ((df["sma_long"] - df["ema_short"]) > 0) & (df["close"] > df["sma_long"]), "near_macd_crossover"] = 1  # Bullish crossover

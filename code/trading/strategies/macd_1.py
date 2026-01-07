@@ -21,14 +21,14 @@ class TradingStrategy(TradingStrategyMACD):
 
         if self.price_volatility > self.trading_price_volatility:
 
-            if (self.near_macd_bull) and self.ema_short_slope > 0 \
+            if (self.near_macd_bull and self.price_change > 0) and self.ema_short_slope > 0 \
                 and self.predicted_error < -0.0001 and self.price_high < self.bb_high:
                     if not self.backtest:
                         logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                     return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
-            elif (self.near_macd_bear) and self.ema_short_slope < 0 \
+            elif (self.near_macd_bear and self.price_change < 0) and self.ema_short_slope < 0 \
                 and self.predicted_error > 0.0001 and self.price_low > self.bb_low:
                     if not self.backtest:
                         logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
@@ -46,14 +46,14 @@ class TradingStrategy(TradingStrategyMACD):
         take_profit, trade_pnl = self.take_profit()
 
         if have_units > 0:  # long position
-            if close_trade or take_profit or self.macd_bear \
+            if (close_trade and trade_pnl < 0) or (take_profit and self.price_change > 0) or (self.macd_bear and self.price_change < 0) \
                 or self.ema_short_slope <= 0:
                     if not self.backtest:
                         logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                     return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                     
         elif have_units < 0:  # short position
-            if close_trade or take_profit or self.macd_bull \
+            if (close_trade and trade_pnl < 0) or (take_profit and self.price_change < 0) or (self.macd_bull and self.price_change > 0) \
                 or self.ema_short_slope >= 0:
                     if not self.backtest:
                         logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
