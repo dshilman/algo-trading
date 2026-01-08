@@ -22,14 +22,14 @@ class TradingStrategy(TradingStrategyMACD):
         if self.price_volatility > self.trading_price_volatility:
 
             if (self.near_macd_bull and self.price_change > 0) and self.ema_short_slope > 0 \
-                and self.predicted_error < -0.0001 and self.price_high < self.bb_high:
+                and self.predicted_error < -0.0001 and round(self.momentum_short, 5) == round(self.momentum_short_max, 5) and self.price_high < self.bb_high:
                     if not self.backtest:
                         logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                     return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
             elif (self.near_macd_bear and self.price_change < 0) and self.ema_short_slope < 0 \
-                and self.predicted_error > 0.0001 and self.price_low > self.bb_low:
+                and self.predicted_error > 0.0001 and self.momentum_short == self.momentum_short_min and self.price_low > self.bb_low:
                     if not self.backtest:
                         logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                     return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)

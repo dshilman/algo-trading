@@ -106,9 +106,9 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # df["ema_short_slope_mean"] = df["ema_short_slope"].rolling(window=self.period_short).mean()
 
-        # df["momentum_short"] = df["close"].rolling(period_short).apply(compute_price_momentum)
-        # df["momentum_short_min"] = df["momentum_short"].rolling(period_short).min()
-        # df["momentum_short_max"] = df["momentum_short"].rolling(period_short).max()
+        df["momentum_short"] = df["close"].rolling(period_short).apply(compute_price_momentum)
+        df["momentum_short_min"] = df["momentum_short"].rolling(period_short).min()
+        df["momentum_short_max"] = df["momentum_short"].rolling(period_short).max()
 
         # df["momentum_long"] = df["close"].rolling(period_long).apply(compute_price_momentum)
 
@@ -155,8 +155,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         # self.ema_short_slope_mean = row["ema_short_slope_mean"]
 
-        # self.momentum_short = row["momentum_short"]
-        # self.momentum_short_min = row["momentum_short_min"]
-        # self.momentum_short_max = row["momentum_short_max"]
+        self.momentum_short = row["momentum_short"]
+        self.momentum_short_min = row["momentum_short_min"]
+        self.momentum_short_max = row["momentum_short_max"]
 
         # self.momentum_long = row["momentum_long"]
