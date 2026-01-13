@@ -156,12 +156,6 @@ class TradingStrategyExec(TradingStrategyCalc):
         date_time_est = date_time.astimezone(est)
         logger.debug(f"Date time (EST): {date_time_est}")
 
-        day = date_time_est.weekday()
-        hour = date_time_est.hour
-
-        if day > 4 or day == 4 and hour >= 15:
-            return False
-
         pause_from_dt = datetime.combine(date_time_est.date(), datetime.strptime(self.pause_start_est, '%H:%M:%S').time(), tzinfo=est)
         pause_to_dt = datetime.combine(date_time_est.date(), datetime.strptime(self.pause_end_est, '%H:%M:%S').time(), tzinfo=est)
 
@@ -172,6 +166,19 @@ class TradingStrategyExec(TradingStrategyCalc):
             return False
 
         return True
+
+    def stop_tradng(self, trading_time: datetime) -> bool:
+        
+        # Convert UTC to EST
+        est = pytz.timezone('US/Eastern')
+        date_time_est = trading_time.astimezone(est)
+
+        day = date_time_est.weekday()
+        hour = date_time_est.hour
+
+        if day > 4 or day == 4 and hour >= 15:
+            return False
+
 
     def get_open_trade_time(self) -> pd.Timestamp: # type: ignore
 
@@ -204,7 +211,7 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         return bool(not self.is_trading_time(trading_time) or open_trade_time is not None and (open_trade_time + time_diff) <= trading_time), (trading_time - open_trade_time).total_seconds()
 
-
+    
     def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
 
         have_units = self.trading_session.have_units
