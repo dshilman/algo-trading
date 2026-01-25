@@ -19,7 +19,12 @@ from trading.utils import utils
 
 logger = logging.getLogger()
 
+# Constants
+MAX_BACKUPS = 5
+LOG_MAX_BYTES = 1024 * 1024  # 1MB
+
 class TradingBacktester():
+    """Backtesting framework for trading strategies."""
     
     def __init__(self, conf_file, pairs_file, trading_strategy, days = 33, refresh = False):
         
@@ -33,8 +38,7 @@ class TradingBacktester():
         logger.setLevel(logging.INFO)
         
         log_file = os.path.join("logs", f"{trading_strategy}_{days}.log")
-        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
-        # formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        logHandler = handlers.RotatingFileHandler(log_file, maxBytes=LOG_MAX_BYTES, backupCount=MAX_BACKUPS)
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', utils.date_format)
 
         logHandler.setFormatter(formatter)
@@ -45,42 +49,45 @@ class TradingBacktester():
 
         try:
             modules = strategy.split(sep=".", maxsplit=2)
-            logger.info(f"Loading:{modules[0]} strategy")
+            logger.info(f"Loading: {modules[0]} strategy")
             module = __import__(f"trading.strategies.{modules[0]}", fromlist=[f"{modules[1]}"])
-            logger.info(f"Loading:{modules[1]} class")
+            logger.info(f"Loading: {modules[1]} class")
             class_ = getattr(module, modules[1])
         except Exception as e:            
-            logger.error(f"Strategy not found for {trading_strategy}", e)
+            logger.error(f"Strategy not found for {trading_strategy}")
+            logger.exception(e)
             raise Exception(f"Strategy not found for {trading_strategy}")
 
-        logger.info(f"Running:{class_} strategy")
-        logger.info(f"Strategy Configuration \n + {config.items(trading_strategy)}")
+        logger.info(f"Running: {class_} strategy")
+        logger.info(f"Strategy Configuration:\n{config.items(trading_strategy)}")
 
         self.strategy: TradingStrategyExec  = class_(trading_strategy=trading_strategy, pair_file=pairs_file, api = self.api, unit_test = False)
         self.strategy.backtest = True
     
     def get_history_with_all_prices(self):
-                
-        df: pd.DataFrame = self.api.get_price_candles(pair_name=self.strategy.instrument, days=self.days, granularity = "M5")
-               
+        """Fetch historical price data from API."""        
+        df: pd.DataFrame = self.api.get_price_candles(
+            pair_name=self.strategy.instrument, 
+            days=self.days, 
+            granularity="M5"
+        )
         return df
 
     def get_data(self):
-
+        """Load or fetch historical data for backtesting."""
         data_dir = os.path.join(os.path.dirname(__file__), "data")
         os.makedirs(data_dir, exist_ok=True)
         pcl_file_name = os.path.join(data_dir, f"backtest_{self.strategy.instrument}_{self.days}.pcl")
+        
         if self.refresh:
             logger.info("Getting data from OANDA API...")                
             df = self.get_history_with_all_prices()
             logger.info(f"Saving data to {pcl_file_name}")
             df.to_pickle(pcl_file_name)
-            # df.to_excel(f"../../data/backtest_{self.strategy.instrument}.xlsx")
         else:
             logger.info(f"Reading data from {pcl_file_name}")
             df = pd.read_pickle(pcl_file_name)
       
-        # df = df.between_time(self.start, self.end)
         return df
 
     def start_trading_backtest(self):
@@ -108,20 +115,21 @@ class TradingBacktester():
                 else:
                     logger.info(f"File: {excel_file_name} already exists")
             except Exception as e:
-                logger.error(f"Couldn't wtite to {excel_file_name}", e)
+                    logger.error(f"Couldn't write to {excel_file_name}")
+                    logger.exception(e)
  
  
-            pause_trading = None
+            pause_trading_until = None
 
             logger.info(f"Starting trading for {self.strategy.instrument}...")
             for index, row in self.strategy.data.iterrows():
 
                 self.strategy.set_strategy_indicators(row=row)
                 
-                if pause_trading == None or index > pause_trading:
+                if pause_trading_until == None or index > pause_trading_until:
                     trade_action = self.strategy.determine_trade_action(trading_time=index)
                     # if trade_action is not None and trade_action.sl_trade:
-                    #     pause_trading = index + timedelta(minutes=5) # type: ignore
+                    #     pause_trading_until = index + timedelta(minutes=5) # type: ignore
         
             logger.info("Finished trading, printing report...")
             self.strategy.trading_session.print_trades()

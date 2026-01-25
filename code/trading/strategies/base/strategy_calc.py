@@ -31,7 +31,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
     
     def to_5_min_candles(self, ticker_data_list, trading_time: datetime) -> pd.DataFrame:
-
+        """Convert raw ticker data to 5-minute OHLC candles. Optimized for performance."""
         # Filter raw data to the window
         cut_off_time = trading_time - timedelta(minutes=utils.ticker_data_size * utils.frequency_min, seconds=trading_time.second)
         filtered_ticker_data_list = [
@@ -51,16 +51,20 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         ticker_df.rename(columns={"mid": "close"}, inplace=True)
 
-        df_open = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').first()
-        df_open.name = "open"
-        df_mid = ticker_df[["close", "ask", "bid"]].resample(f"{utils.frequency_min}min", label='right', closed='right').last()
-        df_high = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').max()
-        df_high.name = "high"
-        df_low = ticker_df["close"].resample(f"{utils.frequency_min}min", label='right', closed='right').min()
-        df_low.name = "low"
-
-        # Merge all into one DataFrame
-        df_consolidated = pd.concat([df_open, df_mid, df_low, df_high], axis=1).sort_index()
+        # Optimized: Single resample with aggregation dict
+        df_consolidated = ticker_df.resample(
+            f"{utils.frequency_min}min", 
+            label='right', 
+            closed='right'
+        ).agg({
+            'close': ['first', 'last', 'min', 'max'],
+            'ask': 'last',
+            'bid': 'last'
+        })
+        
+        # Flatten multi-level columns
+        df_consolidated.columns = ['open', 'close', 'low', 'high', 'ask', 'bid']
+        df_consolidated = df_consolidated.sort_index()
 
         # Logging
         # logger.info(

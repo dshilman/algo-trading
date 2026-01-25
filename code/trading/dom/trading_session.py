@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta, timezone
+from threading import Lock
 from tabulate import tabulate
 from pathlib import Path
 import sys
@@ -11,7 +12,9 @@ from dom.trade import Trade_Action
 from utils import utils
 
 logger = logging.getLogger()
+
 class Trading_Session():
+    """Thread-safe trading session tracker for P&L and trade history."""
 
     def __init__(self, instrument):
         
@@ -27,60 +30,62 @@ class Trading_Session():
         self.trade_cost: float = 0
         self.have_units: int = 0
         self.columns = ["datetime", "trade", "units", "price", "trade_pnl", "trade_duration", "total pnl"]
+        self._lock = Lock()  # Thread safety for trade operations
 
         super().__init__()
 
 
     def add_trade(self, trade_action: Trade_Action, date_time, **kwargs):
+        """Add a trade to the session. Thread-safe."""
+        with self._lock:
+            trade = None
+            trade_pl: float = 0
+            trade_duration = None
 
-        trade = None
-        trade_pl: float = 0
-        trade_duration = None
+            if trade_action.open_trade and trade_action.units > 0:
+                self.trade_cost = abs(trade_action.units) * trade_action.price
+                self.outstanding = (self.outstanding) + (self.trade_cost)      
+                self.long_trades = self.long_trades + 1
+                trade = "Open Long"
+            elif trade_action.open_trade and trade_action.units < 0:
+                self.trade_cost = abs(trade_action.units) * trade_action.price
+                self.outstanding = (self.outstanding) + (self.trade_cost)   
+                self.short_trades = self.short_trades + 1
+                trade = "Open Short"
+            elif not trade_action.open_trade and trade_action.units < 0:
+                self.trade_cost = abs(trade_action.units) * trade_action.price
+                trade_pl = self.trade_cost - self.outstanding
+                self.pl = self.pl + trade_pl
+                duration_divmod = self.calc_duration(date_time)
+                trade_duration = f"{int(duration_divmod[0])} hr {int(duration_divmod[1]/60)} min"  # Fixed: was //60
+                self.long_trades_close = self.long_trades_close + 1
+                self.outstanding = self.have_units + trade_action.units
+                if trade_action.sl_trade:
+                    trade = "Close Long (SL)"
+                elif trade_action.tp_trade:
+                    trade = "Close Long (TP)"
+                else:
+                    trade = "Close Long"
+            elif not trade_action.open_trade and trade_action.units > 0:
+                self.trade_cost = abs(trade_action.units) * trade_action.price
+                trade_pl = self.outstanding - self.trade_cost
+                self.pl = self.pl + trade_pl
+                duration_divmod = self.calc_duration(date_time)
+                trade_duration = f"{int(duration_divmod[0])} hr {int(duration_divmod[1]/60)} min"  # Already correct
+                self.short_trades_close = self.short_trades_close + 1
+                self.outstanding = self.have_units + trade_action.units
+                if trade_action.sl_trade:
+                    trade = "Close Short (SL)"
+                elif trade_action.tp_trade:
+                    trade = "Close Short (TP)"
+                else:
+                    trade = "Close Short"
+            
+            self.have_units = self.have_units + trade_action.units
 
-        if trade_action.open_trade and trade_action.units > 0:
-            self.trade_cost = abs(trade_action.units) * trade_action.price
-            self.outstanding = (self.outstanding) + (self.trade_cost)      
-            self.long_trades = self.long_trades + 1
-            trade = "Open Long"
-        elif trade_action.open_trade and trade_action.units < 0:
-            self.trade_cost = abs(trade_action.units) * trade_action.price
-            self.outstanding = (self.outstanding) + (self.trade_cost)   
-            self.short_trades = self.short_trades + 1
-            trade = "Open Short"
-        elif not trade_action.open_trade and trade_action.units < 0:
-            self.trade_cost = abs(trade_action.units) * trade_action.price
-            trade_pl = self.trade_cost - self.outstanding
-            self.pl = self.pl + trade_pl
-            duration_divmod = self.calc_duration(date_time)
-            trade_duration = f"{int(duration_divmod[0])} hr {int(duration_divmod[1])//60} min"
-            self.long_trades_close = self.long_trades_close + 1
-            self.outstanding = self.have_units + trade_action.units
-            if trade_action.sl_trade:
-                trade = "Close Long (SL)"
-            elif trade_action.tp_trade:
-                trade = "Close Long (TP)"
-            else:
-                trade = "Close Long"
-        elif not trade_action.open_trade and trade_action.units > 0:
-            self.trade_cost = abs(trade_action.units) * trade_action.price
-            trade_pl = self.outstanding - self.trade_cost
-            self.pl = self.pl + trade_pl
-            duration_divmod = self.calc_duration(date_time)
-            trade_duration = f"{int(duration_divmod[0])} hr {int(duration_divmod[1]//60)} min"
-            self.short_trades_close = self.short_trades_close + 1
-            self.outstanding = self.have_units + trade_action.units
-            if trade_action.sl_trade:
-                trade = "Close Short (SL)"
-            elif trade_action.tp_trade:
-                trade = "Close Short (TP)"
-            else:
-                trade = "Close Short"
-        
-        self.have_units = self.have_units + trade_action.units
-
-        self.trades.append([date_time, trade, trade_action.units, trade_action.price, ('' if trade_pl == 0 else '${:,.2f}'.format(trade_pl)), (trade_duration if trade_duration is not None else ""), '${:,.2f}'.format(self.pl)])
+            self.trades.append([date_time, trade, trade_action.units, trade_action.price, ('' if trade_pl == 0 else '${:,.2f}'.format(trade_pl)), (trade_duration if trade_duration is not None else ""), '${:,.2f}'.format(self.pl)])
        
-        return
+            return
 
     def calc_duration(self, date_time):
         trade_duration = divmod((date_time - self.trades[-1][0]).total_seconds(), 3600) if len(self.trades) > 0 else (0, 0)

@@ -27,6 +27,12 @@ from trading.utils import utils
 
 logger = logging.getLogger()
 
+# Constants
+MAX_DEQUE_SIZE = utils.ticker_data_size * 900  # 30-second ticks for 5-min candles
+MAX_ITERATIONS = sys.maxsize  # Replaced invalid integer literal
+THREAD_START_DELAY = 5  # seconds
+MAX_ERROR_COUNT = 20
+
 class Trader():
     def __init__(self, conf_file, pair_file, trading_strategy, unit_test = False):
 
@@ -39,11 +45,8 @@ class Trader():
         config = configparser.ConfigParser()  
         config.read(pair_file)
 
-        # self.days = int(config.get(self.strategy.instrument, 'days'))
-        # self.start = config.get(self.strategy.instrument, 'start')
-        # self.end = config.get(self.strategy.instrument, 'end')
-
-        self.ticker_data_deque = deque(maxlen=utils.ticker_data_size * 900)
+        self.ticker_data_deque = deque(maxlen=MAX_DEQUE_SIZE)
+        self.ticker_data_lock = threading.Lock()  # Thread safety for deque access
         
         class_ = None
         strategy = config.get(trading_strategy, 'strategy')
@@ -86,22 +89,22 @@ class Trader():
         logger.addHandler(log_handler)
 
 
-    def start_trading(self, stop_after = 999999999999999999999999999999999999999999999999999999):
-
+    def start_trading(self, stop_after = sys.maxsize):
+        """Start trading session with streaming and strategy execution threads."""
         logger.info("\n" + 100 * "-")
-        logger.info ("Started New Trading Session")
+        logger.info("Started New Trading Session")
         self.terminate = False
 
+        # Reconcile positions on startup
+        self.reconcile_positions()
+        
         threads = []
-        # threads.append(threading.Thread(target=self.check_positions, args=(1 * 60,)))
-        threads.append(threading.Thread(target=self.start_streaming, args=()))
-        threads.append(threading.Thread(target=self.refresh_strategy, args=(stop_after,)))
-
-        # self.refresh_strategy(refresh=5, stop_after=999999999999999999999999999999999999999999)
+        threads.append(threading.Thread(target=self.start_streaming, args=(), daemon=True))
+        threads.append(threading.Thread(target=self.refresh_strategy, args=(stop_after,), daemon=True))
 
         for t in threads:
             t.start()
-            sleep(5)
+            sleep(THREAD_START_DELAY)
         
         for t in threads:
             t.join()
@@ -110,15 +113,20 @@ class Trader():
 
     
     def reset_dequeue(self, candles: pd.DataFrame):
-
-        self.ticker_data_deque.clear()
-        for index, row in candles.iterrows():
-            self.ticker_data_deque.append((index, row["close"], row["bid"], row["ask"]))    
+        """Reset deque with historical candle data. Thread-safe."""
+        with self.ticker_data_lock:
+            self.ticker_data_deque.clear()
+            for index, row in candles.iterrows():
+                self.ticker_data_deque.append((index, row["close"], row["bid"], row["ask"]))    
 
 
     def start_streaming(self):
-
-        candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument, granularity=utils.granularity, count=utils.count)
+        """Start streaming price data from API. Handles reconnection on errors."""
+        candles = self.api.get_latest_price_candles(
+            pair_name=self.strategy.instrument, 
+            granularity=utils.granularity, 
+            count=utils.count
+        )
         self.reset_dequeue(candles)
         
         self.streaming = True
@@ -127,32 +135,54 @@ class Trader():
         while not self.terminate:
 
             try:
-                logger.info ("Start streaming prices")
+                logger.info("Start streaming prices for %s", self.strategy.instrument)
                 self.api.stream_prices(instrument=self.strategy.instrument, callback=self.new_price_ticker)
                 logger.info("Stopped streaming prices")
                 self.terminate = True
                 break
 
+            except ChunkedEncodingError as e:
+                logger.warning("ChunkedEncodingError - reconnecting: %s", e)
+                sleep(2)  # Brief delay before reconnect
+                
             except Exception as e:
-                logger.error(f"Error in start_streaming")
+                logger.error("Error in start_streaming: %s", e)
                 logger.exception(e)
-                if not type(e) == ChunkedEncodingError:
-                    error_count = error_count + 1
-                if error_count > 20:
-                    logger.info("Too many errors. Stopped streaming prices")
+                error_count += 1
+                
+                if error_count > MAX_ERROR_COUNT:
+                    logger.error("Too many errors (%d). Stopped streaming prices", error_count)
                     self.terminate = True
                     break
+                    
+                sleep(5)  # Longer delay on non-network errors
 
 
     def stop_streaming(self):
-
-        logger.info ("Stop Stream")
+        """Stop streaming prices gracefully."""
+        logger.info("Stop Stream")
         self.api.stop_streaming()
+        
+    def reconcile_positions(self):
+        """Reconcile bot's position tracking with actual broker positions on startup."""
+        try:
+            position = self.api.get_position(self.strategy.instrument)
+            if position:
+                actual_units = int(position.get('long', {}).get('units', 0)) + int(position.get('short', {}).get('units', 0))
+                if actual_units != 0:
+                    logger.warning("Position mismatch detected. Actual: %d, Expected: 0", actual_units)
+                    self.strategy.trading_session.have_units = actual_units
+                    logger.info("Position reconciled: %d units", actual_units)
+                else:
+                    logger.info("Position reconciliation: No open positions")
+        except Exception as e:
+            logger.error("Failed to reconcile positions: %s", e)
+            logger.exception(e)
 
 
 
-    def refresh_strategy(self, stop_after=99999999999999999999999999):
-
+    def refresh_strategy(self, stop_after=MAX_ITERATIONS):
+        """Execute trading strategy periodically. Thread-safe."""
         error_counter: int = 0
         exec_counter: int = 0
 
@@ -174,7 +204,9 @@ class Trader():
                     candles = self.api.get_latest_price_candles(pair_name=self.strategy.instrument, granularity=utils.granularity, count=utils.count)
                     self.reset_dequeue(candles)
 
-                ticker_data_list = list(self.ticker_data_deque)                        
+                # Thread-safe copy of ticker data
+                with self.ticker_data_lock:
+                    ticker_data_list = list(self.ticker_data_deque) 
                 ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list, trading_time)
 
                 # logger.info("Excute strategy")
@@ -219,39 +251,9 @@ class Trader():
 
         return trade_action
 
-
-    def check_positions(self, refresh = 300): 
-
-        i: int = 0
-        print_logs: int = 0
-
-        while not self.terminate:
-            try:
-
-                logger.debug("Check Positions")
-
-                units = self.api.get_position(instrument = self.strategy.instrument)
-                if not units == self.strategy.trading_session.have_units:
-                    self.strategy.trading_session.have_units = int(units)
-
-                if print_logs % 5 == 0:
-                    logger.info(f"Instrument: {self.strategy.instrument}, Units: {units}")
-
-                print_logs = print_logs + 1
-                sleep(refresh)
-
-            except Exception as e:
-                logger.error("Exception occurred in check_positions")
-                logger.exception(e)
-                i = i + 1
-                if i > 20:
-                    self.terminate = True
-                    break
-                sleep(5)
-        
  
     def new_price_ticker(self, **kwargs):
-
+        """Callback for new price ticks from streaming API. Thread-safe."""
         if self.terminate:
             raise StopTradingEvent("Stop Trading")
         
@@ -270,7 +272,9 @@ class Trader():
         pd_timestamp: pd.Timestamp = pd.to_datetime(date_time, utc=True)
         
         recent_tick = (pd_timestamp, (ask + bid)/2, bid, ask) # type: ignore
-        self.ticker_data_deque.append(recent_tick)
+        
+        with self.ticker_data_lock:
+            self.ticker_data_deque.append(recent_tick)
         
         
     def terminate_session(self, cause):

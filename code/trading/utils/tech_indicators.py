@@ -34,7 +34,7 @@ def calculate_rsi(prices: pd.Series):
     avg_gain = gain.ewm(com=period , min_periods=period).mean().iloc[-1]
     avg_loss = loss.ewm(com=period , min_periods=period).mean().iloc[-1]
 
-    rs = avg_gain / avg_loss
+    rs = avg_gain / avg_loss if avg_loss != 0 else float('inf')
     rsi = 100 - (100 / (1 + rs))
     
     return round(rsi, 4)
