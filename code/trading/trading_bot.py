@@ -31,7 +31,7 @@ logger = logging.getLogger()
 MAX_DEQUE_SIZE = utils.ticker_data_size * 900  # 30-second ticks for 5-min candles
 MAX_ITERATIONS = sys.maxsize  # Replaced invalid integer literal
 THREAD_START_DELAY = 5  # seconds
-MAX_ERROR_COUNT = 20
+MAX_ERROR_COUNT = 50
 
 class Trader():
     def __init__(self, conf_file, pair_file, trading_strategy, unit_test = False):
@@ -131,26 +131,26 @@ class Trader():
     
     def start_streaming(self):
         """Start streaming price data from API. Handles reconnection on errors."""
-        self.initializeQueue()  
-        self.streaming = True
         error_count: int = 0
 
         while not self.terminate:
 
             try:
                 logger.info("Start streaming prices for %s", self.strategy.instrument)
+                self.initializeQueue()  
+                self.streaming = True
+
                 self.api.stream_prices(instrument=self.strategy.instrument, callback=self.new_price_ticker)
+        
                 logger.info("Stopped streaming prices")
                 self.terminate = True
                 break
 
-            except ChunkedEncodingError as e:
-                logger.warning("ChunkedEncodingError - reconnecting: %s", e)
-                self.initializeQueue()  
+            # except ChunkedEncodingError as e:
+            #     logger.warning("ChunkedEncodingError - reconnecting: %s", e)
                 
             except Exception as e:
                 logger.error("Error in start_streaming: %s", e)
-                logger.exception(e)
                 error_count += 1
                 
                 if error_count > MAX_ERROR_COUNT:
@@ -158,7 +158,7 @@ class Trader():
                     self.terminate = True
                     break
                     
-                sleep(5)  # Longer delay on non-network errors
+                sleep(1)
 
 
     def stop_streaming(self):
@@ -210,7 +210,7 @@ class Trader():
                 # Thread-safe copy of ticker data
                 with self.ticker_data_lock:
                     ticker_data_list = list(self.ticker_data_deque) 
-                    
+
                 ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list, trading_time)
 
                 # logger.info("Excute strategy")

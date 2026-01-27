@@ -87,8 +87,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["close"] = df["close"].fillna(0)
         df["price_change"] = df["close"].pct_change()
-        df["price_max"] = df["high"].rolling(self.period_short).max()
-        df["price_min"] = df["low"].rolling(self.period_short).min()
+        # df["price_max"] = df["high"].rolling(self.period_short).max()
+        # df["price_min"] = df["low"].rolling(self.period_short).min()
         df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
         df['predicted_error'] = df['predicted'] - df['close']
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
@@ -105,8 +105,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["ema_short"] = df["close"].ewm(span=period_short, adjust=False).mean().fillna(0)
         df["ema_short_slope"] = df["ema_short"].rolling(window=self.period_short).apply(calculate_slope)
-        df["ema_short_slope_min"] = df["ema_short_slope"].rolling(window=self.period_short).min()
-        df["ema_short_slope_max"] = df["ema_short_slope"].rolling(window=self.period_short).max()
+        # df["ema_short_slope_min"] = df["ema_short_slope"].rolling(window=self.period_short).min()
+        # df["ema_short_slope_max"] = df["ema_short_slope"].rolling(window=self.period_short).max()
 
         # df["ema_short_slope_mean"] = df["ema_short_slope"].rolling(window=self.period_short).mean()
 
@@ -130,8 +130,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.price = row["close"]
         self.price_change = row["price_change"]
-        self.price_max = row["price_max"]
-        self.price_min = row["price_min"]
+        # self.price_max = row["price_max"]
+        # self.price_min = row["price_min"]
         self.price_open = row["open"]
         self.price_low = row["low"]
         self.price_high = row["high"]
@@ -154,8 +154,8 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.ema_short = row["ema_short"]
         self.ema_short_slope = row["ema_short_slope"]
-        self.ema_short_slope_min = row["ema_short_slope_min"]
-        self.ema_short_slope_max = row["ema_short_slope_max"]
+        # self.ema_short_slope_min = row["ema_short_slope_min"]
+        # self.ema_short_slope_max = row["ema_short_slope_max"]
 
         # self.ema_short_slope_mean = row["ema_short_slope_mean"]
 
