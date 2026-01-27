@@ -120,15 +120,18 @@ class Trader():
                 self.ticker_data_deque.append((index, row["close"], row["bid"], row["ask"]))    
 
 
-    def start_streaming(self):
-        """Start streaming price data from API. Handles reconnection on errors."""
+    def initializeQueue(self):
+
         candles = self.api.get_latest_price_candles(
             pair_name=self.strategy.instrument, 
             granularity=utils.granularity, 
             count=utils.count
         )
         self.reset_dequeue(candles)
-        
+    
+    def start_streaming(self):
+        """Start streaming price data from API. Handles reconnection on errors."""
+        self.initializeQueue()  
         self.streaming = True
         error_count: int = 0
 
@@ -143,7 +146,7 @@ class Trader():
 
             except ChunkedEncodingError as e:
                 logger.warning("ChunkedEncodingError - reconnecting: %s", e)
-                sleep(2)  # Brief delay before reconnect
+                self.initializeQueue()  
                 
             except Exception as e:
                 logger.error("Error in start_streaming: %s", e)
@@ -207,6 +210,7 @@ class Trader():
                 # Thread-safe copy of ticker data
                 with self.ticker_data_lock:
                     ticker_data_list = list(self.ticker_data_deque) 
+                    
                 ticker_data_df = self.strategy.to_5_min_candles(ticker_data_list, trading_time)
 
                 # logger.info("Excute strategy")
