@@ -151,6 +151,9 @@ class TradingStrategyExec(TradingStrategyCalc):
     def is_trading_time(self, date_time: datetime) -> bool:
         logger.debug(f"Date time (UTC): {date_time}")
 
+        if self.stop_tradng(date_time):
+            return False
+        
         # Convert UTC to EST
         est = pytz.timezone('US/Eastern')
         date_time_est = date_time.astimezone(est)
