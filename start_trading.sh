@@ -8,7 +8,7 @@ forex_pairs=(
     # ["AUD_USD_1"]="MACD"
     # ["USD_CAD_1"]="MACD"
 
-    # ["EUR_USD_2"]="Mean Reverse"
+    ["EUR_USD_2"]="Mean Reverse"
     # ["GBP_USD_2"]="Mean Reverse"
     # ["USD_CAD_2"]="Mean Reverse"
     # ["AUD_USD_2"]="Mean Reverse"

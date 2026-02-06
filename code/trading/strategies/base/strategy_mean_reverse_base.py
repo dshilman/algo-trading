@@ -22,31 +22,25 @@ class TradingStrategyMeanReverse(TradingStrategyExec):
 
         df: pd.DataFrame = self.data
 
+        df["price_max"] = df["high"].rolling(self.period_short).max()
+        df["price_min"] = df["low"].rolling(self.period_short).min()
+
         df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
         df["ema_bb_high_divergance_mean"] = df["ema_bb_high_divergance"].rolling(self.period_short).mean()
 
         df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
         df["ema_bb_low_divergance_mean"] = df["ema_bb_low_divergance"].rolling(self.period_short).mean()
 
-
-        df["bb_high_crossover"] = 0  # Initialize signal column
-        df.loc[(df["open"] > df["bb_upper"]) & (df["close"] < df["bb_upper"]), "bb_high_crossover"] = 1  # Bear crossover
-        df["bb_high_crossover"] = df["bb_high_crossover"].rolling(5).apply(lambda x: 1 in x.values)
-
-        df["bb_low_crossover"] = 0  # Initialize signal column
-        df.loc[(df["open"] < df["bb_lower"]) & (df["close"] > df["bb_lower"]), "bb_low_crossover"] = 1  # Bull crossover
-        df["bb_low_crossover"] = df["bb_low_crossover"].rolling(5).apply(lambda x: -1 in x.values)
-   
         self.data = df
 
     def set_strategy_indicators(self, row: pd.Series):
         super().set_strategy_indicators(row)
+
+        self.price_max = row["price_max"]
+        self.price_min = row["price_min"]
 
         self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
         self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
 
         self.ema_bb_high_divergance_mean = row["ema_bb_high_divergance_mean"]
         self.ema_bb_low_divergance_mean = row["ema_bb_low_divergance_mean"]
-
-        self.bb_high_crossover = row["bb_high_crossover"]
-        self.bb_low_crossover = row["bb_low_crossover"]

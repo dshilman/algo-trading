@@ -87,8 +87,6 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["close"] = df["close"].fillna(0)
         df["price_change"] = df["close"].pct_change()
-        # df["price_max"] = df["high"].rolling(self.period_short).max()
-        # df["price_min"] = df["low"].rolling(self.period_short).min()
         df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
         df['predicted_error'] = df['predicted'] - df['close']
         df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
@@ -107,8 +105,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["ema_short_slope"] = df["ema_short"].rolling(window=self.period_short).apply(calculate_slope)
         # df["ema_short_slope_min"] = df["ema_short_slope"].rolling(window=self.period_short).min()
         # df["ema_short_slope_max"] = df["ema_short_slope"].rolling(window=self.period_short).max()
-
-        # df["ema_short_slope_mean"] = df["ema_short_slope"].rolling(window=self.period_short).mean()
 
         df["momentum_short"] = df["close"].rolling(period_short).apply(compute_price_momentum)
         df["momentum_short_min"] = df["momentum_short"].rolling(period_short).min()
@@ -130,8 +126,6 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         self.price = row["close"]
         self.price_change = row["price_change"]
-        # self.price_max = row["price_max"]
-        # self.price_min = row["price_min"]
         self.price_open = row["open"]
         self.price_low = row["low"]
         self.price_high = row["high"]
@@ -140,7 +134,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.bid = row["bid"]
         self.predicted = row["predicted"]
         self.predicted_error = row["predicted_error"]
-        # self.std_dev_long = row["std_dev_long"]
+        self.std_dev_long = row["std_dev_long"]
 
         self.rsi_short = round(row["rsi_short"], 4)
         self.rsi_short_max = round(row["rsi_short_max"], 4)
@@ -156,8 +150,6 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.ema_short_slope = row["ema_short_slope"]
         # self.ema_short_slope_min = row["ema_short_slope_min"]
         # self.ema_short_slope_max = row["ema_short_slope_max"]
-
-        # self.ema_short_slope_mean = row["ema_short_slope_mean"]
 
         self.momentum_short = row["momentum_short"]
         self.momentum_short_min = row["momentum_short_min"]

@@ -19,9 +19,11 @@ logger = logging.getLogger()
 
 
 class TradingStrategyExec(TradingStrategyCalc):
+
     def __init__(self, trading_strategy, pair_file, api = None, unit_test=False):
 
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api=api, unit_test=unit_test)
+        self.open_trade = False
 
 
     def execute_strategy(self, trading_time):
@@ -32,6 +34,9 @@ class TradingStrategyExec(TradingStrategyCalc):
             logger.info(f"{trade_action}")
             order = self.create_order(trade_action)
             self.submit_order(order)
+            self.open_trade = trade_action.open_trade
+            self.trading_session.add_trade(trade_action=trade_action, date_time=trading_time)
+
         else:
             logger.debug("No trade action")
 
@@ -52,12 +57,12 @@ class TradingStrategyExec(TradingStrategyCalc):
 
         trade = None
         
-        if have_units == 0 and is_trading_time and (self.trading_spread == 0 or spread <= self.trading_spread):
+        if not self.open_trade and is_trading_time and (self.trading_spread == 0 or spread <= self.trading_spread):
       
             logger.debug(f"Have {have_units} positions, checking if need to open a new trade")
             trade = self.check_if_need_open_trade(trading_time)
 
-        elif abs(have_units) == self.units_to_trade:
+        elif abs(have_units) == self.units_to_trade and self.open_trade:
 
             logger.debug(f"Have {have_units} positions, checking for stop loss")
             trade = self.check_for_sl(trading_time, have_units)
@@ -66,8 +71,10 @@ class TradingStrategyExec(TradingStrategyCalc):
                 logger.debug(f"Have {have_units} positions, checking if need to close a trade")
                 trade = self.check_if_need_close_trade(trading_time)
            
-        if trade is not None:            
+        if trade is not None and self.backtest:            
             self.trading_session.add_trade(trade_action=trade, date_time=trading_time)
+            self.open_trade = trade.open_trade
+
         
         return trade # type: ignore
             
@@ -212,7 +219,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         open_trade_time = self.get_open_trade_time()        
         time_diff = timedelta(minutes=self.keep_trade_open_time, seconds=-open_trade_time.second)
 
-        return bool(not self.is_trading_time(trading_time) or open_trade_time is not None and (open_trade_time + time_diff) <= trading_time), (trading_time - open_trade_time).total_seconds()
+        return bool(open_trade_time is not None and (open_trade_time + time_diff) <= trading_time), (trading_time - open_trade_time).total_seconds()
 
     
     def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
@@ -225,13 +232,13 @@ class TradingStrategyExec(TradingStrategyCalc):
         take_profit, trade_pnl = self.take_profit()
 
         if have_units > 0:  # long position
-            if (close_trade or take_profit) and self.price_change < 0:
+            if self.stop_tradng(trading_time) or (close_trade or take_profit) and self.price_change < 0:
                 if not self.backtest:
                     logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                 
         elif have_units < 0:  # short position
-            if (close_trade or take_profit) and self.price_change > 0:
+            if self.stop_tradng(trading_time) or (close_trade or take_profit) and self.price_change > 0:
                 if not self.backtest:
                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
                 return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
