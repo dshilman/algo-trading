@@ -98,6 +98,7 @@ class TradingStrategyCalc(TradingStrategyBase):
 
         df["sma_long"] = df["close"].rolling(period_long).mean(numeric_only=True).fillna(0)
         df["std_dev_long"] = df["close"].rolling(period_long).std(numeric_only=True)
+        df["std_dev_short"] = df["close"].rolling(period_short).std(numeric_only=True)
         df["bb_lower"] = df["sma_long"] - df["std_dev_long"] * std_dev_long
         df["bb_upper"] = df["sma_long"] + df["std_dev_long"] * std_dev_long
 
@@ -135,6 +136,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.predicted = row["predicted"]
         self.predicted_error = row["predicted_error"]
         self.std_dev_long = row["std_dev_long"]
+        self.std_dev_short = row["std_dev_short"]
 
         self.rsi_short = round(row["rsi_short"], 4)
         self.rsi_short_max = round(row["rsi_short_max"], 4)

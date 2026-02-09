@@ -24,7 +24,7 @@ class TradingStrategy(TradingStrategyMeanReverse):
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
    
    
-        if self.trading_std < self.std_dev_long < self.trading_std * 1.5 and self.price_volatility > self.trading_price_volatility:
+        if self.trading_std < self.std_dev_long < self.trading_std * 1.5:
 
                 if self.price_max > self.bb_high and self.rsi_short < self.high_rsi < self.rsi_short_max \
                     and round(self.ema_bb_high_divergance, 4) > round(self.ema_bb_high_divergance_mean, 4) and self.price < self.ema_short:

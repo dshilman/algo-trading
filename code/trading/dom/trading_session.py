@@ -83,7 +83,7 @@ class Trading_Session():
             
             self.have_units = self.have_units + trade_action.units
 
-            self.trades.append([date_time, trade, trade_action.units, trade_action.price, ('' if trade_pl == 0 else '${:,.2f}'.format(trade_pl)), (trade_duration if trade_duration is not None else ""), '${:,.2f}'.format(self.pl)])
+            self.trades.append([date_time, trade, trade_action.units, trade_action.price, ('' if trade_pl == 0 else '${:,.2f}'.format(trade_pl)), (trade_duration if trade_duration is not None else ""), '' if trade_action.open_trade else '${:,.2f}'.format(self.pl)])
        
             return
 

@@ -44,3 +44,26 @@ class TradingStrategyMACD(TradingStrategyExec):
         # self.macd_crossover = row["macd_crossover"]
         self.macd_bull = bool(row["macd_crossover"] == 1)
         self.macd_bear = bool(row["macd_crossover"] == -1)
+
+    def check_if_need_close_trade(self, trading_time) -> Trade_Action: # type: ignore
+
+        have_units = self.trading_session.have_units
+        close_trade, trade_duration_sec = self.need_close_trade(trading_time)
+        trade_duration_min_sec = divmod(trade_duration_sec, 60)
+        open_min = trade_duration_min_sec[0]
+        open_seconds = trade_duration_min_sec[1]
+        take_profit, trade_pnl = self.take_profit()
+
+        if have_units > 0:  # long position
+            if self.stop_tradng(trading_time) or (close_trade and (self.ema_short_slope < 0 or self.predicted_error < -.0001)) \
+                or (take_profit and self.predicted_error > 0) or (self.macd_bear and self.predicted_error > 0):
+                    if not self.backtest:
+                        logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
+                    return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
+                    
+        elif have_units < 0:  # short position
+            if self.stop_tradng(trading_time) or (close_trade and (self.ema_short_slope > 0 or self.predicted_error > .0001)) \
+                or (take_profit and self.predicted_error < 0) or (self.macd_bull and self.predicted_error < 0):
+                    if not self.backtest:
+                        logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
+                    return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
