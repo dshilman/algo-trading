@@ -17,21 +17,43 @@ class TradingStrategy(TradingStrategyMACD):
         super().__init__(trading_strategy=trading_strategy, pair_file=pair_file, api = api, unit_test = unit_test)
 
 
+    def calc_indicators(self):
+        super().calc_indicators()
+
+        df: pd.DataFrame = self.data
+
+        df["ema_bb_high_divergance"] = df["bb_upper"] - df["ema_short"]
+        df["ema_bb_high_divergance_min"] = df["ema_bb_high_divergance"].rolling(self.period_short).min()
+
+        df["ema_bb_low_divergance"] = df["ema_short"] - df["bb_lower"]
+        df["ema_bb_low_divergance_min"] = df["ema_bb_low_divergance"].rolling(self.period_short).min()
+
+        self.data = df
+
+    def set_strategy_indicators(self, row: pd.Series):
+        super().set_strategy_indicators(row)
+
+        self.ema_bb_high_divergance = row["ema_bb_high_divergance"]
+        self.ema_bb_low_divergance = row["ema_bb_low_divergance"]
+
+        self.ema_bb_high_divergance_min = row["ema_bb_high_divergance_min"]
+        self.ema_bb_low_divergance_min = row["ema_bb_low_divergance_min"]
+
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
-        if self.trading_std < self.std_dev_short < self.trading_std * 2:
+        if self.std_dev_long < self.trading_std:
 
-            if self.rsi_short == self.rsi_short_max > self.high_rsi \
+            if self.predicted_error > 0.0001 and self.ema_short_slope > 0 \
                 and self.momentum_short == self.momentum_short_max \
-                    and self.price < self.bb_high:
+                    and self.ema_bb_high_divergance == self.ema_bb_high_divergance_min:
                         if not self.backtest:
                             logger.info(f"Go Long - Buy {self.units_to_trade} units at ask price: {self.ask}")
                         return Trade_Action(trading_time, self.instrument, self.units_to_trade, self.ask, True, False, False)                    
 
 
-            elif self.rsi_short == self.rsi_short_min < self.low_rsi \
+            elif self.predicted_error < -0.0001 and self.ema_short_slope < 0 \
                 and self.momentum_short == self.momentum_short_min \
-                    and self.price > self.bb_low:
+                    and self.ema_bb_low_divergance == self.ema_bb_low_divergance_min:
                         if not self.backtest:
                             logger.info(f"Go Short - Sell {self.units_to_trade} units at ask price: {self.bid}")
                         return Trade_Action(trading_time, self.instrument, -self.units_to_trade, self.bid, True, False, False)
@@ -47,13 +69,13 @@ class TradingStrategy(TradingStrategyMACD):
         take_profit, trade_pnl = self.take_profit()
 
         if have_units > 0:  # long position
-            if (close_trade and trade_pnl < 0) or (take_profit and self.price_change > 0) or self.ema_short_slope <= 0:
-                    if not self.backtest:
-                        logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
-                    return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
+            if (close_trade or take_profit) and round(self.ema_short_slope, 4) <= 0:
+                if not self.backtest:
+                    logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
+                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                     
         elif have_units < 0:  # short position
-            if (close_trade and trade_pnl < 0) or (take_profit and self.price_change < 0) or self.ema_short_slope >= 0:
-                    if not self.backtest:
-                        logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
-                    return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
+            if (close_trade or take_profit)and round(self.ema_short_slope, 4) >= 0:
+                if not self.backtest:
+                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
+                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
