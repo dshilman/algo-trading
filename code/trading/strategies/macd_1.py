@@ -19,7 +19,8 @@ class TradingStrategy(TradingStrategyMACD):
 
     def check_if_need_open_trade(self, trading_time) -> Trade_Action: # type: ignore
 
-        if self.trading_price_volatility < self.price_volatility < self.trading_price_volatility * 2:
+        if 0.0005 < self.std_dev_long < 0.0015 \
+            and self.trading_price_volatility < self.price_volatility < self.trading_price_volatility * 2:
 
             if self.macd_crossover_bull_recent and self.price_high < self.bb_high \
                 and self.rsi_short_max > self.high_rsi and self.momentum_short == self.momentum_short_max:
@@ -46,15 +47,17 @@ class TradingStrategy(TradingStrategyMACD):
         take_profit, trade_pnl = self.take_profit()
 
         if have_units > 0:  # long position
-            if self.stop_tradng(trading_time) or close_trade \
-                or take_profit or self.macd_bear:
-                    if not self.backtest:
-                        logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
-                    return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
+            if (take_profit and self.momentum_short > 0): # keep making money
+                 return
+            elif self.stop_tradng(trading_time) or close_trade or take_profit or self.macd_bear:
+                if not self.backtest:
+                    logger.info(f"Close long position  - Sell {have_units} units at ask price: {self.bid}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
+                return Trade_Action(trading_time, self.instrument, -have_units, self.bid, False, False, take_profit)
                     
-        elif have_units < 0:  # short position
-            if self.stop_tradng(trading_time) or close_trade \
-                or take_profit or self.macd_bull:
-                    if not self.backtest:
-                        logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
-                    return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
+        elif have_units < 0:  # 
+            if (take_profit and self.momentum_short < 0): # keep making money
+                 return
+            elif self.stop_tradng(trading_time) or close_trade or take_profit or self.macd_bull:
+                if not self.backtest:
+                    logger.info(f"Close short position  - Buy {-have_units} units at ask price: {self.ask}, trade duration: {open_min} min {open_seconds} sec, trade profit: {trade_pnl}")
+                return Trade_Action(trading_time, self.instrument, -have_units, self.ask, False, False, take_profit)
