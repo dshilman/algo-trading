@@ -64,7 +64,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         
         # Flatten multi-level columns
         df_consolidated.columns = ['open', 'close', 'low', 'high', 'ask', 'bid']
-        df_consolidated = df_consolidated.sort_index()
+        df_consolidated = df_consolidated.sort_index().ffill()
 
         # Logging
         # logger.info(
@@ -89,7 +89,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["price_change"] = df["close"].pct_change()
         df['predicted'] = df['close'].rolling(window=self.period_short).apply(predict_next)
         df['predicted_error'] = df['predicted'] - df['close']
-        df["price_volatility"] = ((df["high"] - df["low"]) / (df["high"] + df["low"]) / 2).rolling(self.period_short).mean()    
+        df["price_volatility"] = ((df["high"] - df["low"]) / ((df["high"] + df["low"]) / 2)).rolling(self.period_short).mean()
 
         df["rsi_short"] = df["close"].rolling(period_short).apply(calculate_rsi)
         df["rsi_short_max"] = df["rsi_short"].rolling(self.period_short).max()
@@ -111,7 +111,7 @@ class TradingStrategyCalc(TradingStrategyBase):
         df["momentum_short_min"] = df["momentum_short"].rolling(period_short).min()
         df["momentum_short_max"] = df["momentum_short"].rolling(period_short).max()
 
-        # df["momentum_long"] = df["close"].rolling(period_long).apply(compute_price_momentum)
+        df["momentum_long"] = df["close"].rolling(period_long).apply(compute_price_momentum)
 
         if self.unit_test:
             logger.info("\n" + df.tail(10).to_string(header=True))
@@ -157,4 +157,4 @@ class TradingStrategyCalc(TradingStrategyBase):
         self.momentum_short_min = row["momentum_short_min"]
         self.momentum_short_max = row["momentum_short_max"]
 
-        # self.momentum_long = row["momentum_long"]
+        self.momentum_long = row["momentum_long"]

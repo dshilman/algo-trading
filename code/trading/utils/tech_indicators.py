@@ -39,32 +39,6 @@ def calculate_rsi(prices: pd.Series):
     
     return round(rsi, 4)
 
-def compute_rsi(close: pd.Series) -> pd.Series:
-
-    period = close.size
-    delta = close.diff()
-    gain = delta.clip(lower=0).rolling(window=period).mean()
-    loss = -delta.clip(upper=0).rolling(window=period).mean()
-    rs = gain / loss
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
-
-
-def calculate_rsi_new(S):
-    
-    prices = pd.Series(S)
-    delta = prices.diff()
-    gain = delta.where(delta.gt(0), 0)
-    loss = -delta.where(delta.lt(0), 0)
-
-    avg_gain = gain.mean()
-    avg_loss = loss.mean()
-
-    rs = avg_gain / avg_loss
-    rsi = 100 - (100 / (1 + rs))
-    
-    return rsi
-
 def calculate_ema(S: pd.Series, span=15):
 
    return S.ewm(span=span, adjust=False).mean().iloc[-1]
@@ -82,22 +56,6 @@ def predict_next(y):
     next_pred = model.predict(next_x)[0, 0]
 
     return next_pred
-
-def slope(y):
-
-    x = np.arange(len(y)).reshape(-1, 1)
-    model = LinearRegression()
-    model.fit(x, y.values.reshape(-1, 1))
-
-    return model.coef_[0][0]
-
-def intercept(y):
-
-    x = np.arange(len(y)).reshape(-1, 1)
-    model = LinearRegression()
-    model.fit(x, y.values.reshape(-1, 1))
-
-    return model.intercept_
 
 def compute_price_momentum(close: pd.Series) -> float:
     window = close.size

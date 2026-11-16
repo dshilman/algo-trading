@@ -169,15 +169,14 @@ class Trader():
     def reconcile_positions(self):
         """Reconcile bot's position tracking with actual broker positions on startup."""
         try:
-            position = self.api.get_position(self.strategy.instrument)
-            if position:
-                actual_units = int(position.get('long', {}).get('units', 0)) + int(position.get('short', {}).get('units', 0))
-                if actual_units != 0:
-                    logger.warning("Position mismatch detected. Actual: %d, Expected: 0", actual_units)
-                    self.strategy.trading_session.have_units = actual_units
-                    logger.info("Position reconciled: %d units", actual_units)
-                else:
-                    logger.info("Position reconciliation: No open positions")
+            actual_units = int(self.api.get_position(self.strategy.instrument))
+            if actual_units != 0:
+                logger.warning("Position mismatch detected. Actual: %d, Expected: 0", actual_units)
+                self.strategy.trading_session.have_units = actual_units
+                self.strategy.open_trade = True
+                logger.info("Position reconciled: %d units", actual_units)
+            else:
+                logger.info("Position reconciliation: No open positions")
         except Exception as e:
             logger.error("Failed to reconcile positions: %s", e)
             logger.exception(e)

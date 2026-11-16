@@ -178,7 +178,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         return True
 
     def stop_tradng(self, trading_time: datetime) -> bool:
-        
+
         # Convert UTC to EST
         est = pytz.timezone('US/Eastern')
         date_time_est = trading_time.astimezone(est)
@@ -186,8 +186,7 @@ class TradingStrategyExec(TradingStrategyCalc):
         day = date_time_est.weekday()
         hour = date_time_est.hour
 
-        if day > 4 or day == 4 and hour >= 15:
-            return False
+        return day > 4 or (day == 4 and hour >= 15)
 
 
     def get_open_trade_time(self) -> pd.Timestamp: # type: ignore
